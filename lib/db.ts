@@ -1,0 +1,197 @@
+import { supabase } from "./supabase";
+import { SavedProperty, Booking, HostSettings, ManualBlock, WeeklyBlock, WeeklyBlockException } from "./types";
+
+// ─── Properties ──────────────────────────────────────────────────────────────
+
+export async function fetchProperties(): Promise<SavedProperty[]> {
+  const { data, error } = await supabase
+    .from("properties")
+    .select("*")
+    .eq("is_draft", false)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as SavedProperty[];
+}
+
+export async function fetchPropertyBySlug(slug: string): Promise<SavedProperty | null> {
+  const { data, error } = await supabase
+    .from("properties")
+    .select("*")
+    .eq("slug", slug)
+    .eq("is_draft", false)
+    .single();
+  if (error) return null;
+  return data as SavedProperty;
+}
+
+export async function fetchHostProperties(hostId: string): Promise<SavedProperty[]> {
+  const { data, error } = await supabase
+    .from("properties")
+    .select("*")
+    .eq("host_id", hostId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as SavedProperty[];
+}
+
+export async function upsertProperty(property: SavedProperty): Promise<void> {
+  const { error } = await supabase
+    .from("properties")
+    .upsert(property);
+  if (error) throw error;
+}
+
+export async function deletePropertyById(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("properties")
+    .delete()
+    .eq("id", id);
+  if (error) throw error;
+}
+
+// ─── Bookings ─────────────────────────────────────────────────────────────────
+
+export async function fetchHostBookings(propertyIds: string[]): Promise<Booking[]> {
+  if (propertyIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("*")
+    .in("property_id", propertyIds)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as Booking[];
+}
+
+export async function fetchBlockedDates(propertyId: string, roomName: string): Promise<string[]> {
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("check_in, check_out, status, payment_deadline")
+    .eq("property_id", propertyId)
+    .eq("room_name", roomName)
+    .not("status", "in", '("cancelled","expired")');
+  if (error) return [];
+
+  const blocked: string[] = [];
+  for (const b of data ?? []) {
+    if (b.status === "pending" && b.payment_deadline < now) continue;
+    const cur = new Date(b.check_in);
+    const end = new Date(b.check_out);
+    while (cur < end) {
+      blocked.push(cur.toISOString().split("T")[0]);
+      cur.setDate(cur.getDate() + 1);
+    }
+  }
+  return blocked;
+}
+
+export async function insertBooking(booking: Booking): Promise<void> {
+  const { error } = await supabase
+    .from("bookings")
+    .insert(booking);
+  if (error) throw error;
+}
+
+export async function patchBooking(id: string, updates: Partial<Booking>): Promise<void> {
+  const { error } = await supabase
+    .from("bookings")
+    .update(updates)
+    .eq("id", id);
+  if (error) throw error;
+}
+
+// ─── Host Settings ────────────────────────────────────────────────────────────
+
+export async function fetchHostSettings(hostId: string): Promise<HostSettings | null> {
+  const { data, error } = await supabase
+    .from("host_settings")
+    .select("*")
+    .eq("host_id", hostId)
+    .single();
+  if (error) return null;
+  return data as HostSettings;
+}
+
+export async function upsertHostSettings(settings: HostSettings): Promise<void> {
+  const { error } = await supabase
+    .from("host_settings")
+    .upsert({ ...settings, updated_at: new Date().toISOString() });
+  if (error) throw error;
+}
+
+// ─── Manual Blocks ────────────────────────────────────────────────────────────
+
+export async function fetchManualBlocks(propertyId: string, roomId: string): Promise<ManualBlock[]> {
+  const { data, error } = await supabase
+    .from("manual_blocks")
+    .select("*")
+    .eq("property_id", propertyId)
+    .eq("room_id", roomId);
+  if (error) throw error;
+  return (data ?? []) as ManualBlock[];
+}
+
+export async function createManualBlock(
+  block: Omit<ManualBlock, "id" | "created_at">
+): Promise<ManualBlock> {
+  const row = { ...block, id: `MB-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, created_at: new Date().toISOString() };
+  const { data, error } = await supabase.from("manual_blocks").insert(row).select().single();
+  if (error) throw error;
+  return data as ManualBlock;
+}
+
+export async function deleteManualBlock(id: string): Promise<void> {
+  const { error } = await supabase.from("manual_blocks").delete().eq("id", id);
+  if (error) throw error;
+}
+
+// ─── Weekly Blocks ────────────────────────────────────────────────────────────
+
+export async function fetchWeeklyBlocks(propertyId: string, roomId: string): Promise<WeeklyBlock[]> {
+  const { data, error } = await supabase
+    .from("weekly_blocks")
+    .select("*")
+    .eq("property_id", propertyId)
+    .eq("room_id", roomId);
+  if (error) throw error;
+  return (data ?? []) as WeeklyBlock[];
+}
+
+export async function upsertWeeklyBlock(
+  block: Omit<WeeklyBlock, "id" | "created_at">
+): Promise<void> {
+  const row = { ...block, id: `WB-${Date.now()}`, created_at: new Date().toISOString() };
+  const { error } = await supabase.from("weekly_blocks").upsert(row, { onConflict: "property_id,room_id,day_of_week" });
+  if (error) throw error;
+}
+
+export async function deleteWeeklyBlock(id: string): Promise<void> {
+  const { error } = await supabase.from("weekly_blocks").delete().eq("id", id);
+  if (error) throw error;
+}
+
+// ─── Weekly Block Exceptions (특정 날짜 정기블락 제외) ────────────────────────
+
+export async function fetchWeeklyBlockExceptions(propertyId: string, roomId: string): Promise<WeeklyBlockException[]> {
+  const { data, error } = await supabase
+    .from("weekly_block_exceptions")
+    .select("*")
+    .eq("property_id", propertyId)
+    .eq("room_id", roomId);
+  if (error) throw error;
+  return (data ?? []) as WeeklyBlockException[];
+}
+
+export async function createWeeklyBlockException(
+  exc: Omit<WeeklyBlockException, "id" | "created_at">
+): Promise<WeeklyBlockException> {
+  const row = { ...exc, id: `WBE-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, created_at: new Date().toISOString() };
+  const { data, error } = await supabase.from("weekly_block_exceptions").insert(row).select().single();
+  if (error) throw error;
+  return data as WeeklyBlockException;
+}
+
+export async function deleteWeeklyBlockException(id: string): Promise<void> {
+  const { error } = await supabase.from("weekly_block_exceptions").delete().eq("id", id);
+  if (error) throw error;
+}
