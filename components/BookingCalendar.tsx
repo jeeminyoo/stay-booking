@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { isHoliday } from "@/lib/holidays";
 
 interface Props {
   blockedDates: string[];
@@ -143,6 +144,8 @@ export default function BookingCalendar({
           const inRange = isInRange(dateStr);
           const dayNum = parseInt(dateStr.split("-")[2]);
           const dayOfWeek = (firstDay + dayNum - 1) % 7;
+          const holiday = isHoliday(dateStr);
+          const isRed = dayOfWeek === 0 || holiday;
 
           let cellClass =
             "relative flex items-center justify-center h-9 text-sm transition-colors";
@@ -157,7 +160,7 @@ export default function BookingCalendar({
             if (isCheckOut) cellClass += " rounded-r-full";
           } else {
             cellClass += " hover:bg-gray-100 rounded-full cursor-pointer";
-            if (dayOfWeek === 0) cellClass += " text-red-500";
+            if (isRed) cellClass += " text-red-500";
             else if (dayOfWeek === 6) cellClass += " text-blue-500";
             else cellClass += " text-gray-800";
           }
@@ -173,6 +176,9 @@ export default function BookingCalendar({
               onMouseLeave={() => setHoverDate("")}
             >
               {dayNum}
+              {holiday && !blocked && (
+                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-red-400" />
+              )}
               {blocked && (
                 <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-red-300" />
               )}

@@ -112,7 +112,7 @@ export default function StepPricing({ draft, onChange, errors }: Props) {
           {!samePrice && (
             <>
               <div>
-                <label className={labelClass}>주말 (금~토)</label>
+                <label className={labelClass}>주말 (금,토) · 공휴일</label>
                 <PriceInput value={room.weekend_price}
                   onChange={(v) => updateRoom(activeRoom, { weekend_price: v })} placeholder="0" />
               </div>

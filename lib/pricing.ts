@@ -1,4 +1,5 @@
 import { Pricing, SpecialPrice } from "./types";
+import { isHoliday } from "./holidays";
 
 // ─── 요금 계산 ────────────────────────────────────────────────────────────────
 
@@ -48,15 +49,19 @@ export function calculateTotalPrice(params: CalcParams): CalcResult {
     if (special) {
       // extra_amount: 요일별 기본요금에 더해지는 시즌 추가금
       const dow = cur.getDay();
-      const dayBase = dow === 0 ? pricing.sunday_price : dow >= 5 ? pricing.weekend_price : pricing.weekday_price;
+      const holiday = isHoliday(dateStr);
+      const dayBase = dow === 0 ? pricing.sunday_price
+        : (dow >= 5 || holiday) ? pricing.weekend_price
+        : pricing.weekday_price;
       basePrice = dayBase + special.extra_amount;
       isSpecial = true;
     } else {
       const dow = cur.getDay(); // 0=일, 1=월, ..., 6=토
+      const holiday = isHoliday(dateStr);
       if (dow === 0) {
         basePrice = pricing.sunday_price;
-      } else if (dow >= 5) {
-        // 금(5), 토(6)
+      } else if (dow >= 5 || holiday) {
+        // 금(5), 토(6), 공휴일
         basePrice = pricing.weekend_price;
       } else {
         basePrice = pricing.weekday_price;
