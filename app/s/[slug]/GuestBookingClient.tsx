@@ -2,14 +2,64 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { SavedProperty, RoomDraft, Booking } from "@/lib/types";
+import { SavedProperty, RoomDraft, Booking, ImageEntry } from "@/lib/types";
+
+function getImages(p: SavedProperty | RoomDraft): ImageEntry[] {
+  if (p.images && p.images.length > 0) return p.images;
+  if (p.image_url) return [{ id: "legacy", thumb_url: p.image_url, main_url: p.image_url }];
+  return [];
+}
+
+function ImageGallery({ images, onClickImage, height = "h-56 md:h-72" }: {
+  images: ImageEntry[];
+  onClickImage?: (url: string) => void;
+  height?: string;
+}) {
+  if (images.length === 0) return null;
+  if (images.length === 1) {
+    return (
+      <div className={`${height} bg-gray-200 shrink-0`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={images[0].thumb_url} alt="" loading="lazy"
+          className="w-full h-full object-cover cursor-pointer"
+          onClick={() => onClickImage?.(images[0].main_url)}
+        />
+      </div>
+    );
+  }
+  return (
+    <div className={`${height} bg-gray-200 shrink-0 relative`}>
+      <div
+        className="flex overflow-x-auto snap-x snap-mandatory h-full scrollbar-hide"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
+        {images.map((img) => (
+          <div key={img.id} className="shrink-0 w-full h-full snap-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={img.thumb_url} alt="" loading="lazy"
+              className="w-full h-full object-cover cursor-pointer"
+              onClick={() => onClickImage?.(img.main_url)}
+            />
+          </div>
+        ))}
+      </div>
+      <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
+        {images.map((img) => (
+          <span key={img.id} className="w-1.5 h-1.5 rounded-full bg-white/80" />
+        ))}
+      </div>
+    </div>
+  );
+}
 import { calculateTotalPrice } from "@/lib/pricing";
 import BookingCalendar from "@/components/BookingCalendar";
 import PaymentTimer from "@/components/PaymentTimer";
 import { fetchPropertyBySlug } from "@/lib/db";
 import { getBlockedDates, createBooking, updateBooking, calcAutoDeadline } from "@/lib/data";
 import { fetchHostSettings } from "@/lib/db";
-import Link from "next/link";
+import Logo from "@/components/Logo";
 
 type Step = "room" | "date" | "info" | "payment" | "done";
 
@@ -92,9 +142,28 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
   const [paymentNote, setPaymentNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [infoError, setInfoError] = useState("");
+
+  useEffect(() => {
+    if (infoError || phoneError) {
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    }
+  }, [infoError, phoneError]);
   const [autoCancelMinutes, setAutoCancelMinutes] = useState(60);
   const [descExpanded, setDescExpanded] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+
+  async function handleShare() {
+    const url = window.location.href;
+    if (navigator.share) {
+      try { await navigator.share({ title: property?.name ?? "숙소 공유", url }); } catch {}
+    } else {
+      await navigator.clipboard.writeText(url);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -327,66 +396,61 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
       {/* ── Header ── */}
       <header className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-3.5 flex items-center justify-between">
-          <Link href="/" className="text-base font-black text-indigo-600 tracking-tight">스테이픽</Link>
-          <span className="text-[10px] bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-full font-bold">수수료 0%</span>
+          <span className="cursor-default"><Logo /></span>
+          <div className="flex items-center gap-2">
+            <button onClick={handleShare}
+              className="relative p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500"
+              title="공유하기">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>
+              {shareCopied && (
+                <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 text-[10px] bg-gray-900 text-white px-2 py-0.5 rounded whitespace-nowrap">
+                  링크 복사됨
+                </span>
+              )}
+            </button>
+            <span className="text-[10px] bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-full font-bold">수수료 0%</span>
+          </div>
         </div>
       </header>
 
       {/* ── Property hero ── */}
-      {property.image_url && (
-        <div className="h-44 bg-gray-200 relative shrink-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={property.image_url} alt={property.name} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-          <div className="absolute bottom-0 left-0 px-5 pb-4">
-            <p className="text-white font-black text-xl leading-tight drop-shadow">{property.name}</p>
-            {selectedRoom && step !== "room" && (
-              <p className="text-white/80 text-xs mt-0.5">{selectedRoom.name}</p>
-            )}
-          </div>
-        </div>
-      )}
-      {!property.image_url && (
-        <div className="bg-white border-b border-gray-100 px-5 py-4 max-w-2xl mx-auto w-full">
-          <p className="font-black text-gray-900 text-xl leading-tight">{property.name}</p>
-          {selectedRoom && step !== "room" && (
-            <p className="text-xs text-gray-400 mt-0.5">{selectedRoom.name}</p>
-          )}
-        </div>
-      )}
+      <ImageGallery images={getImages(property)} onClickImage={setLightboxUrl} />
 
-      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-6 space-y-4 pb-2">
+      <main className="flex-1 max-w-2xl mx-auto w-full px-4 pb-2">
 
         {/* ── Step: room ── */}
         {step === "room" && (
           <div>
-            {/* Property description + address */}
-            {(descText || property.address) && (
-              <div className="mb-5 bg-white rounded-2xl border border-gray-100 px-4 py-4 space-y-3">
-                {descText && (
-                  <div>
-                    <p className="text-sm text-gray-700 leading-relaxed">
-                      {descTooLong && !descExpanded ? `${descText.slice(0, DESC_LIMIT)}…` : descText}
-                    </p>
-                    {descTooLong && (
-                      <button onClick={() => setDescExpanded(v => !v)}
-                        className="text-xs text-indigo-500 mt-1.5 font-medium">
-                        {descExpanded ? "접기" : "더 보기"}
-                      </button>
-                    )}
-                  </div>
-                )}
-                {property.address && (
-                  <div className={`flex items-center gap-1.5 ${descText ? "pt-3 border-t border-gray-100" : ""}`}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 shrink-0">
-                      <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/>
-                      <circle cx="12" cy="10" r="3"/>
-                    </svg>
-                    <p className="text-xs text-gray-400">{property.address}</p>
-                  </div>
-                )}
-              </div>
-            )}
+            {/* Property name + address + description */}
+            <div className="pt-6 pb-6 border-b border-gray-100 mb-6">
+              <h1 className="text-2xl font-black text-gray-900 leading-tight mb-2">{property.name}</h1>
+              {property.address && (
+                <div className="flex items-center gap-1.5 mb-4">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 shrink-0">
+                    <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/>
+                    <circle cx="12" cy="10" r="3"/>
+                  </svg>
+                  <p className="text-sm text-gray-400">{property.address}</p>
+                </div>
+              )}
+              {descText && (
+                <div>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    {descTooLong && !descExpanded ? `${descText.slice(0, DESC_LIMIT)}…` : descText}
+                  </p>
+                  {descTooLong && (
+                    <button onClick={() => setDescExpanded(v => !v)}
+                      className="text-xs text-indigo-500 mt-2 font-medium">
+                      {descExpanded ? "접기" : "더 보기"}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
 
             <h2 className="text-base font-bold text-gray-800 mb-3">객실을 선택해주세요</h2>
             <div className="space-y-3">
@@ -396,26 +460,17 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
                   <button key={idx} type="button" onClick={() => void handleSelectRoom(room)}
                     className={`w-full bg-white rounded-2xl border text-left transition-all overflow-hidden
                       ${isSelected ? "border-indigo-500 ring-2 ring-indigo-200 shadow-sm" : "border-gray-200 hover:border-indigo-300"}`}>
-                    {room.image_url ? (
-                      <div className="h-44 w-full overflow-hidden relative">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={room.image_url} alt={room.name} className="w-full h-full object-cover" />
-                        {isSelected && (
-                          <div className="absolute top-3 right-3 w-7 h-7 bg-indigo-600 rounded-full flex items-center justify-center">
-                            <span className="text-white text-sm font-bold">✓</span>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="h-32 w-full bg-gray-100 flex items-center justify-center text-gray-300 text-4xl relative">
-                        🛏
-                        {isSelected && (
-                          <div className="absolute top-3 right-3 w-7 h-7 bg-indigo-600 rounded-full flex items-center justify-center">
-                            <span className="text-white text-sm font-bold">✓</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    <div className="relative">
+                      {getImages(room).length > 0
+                        ? <ImageGallery images={getImages(room)} onClickImage={(url) => { setLightboxUrl(url); }} height="h-44" />
+                        : <div className="h-32 w-full bg-gray-100 flex items-center justify-center text-gray-300 text-4xl">🛏</div>
+                      }
+                      {isSelected && (
+                        <div className="absolute top-3 right-3 w-7 h-7 bg-indigo-600 rounded-full flex items-center justify-center z-10">
+                          <span className="text-white text-sm font-bold">✓</span>
+                        </div>
+                      )}
+                    </div>
                     <div className="px-4 py-3.5">
                       <p className="font-bold text-gray-900 text-base mb-1">{room.name}</p>
                       <p className="text-xs text-gray-500 mb-2">
@@ -437,7 +492,10 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
         {/* ── Step: date + guests ── */}
         {step === "date" && selectedRoom && (
           <div className="space-y-4">
-            <h2 className="text-lg font-bold text-gray-900">날짜 및 인원 선택</h2>
+            <div className="pt-5 pb-4 border-b border-gray-100">
+              <p className="text-xs text-gray-400 mb-1">{property.name}</p>
+              <h2 className="text-lg font-bold text-gray-900">{selectedRoom.name}</h2>
+            </div>
 
             <div className="bg-white rounded-2xl border border-gray-100 p-4">
               <BookingCalendar
@@ -501,7 +559,10 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
         {/* ── Step: info ── */}
         {step === "info" && calc && (
           <div className="space-y-4">
-            <h2 className="text-lg font-bold text-gray-900">예약자 정보</h2>
+            <div className="pt-5 pb-4 border-b border-gray-100">
+              <p className="text-xs text-gray-400 mb-1">{property.name}{selectedRoom ? ` · ${selectedRoom.name}` : ""}</p>
+              <h2 className="text-lg font-bold text-gray-900">예약자 정보</h2>
+            </div>
 
             <div className="bg-white rounded-2xl border border-gray-100 px-4 py-3 text-sm space-y-2">
               <div className="flex justify-between items-center">
@@ -521,11 +582,10 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
               <div className="flex items-start gap-2.5">
                 <span className="text-lg shrink-0 mt-0.5">💳</span>
                 <div>
-                  <p className="text-xs font-semibold text-indigo-700 mb-0.5">계좌이체 전용 · 수수료 없는 최저가</p>
+                  <p className="text-xs font-semibold text-indigo-700 mb-0.5">직접 이체로, 더 낮은 가격</p>
                   <p className="text-xs text-indigo-600 leading-relaxed">
-                    스테이픽은 계좌이체로만 예약이 이루어집니다.<br />
-                    중간 플랫폼 수수료가 없어 다른 예약채널보다 <strong>가장 저렴하게</strong> 예약할 수 있습니다.<br />
-                    입금 시 아래 입력한 <strong>예약자 이름</strong>으로 보내주세요.
+                    스테이픽은 호스트 계좌로 직접 이체하는 방식으로 예약이 진행됩니다.<br />
+                    중간 수수료 없이, 더 좋은 가격을 경험해보세요.
                   </p>
                 </div>
               </div>
@@ -582,7 +642,10 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
         {/* ── Step: payment ── */}
         {step === "payment" && booking && property && (
           <div className="space-y-4">
-            <h2 className="text-lg font-bold text-gray-900 text-center">계좌 이체 안내</h2>
+            <div className="pt-5 pb-4 border-b border-gray-100">
+              <p className="text-xs text-gray-400 mb-1">{property.name}{selectedRoom ? ` · ${selectedRoom.name}` : ""}</p>
+              <h2 className="text-lg font-bold text-gray-900">계좌 이체 안내</h2>
+            </div>
 
             <div className="flex flex-col items-center gap-2">
               <PaymentTimer deadline={booking.payment_deadline} onExpire={handleExpire} />
@@ -687,6 +750,27 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
             © 스테이픽 · 수수료 없는 숙소 예약 플랫폼
           </p>
         </footer>
+      )}
+
+      {/* ── Lightbox ── */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center"
+          onClick={() => setLightboxUrl(null)}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={lightboxUrl} alt=""
+            className="max-w-full max-h-full object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            onClick={() => setLightboxUrl(null)}
+            className="absolute top-4 right-4 w-9 h-9 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white text-xl transition-colors"
+          >
+            ✕
+          </button>
+        </div>
       )}
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
+import Logo from "@/components/Logo";
 import { Booking } from "@/lib/types";
 import { getBookingsByPhone, expireOverdueBookings } from "@/lib/data";
 import PaymentTimer from "@/components/PaymentTimer";
@@ -72,7 +73,7 @@ export default function MyBookingsPage() {
           <Link href="/" className="text-gray-500 hover:text-gray-800 transition-colors">
             ← 뒤로
           </Link>
-          <span className="font-bold text-indigo-600 text-lg">스테이픽</span>
+          <Logo />
         </div>
       </header>
 

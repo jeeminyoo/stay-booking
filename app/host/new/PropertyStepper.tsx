@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import { PropertyDraft, KakaoUser } from "@/lib/types";
 import { generateSlug, normalizeSlug } from "@/lib/pricing";
 import { upsertProperty } from "@/lib/db";
-import { uploadDataUrl, isDataUrl } from "@/lib/storage";
+import { uploadImageEntry, isDataUrl } from "@/lib/storage";
 import KakaoAddressInput from "@/components/host/KakaoAddressInput";
 import BankSelector from "@/components/host/BankSelector";
-import ImageUpload from "@/components/host/ImageUpload";
+import MultiImageUpload from "@/components/host/MultiImageUpload";
 import StepRooms from "@/components/host/steps/StepRooms";
 import StepPricing from "@/components/host/steps/StepPricing";
+import Logo from "@/components/Logo";
 
 const DRAFT_KEY = "host_property_draft";
 
@@ -21,6 +22,7 @@ const DEFAULT_DRAFT: PropertyDraft = {
   lat: 0,
   lng: 0,
   image_url: "",
+  images: [],
   slug: "",
   bank_name: "",
   bank_account: "",
@@ -34,6 +36,7 @@ const DEFAULT_DRAFT: PropertyDraft = {
     beds: 1,
     bathrooms: 1,
     image_url: "",
+    images: [],
     weekday_price: 0,
     weekend_price: 0,
     sunday_price: 0,
@@ -63,11 +66,11 @@ const STEPS: StepConfig[] = [
   { title: "숙소 이름을\n알려주세요", subtitle: "게스트가 처음 보게 될 이름입니다.", validate: (d) => d.name.trim() ? null : "숙소 이름을 입력해주세요." },
   { title: "숙소를\n소개해주세요", subtitle: "어떤 숙소인지 자유롭게 작성해주세요.", validate: () => null },
   { title: "위치를\n알려주세요", subtitle: "게스트가 찾아갈 수 있도록 정확한 주소를 입력해주세요.", validate: (d) => d.address.trim() ? null : "주소를 입력해주세요." },
-  { title: "대표 사진을\n등록해주세요", subtitle: "첫인상이 되는 사진입니다. 숙소를 잘 보여주는 사진을 선택해주세요.", validate: (d) => d.image_url ? null : "대표 사진을 등록해주세요." },
+  { title: "대표 사진을\n등록해주세요", subtitle: "숙소의 매력을 잘 보여주는 사진을 등록해주세요.", validate: (d) => (d.images?.length ?? 0) > 0 ? null : "대표 사진을 1장 이상 등록해주세요." },
   { title: "입금 계좌를\n입력해주세요", subtitle: "게스트가 직접 이체할 계좌 정보입니다.", validate: (d) => (d.bank_name && d.bank_account && d.bank_holder) ? null : "계좌 정보를 모두 입력해주세요." },
   { title: "객실을\n설정해주세요", subtitle: "최대 5개의 객실을 등록할 수 있습니다.", validate: (d) => {
     if (!d.rooms.every(r => r.name.trim())) return "모든 객실 이름을 입력해주세요.";
-    if (!d.rooms.every(r => r.image_url)) return "모든 객실 사진을 등록해주세요.";
+    if (!d.rooms.every(r => (r.images?.length ?? 0) > 0 || r.image_url)) return "모든 객실 사진을 등록해주세요.";
     return null;
   }},
   { title: "요금을\n설정해주세요", subtitle: "요일별로 다른 요금을 설정할 수 있습니다.", validate: (d) => d.rooms.every(r => r.weekday_price > 0 || r.weekend_price > 0) ? null : "최소 1개 이상의 요금을 입력해주세요." },
@@ -101,7 +104,21 @@ export default function PropertyStepper({ user }: { user: KakaoUser }) {
   const updateDraft = useCallback((updates: Partial<PropertyDraft>) => {
     setDraft((prev) => {
       const next = { ...prev, ...updates };
-      try { localStorage.setItem(DRAFT_KEY, JSON.stringify(next)); } catch {}
+      // Strip data URLs before localStorage to avoid quota issues
+      try {
+        const strip = (url: string) => isDataUrl(url) ? "" : url;
+        const toStore = {
+          ...next,
+          image_url: strip(next.image_url),
+          images: (next.images ?? []).map(img => ({ ...img, thumb_url: strip(img.thumb_url), main_url: strip(img.main_url) })),
+          rooms: (next.rooms ?? []).map(r => ({
+            ...r,
+            image_url: strip(r.image_url),
+            images: (r.images ?? []).map(img => ({ ...img, thumb_url: strip(img.thumb_url), main_url: strip(img.main_url) })),
+          })),
+        };
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(toStore));
+      } catch {}
       return next;
     });
     setError(null);
@@ -137,22 +154,34 @@ export default function PropertyStepper({ user }: { user: KakaoUser }) {
     try {
       const propertyId = draft.id || `prop-${Date.now()}`;
 
-      // base64 이미지를 Supabase Storage에 업로드하고 URL로 교체
-      const imageUrl = isDataUrl(draft.image_url)
-        ? await uploadDataUrl(draft.image_url, `${propertyId}/cover`)
-        : draft.image_url;
+      // 커버 이미지 2종 업로드
+      const uploadedCoverImages = await Promise.all(
+        (draft.images ?? []).map(img =>
+          uploadImageEntry(img, `stays/${propertyId}/cover`)
+        )
+      );
 
+      // 객실 이미지 2종 업로드
       const rooms = await Promise.all(
         draft.rooms.map(async (room, i) => {
-          if (!room.image_url || !isDataUrl(room.image_url)) return room;
-          const url = await uploadDataUrl(room.image_url, `${propertyId}/room-${i}`);
-          return { ...room, image_url: url };
+          const roomId = `room-${i}`;
+          const uploadedRoomImages = await Promise.all(
+            (room.images ?? []).map(img =>
+              uploadImageEntry(img, `stays/${propertyId}/rooms/${roomId}`)
+            )
+          );
+          return {
+            ...room,
+            images: uploadedRoomImages,
+            image_url: uploadedRoomImages[0]?.thumb_url ?? room.image_url,
+          };
         })
       );
 
       const saved = {
         ...draft,
-        image_url: imageUrl,
+        images: uploadedCoverImages,
+        image_url: uploadedCoverImages[0]?.thumb_url ?? "",
         rooms,
         id: propertyId,
         host_id: user.id,
@@ -209,10 +238,10 @@ export default function PropertyStepper({ user }: { user: KakaoUser }) {
       // 4. 대표 사진
       case 3:
         return (
-          <ImageUpload
-            value={draft.image_url}
-            onChange={(url) => updateDraft({ image_url: url })}
-            placeholder="앨범 또는 파일에서 사진 선택"
+          <MultiImageUpload
+            images={draft.images ?? []}
+            maxCount={5}
+            onChange={(images) => updateDraft({ images, image_url: images[0]?.thumb_url ?? "" })}
           />
         );
 
@@ -341,9 +370,8 @@ export default function PropertyStepper({ user }: { user: KakaoUser }) {
       {/* Header */}
       <header className="sticky top-0 z-10 bg-white border-b border-gray-100">
         <div className="relative flex items-center justify-center px-4 py-3 max-w-lg mx-auto">
-          <button onClick={() => router.push("/")}
-            className="absolute left-4 text-base font-black text-indigo-600 tracking-tight">
-            스테이픽
+          <button onClick={() => router.push("/")} className="absolute left-4">
+            <Logo />
           </button>
           <span className="text-xs text-gray-400 font-medium">{step + 1} / {TOTAL}</span>
           <button onClick={() => { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); router.push("/host"); }}

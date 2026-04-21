@@ -46,6 +46,7 @@ export interface Booking {
   bank_account: string;
   bank_holder: string;
   guest_message?: string;
+  host_memo?: string;
 }
 
 // ─── Property (숙소) ─────────────────────────────────────────────────────────
@@ -113,6 +114,14 @@ export interface SpecialPrice {
   extra_amount: number;
 }
 
+// ─── Image ───────────────────────────────────────────────────────────────────
+
+export interface ImageEntry {
+  id: string;
+  thumb_url: string;  // 600px webp — 리스트/카드용
+  main_url: string;   // 1600px webp — 상세/라이트박스용
+}
+
 // ─── Form Draft ──────────────────────────────────────────────────────────────
 
 export interface SpecialPriceDraft {
@@ -130,6 +139,7 @@ export interface RoomDraft {
   beds: number;
   bathrooms: number;
   image_url: string;
+  images?: ImageEntry[];
   weekday_price: number;
   weekend_price: number;
   sunday_price: number;
@@ -146,6 +156,7 @@ export interface PropertyDraft {
   lat: number;
   lng: number;
   image_url: string;
+  images?: ImageEntry[];
   slug: string;
   bank_name: string;
   bank_account: string;

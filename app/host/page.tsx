@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
+import Logo from "@/components/Logo";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SavedProperty, KakaoUser, Booking, HostSettings } from "@/lib/types";
 import { getUser, clearUser } from "@/lib/auth";
@@ -61,12 +62,14 @@ const DEFAULT_SETTINGS: Omit<HostSettings, "host_id" | "updated_at"> = {
 
 export default function HostDashboard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [user, setUser] = useState<KakaoUser | null>(null);
   const [properties, setProperties] = useState<SavedProperty[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [hasDraft, setHasDraft] = useState(false);
   const [checked, setChecked] = useState(false);
-  const [tab, setTab] = useState<"bookings" | "availability" | "properties" | "settings">("bookings");
+  const initialTab = (searchParams.get("tab") as "bookings" | "availability" | "properties" | "settings") ?? "bookings";
+  const [tab, setTab] = useState<"bookings" | "availability" | "properties" | "settings">(initialTab);
   const [settings, setSettings] = useState<HostSettings | null>(null);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
@@ -146,7 +149,7 @@ export default function HostDashboard() {
       <header className="bg-white border-b">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/" className="font-bold text-indigo-600 text-lg">스테이픽</Link>
+            <Link href="/"><Logo /></Link>
             <span className="text-gray-300">|</span>
             <span className="text-gray-600 text-sm">호스트</span>
           </div>
@@ -193,7 +196,7 @@ export default function HostDashboard() {
 
         {/* ─── 예약 현황 탭 ─── */}
         {tab === "availability" && user && (
-          <AvailabilityTab user={user} properties={properties} bookings={bookings} />
+          <AvailabilityTab user={user} properties={properties} bookings={bookings} onConfirmBooking={confirmBooking} />
         )}
 
         {/* ─── 예약 알림 탭 ─── */}

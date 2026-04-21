@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { getKakaoAuthUrl } from "@/lib/auth";
+import Logo from "@/components/Logo";
 
 export default function LoginPage() {
   function handleKakaoLogin() {
@@ -13,7 +14,7 @@ export default function LoginPage() {
 
       {/* Header */}
       <header className="bg-white border-b border-gray-100 px-5 py-4">
-        <Link href="/" className="text-lg font-black text-indigo-600 tracking-tight">스테이픽</Link>
+        <Link href="/"><Logo /></Link>
       </header>
 
       {/* Main */}

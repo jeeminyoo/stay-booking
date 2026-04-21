@@ -58,7 +58,7 @@ export default function KakaoAddressInput({ value, onSelect }: Props) {
     if (!scriptReady || !window.daum) return;
     new window.daum.Postcode({
       oncomplete: async (data) => {
-        const addr = data.roadAddress || data.jibunAddress;
+        const addr = data.jibunAddress || data.roadAddress;
         setBaseAddress(addr);
         setDetail("");
         setGeocoding(true);

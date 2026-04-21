@@ -5,6 +5,7 @@ import {
   fetchManualBlocks, createManualBlock, deleteManualBlock,
   fetchWeeklyBlocks, upsertWeeklyBlock, deleteWeeklyBlock,
   fetchWeeklyBlockExceptions, createWeeklyBlockException, deleteWeeklyBlockException,
+  patchBooking,
 } from "@/lib/db";
 import {
   SavedProperty, KakaoUser, Booking, ManualBlock,
@@ -84,11 +85,12 @@ interface Props {
   user: KakaoUser;
   properties: SavedProperty[];
   bookings: Booking[];
+  onConfirmBooking: (id: string) => Promise<void>;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function AvailabilityTab({ user: _user, properties, bookings }: Props) {
+export default function AvailabilityTab({ user: _user, properties, bookings, onConfirmBooking }: Props) {
   const [propIdx, setPropIdx]   = useState(0);
   const [roomIdx, setRoomIdx]   = useState(0);
   const [manualBlocks, setManualBlocks]         = useState<ManualBlock[]>([]);
@@ -104,6 +106,20 @@ export default function AvailabilityTab({ user: _user, properties, bookings }: P
   const [blockNote, setBlockNote]         = useState("");
   const [addingBlock, setAddingBlock]     = useState(false);
   const [weeklyModal, setWeeklyModal]     = useState(false);
+  const [memos, setMemos] = useState<Record<string, string>>({});
+  const [memoSaving, setMemoSaving] = useState<Record<string, boolean>>({});
+  const [memoSaved, setMemoSaved] = useState<Record<string, boolean>>({});
+
+  async function saveMemo(bookingId: string, memo: string) {
+    setMemoSaving(prev => ({ ...prev, [bookingId]: true }));
+    try {
+      await patchBooking(bookingId, { host_memo: memo });
+      setMemoSaved(prev => ({ ...prev, [bookingId]: true }));
+      setTimeout(() => setMemoSaved(prev => ({ ...prev, [bookingId]: false })), 2000);
+    } finally {
+      setMemoSaving(prev => ({ ...prev, [bookingId]: false }));
+    }
+  }
 
   const property = properties[propIdx] ?? null;
   const rooms: RoomDraft[] = property?.rooms ?? [];
@@ -494,6 +510,46 @@ export default function AvailabilityTab({ user: _user, properties, bookings }: P
                       {b.payment_note && (
                         <div className="mt-1.5 bg-blue-50 rounded-2xl px-3.5 py-2.5 text-xs text-blue-700">
                           <span className="text-blue-400 font-semibold mr-1">입금 메시지</span>{b.payment_note}
+                        </div>
+                      )}
+                      {["waiting_for_deposit", "deposit_requested", "confirmed"].includes(b.status) && (
+                        <div className="mt-3 pt-3 border-t border-gray-100">
+                          <p className="text-[11px] text-gray-400 mb-1.5 font-medium">호스트 메모</p>
+                          <textarea
+                            rows={2}
+                            placeholder="내부 메모 (게스트에게 노출되지 않음)"
+                            value={memos[b.id] ?? b.host_memo ?? ""}
+                            onChange={e => setMemos(prev => ({ ...prev, [b.id]: e.target.value }))}
+                            className="w-full text-xs border border-gray-200 rounded-xl px-3 py-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300 placeholder:text-gray-300"
+                          />
+                          <div className="flex items-center justify-end gap-2 mt-2">
+                            {memoSaved[b.id] && (
+                              <span className="text-[11px] text-emerald-500 font-medium">저장됐어요 ✓</span>
+                            )}
+                            <button
+                              onClick={() => saveMemo(b.id, memos[b.id] ?? b.host_memo ?? "")}
+                              disabled={memoSaving[b.id]}
+                              className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-gray-900 text-white hover:bg-gray-700 disabled:opacity-50 transition-colors">
+                              {memoSaving[b.id] ? "저장 중..." : "저장"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      {b.status === "waiting_for_deposit" && (
+                        <div className="mt-3 pt-3 border-t border-gray-100 space-y-2.5">
+                          {b.payment_deadline && (
+                            <p className="text-xs text-amber-600 flex items-center gap-1.5">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                              </svg>
+                              {formatDateTime(b.payment_deadline)} 자동취소
+                            </p>
+                          )}
+                          <button
+                            onClick={() => onConfirmBooking(b.id)}
+                            className="w-full bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors">
+                            예약 확정
+                          </button>
                         </div>
                       )}
                     </div>

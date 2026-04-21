@@ -2,7 +2,7 @@
 
 import { PropertyDraft, RoomDraft } from "@/lib/types";
 import NumberInput from "@/components/host/NumberInput";
-import ImageUpload from "@/components/host/ImageUpload";
+import MultiImageUpload from "@/components/host/MultiImageUpload";
 
 interface Props {
   draft: PropertyDraft;
@@ -19,6 +19,7 @@ const DEFAULT_ROOM = (): RoomDraft => ({
   beds: 1,
   bathrooms: 1,
   image_url: "",
+  images: [],
   weekday_price: 0,
   weekend_price: 0,
   sunday_price: 0,
@@ -98,11 +99,10 @@ export default function StepRooms({ draft, onChange, errors }: Props) {
 
           <div className="p-4 space-y-4">
             {/* 사진 */}
-            <ImageUpload
-              value={room.image_url}
-              onChange={(url) => updateRoom(idx, { image_url: url })}
-              aspectRatio="square"
-              placeholder="객실 사진 선택"
+            <MultiImageUpload
+              images={room.images ?? []}
+              maxCount={3}
+              onChange={(images) => updateRoom(idx, { images, image_url: images[0]?.thumb_url ?? "" })}
             />
 
             {/* 인원 */}
