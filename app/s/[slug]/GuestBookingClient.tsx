@@ -184,7 +184,6 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
         const roomId = `${found.id}-${room.name}`;
         const blocked = await getBlockedDates(found.id, roomId);
         setBlockedDates(blocked);
-        setStep("date");
       }
     }
     load();
@@ -452,7 +451,9 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
               )}
             </div>
 
-            <h2 className="text-base font-bold text-gray-800 mb-3">객실을 선택해주세요</h2>
+            <h2 className="text-base font-bold text-gray-800 mb-3">
+              {property.rooms.length === 1 ? "객실 정보" : "객실을 선택해주세요"}
+            </h2>
             <div className="space-y-3">
               {property.rooms.map((room, idx) => {
                 const isSelected = selectedRoom?.name === room.name;
@@ -715,9 +716,15 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
       </main>
 
       {/* ── Bottom nav ── */}
+      {step === "room" && property.rooms.length === 1 && (
+        <BottomNav
+          onBack={() => router.push("/")} backLabel="홈"
+          onNext={() => setStep("date")} nextLabel="날짜 선택"
+        />
+      )}
       {step === "date" && (
         <BottomNav
-          onBack={() => property.rooms.length > 1 ? setStep("room") : router.push("/")} backLabel="이전"
+          onBack={() => setStep("room")} backLabel="이전"
           onNext={() => setStep("info")} nextLabel="다음"
           nextDisabled={!checkIn || !checkOut}
           priceSummary={calc ? { nights, total: calc.total, adults: guests.adults, children: guests.children, infants: guests.infants } : null}
