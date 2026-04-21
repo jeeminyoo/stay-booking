@@ -62,14 +62,12 @@ const DEFAULT_SETTINGS: Omit<HostSettings, "host_id" | "updated_at"> = {
 
 export default function HostDashboard() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [user, setUser] = useState<KakaoUser | null>(null);
   const [properties, setProperties] = useState<SavedProperty[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [hasDraft, setHasDraft] = useState(false);
   const [checked, setChecked] = useState(false);
-  const initialTab = (searchParams.get("tab") as "bookings" | "availability" | "properties" | "settings") ?? "bookings";
-  const [tab, setTab] = useState<"bookings" | "availability" | "properties" | "settings">(initialTab);
+  const [tab, setTab] = useState<"bookings" | "availability" | "properties" | "settings">("bookings");
   const [settings, setSettings] = useState<HostSettings | null>(null);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
@@ -81,6 +79,10 @@ export default function HostDashboard() {
   }
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get("tab") as "bookings" | "availability" | "properties" | "settings" | null;
+    if (t) setTab(t);
+
     const u = getUser();
     setUser(u);
     setChecked(true);
