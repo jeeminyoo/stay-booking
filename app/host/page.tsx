@@ -72,6 +72,7 @@ export default function HostDashboard() {
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
   const [toast, setToast] = useState("");
+  const [highlightBookingId, setHighlightBookingId] = useState<string | null>(null);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -81,7 +82,9 @@ export default function HostDashboard() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const t = params.get("tab") as "bookings" | "availability" | "properties" | "settings" | null;
+    const bookingId = params.get("booking");
     if (t) setTab(t);
+    if (bookingId) { setTab("bookings"); setHighlightBookingId(bookingId); }
 
     const u = getUser();
     setUser(u);
@@ -97,6 +100,15 @@ export default function HostDashboard() {
       setSettings(s ?? { host_id: u.id, updated_at: "", ...DEFAULT_SETTINGS });
     });
   }, []);
+
+  // 예약 카드로 자동 스크롤
+  useEffect(() => {
+    if (!highlightBookingId || bookings.length === 0) return;
+    const el = document.getElementById(`booking-${highlightBookingId}`);
+    if (el) {
+      setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "center" }), 300);
+    }
+  }, [highlightBookingId, bookings]);
 
   function handleLogout() {
     clearUser();
@@ -215,8 +227,11 @@ export default function HostDashboard() {
                 {bookings.map((b) => {
                   const s = STATUS_LABEL[b.status] ?? STATUS_LABEL.cancelled;
                   const canAct = b.status === "waiting_for_deposit" || b.status === "deposit_requested";
+                  const isHighlighted = highlightBookingId === b.id;
                   return (
-                    <div key={b.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                    <div key={b.id} id={`booking-${b.id}`}
+                      className={`bg-white rounded-2xl border overflow-hidden transition-all duration-500
+                        ${isHighlighted ? "border-indigo-400 ring-2 ring-indigo-200 shadow-md" : "border-gray-100"}`}>
                       <div className="p-4">
                         <div className="flex items-start justify-between gap-3 mb-3">
                           <div>
