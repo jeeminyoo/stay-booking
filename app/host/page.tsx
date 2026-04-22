@@ -6,7 +6,8 @@ import Logo from "@/components/Logo";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SavedProperty, KakaoUser, Booking, HostSettings } from "@/lib/types";
 import { getUser, clearUser } from "@/lib/auth";
-import { fetchHostProperties, fetchHostBookings, deletePropertyById, patchBooking, fetchHostSettings, upsertHostSettings } from "@/lib/db";
+import { fetchHostProperties, fetchHostBookings, deletePropertyById, patchBooking, fetchHostSettings, upsertHostSettings, patchPropertyNotice } from "@/lib/db";
+import { RoomDraft } from "@/lib/types";
 import { expireOverdueBookings } from "@/lib/data";
 import AvailabilityTab from "@/components/host/AvailabilityTab";
 
@@ -73,6 +74,11 @@ export default function HostDashboard() {
   const [settingsSaved, setSettingsSaved] = useState(false);
   const [toast, setToast] = useState("");
   const [highlightBookingId, setHighlightBookingId] = useState<string | null>(null);
+  const [noticeEditId, setNoticeEditId] = useState<string | null>(null);
+  const [noticePerRoom, setNoticePerRoom] = useState(false);
+  const [noticeShared, setNoticeShared] = useState("");
+  const [noticeRooms, setNoticeRooms] = useState<{ name: string; notice: string }[]>([]);
+  const [noticeSaving, setNoticeSaving] = useState(false);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -132,6 +138,34 @@ export default function HostDashboard() {
     if (!confirm("이 예약을 취소하시겠습니까?")) return;
     await patchBooking(id, { status: "cancelled" });
     setBookings(prev => prev.map(b => b.id === id ? { ...b, status: "cancelled" } : b));
+  }
+
+  function openNoticeEdit(p: SavedProperty) {
+    if (noticeEditId === p.id) { setNoticeEditId(null); return; }
+    setNoticeEditId(p.id);
+    setNoticePerRoom(p.notice_per_room ?? false);
+    setNoticeShared(p.notice ?? "");
+    setNoticeRooms(p.rooms.map(r => ({ name: r.name, notice: r.notice ?? "" })));
+  }
+
+  async function saveNotice(p: SavedProperty) {
+    setNoticeSaving(true);
+    try {
+      const updatedRooms: RoomDraft[] = p.rooms.map((r, i) => ({
+        ...r,
+        notice: noticeRooms[i]?.notice ?? "",
+      }));
+      await patchPropertyNotice(p.id, noticeShared, noticePerRoom, updatedRooms);
+      setProperties(prev => prev.map(prop =>
+        prop.id === p.id
+          ? { ...prop, notice: noticeShared, notice_per_room: noticePerRoom, rooms: updatedRooms }
+          : prop
+      ));
+      setNoticeEditId(null);
+      showToast("유의사항이 저장되었습니다");
+    } finally {
+      setNoticeSaving(false);
+    }
   }
 
   async function saveSettings() {
@@ -373,7 +407,76 @@ export default function HostDashboard() {
                         </button>
                         <button onClick={() => deleteProperty(p.id)} className="text-sm text-red-400 border border-red-100 px-3 py-2 rounded-lg hover:bg-red-50 transition-colors">삭제</button>
                       </div>
+                      {/* 유의사항 버튼 */}
+                      <button
+                        onClick={() => openNoticeEdit(p)}
+                        className="w-full mt-2 text-sm border border-gray-200 text-gray-600 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-1.5">
+                        <span>📋</span>
+                        <span>이용 유의사항 {(p.notice?.trim() || p.rooms.some(r => r.notice?.trim())) ? "수정" : "등록"}</span>
+                      </button>
                     </div>
+
+                    {/* 유의사항 편집 패널 */}
+                    {noticeEditId === p.id && (
+                      <div className="border-t border-gray-100 p-4 bg-gray-50 space-y-4">
+                        {/* 모드 토글 */}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setNoticePerRoom(false)}
+                            className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors
+                              ${!noticePerRoom ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-500 border-gray-200"}`}>
+                            전체 공통
+                          </button>
+                          <button
+                            onClick={() => setNoticePerRoom(true)}
+                            className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors
+                              ${noticePerRoom ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-500 border-gray-200"}`}>
+                            객실별 개별
+                          </button>
+                        </div>
+
+                        {/* 공통 유의사항 */}
+                        {!noticePerRoom && (
+                          <textarea
+                            value={noticeShared}
+                            onChange={e => setNoticeShared(e.target.value)}
+                            placeholder="숙소 이용 시 유의사항을 입력해주세요."
+                            rows={6}
+                            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none bg-white"
+                          />
+                        )}
+
+                        {/* 객실별 유의사항 */}
+                        {noticePerRoom && noticeRooms.map((r, i) => (
+                          <div key={i}>
+                            <p className="text-xs font-semibold text-gray-500 mb-1.5">{r.name}</p>
+                            <textarea
+                              value={r.notice}
+                              onChange={e => setNoticeRooms(prev => prev.map((nr, ni) => ni === i ? { ...nr, notice: e.target.value } : nr))}
+                              placeholder={`${r.name} 유의사항`}
+                              rows={4}
+                              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none bg-white"
+                            />
+                          </div>
+                        ))}
+
+                        {/* 유의사항 URL 안내 */}
+                        <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2.5 text-xs text-indigo-700 flex items-start gap-2">
+                          <span className="shrink-0 mt-0.5">🔗</span>
+                          <div>
+                            <p className="font-semibold mb-0.5">알림톡 링크용 URL</p>
+                            <p className="font-mono break-all select-all">{typeof window !== "undefined" ? window.location.origin : "https://staypick.info"}/s/{p.slug}/notice</p>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <button onClick={() => setNoticeEditId(null)} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors">취소</button>
+                          <button onClick={() => saveNotice(p)} disabled={noticeSaving} className="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50">
+                            {noticeSaving ? "저장 중..." : "저장"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

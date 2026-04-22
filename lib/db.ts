@@ -41,6 +41,19 @@ export async function upsertProperty(property: SavedProperty): Promise<void> {
   if (error) throw error;
 }
 
+export async function patchPropertyNotice(
+  id: string,
+  notice: string,
+  notice_per_room: boolean,
+  rooms: import("./types").RoomDraft[],
+): Promise<void> {
+  const { error } = await supabase
+    .from("properties")
+    .update({ notice, notice_per_room, rooms })
+    .eq("id", id);
+  if (error) throw error;
+}
+
 export async function deletePropertyById(id: string): Promise<void> {
   const { error } = await supabase
     .from("properties")

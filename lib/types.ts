@@ -146,6 +146,7 @@ export interface RoomDraft {
   extra_adult_price: number;
   extra_child_price: number;
   special_prices: SpecialPriceDraft[];
+  notice?: string;
 }
 
 export interface PropertyDraft {
@@ -162,6 +163,8 @@ export interface PropertyDraft {
   bank_account: string;
   bank_holder: string;
   rooms: RoomDraft[];
+  notice?: string;
+  notice_per_room?: boolean;
 }
 
 // ─── ManualBlock (수동 블락) ───────────────────────────────────────────────────
