@@ -430,13 +430,13 @@ export default function HostDashboard() {
                         {/* 모드 토글 */}
                         <div className="flex gap-2">
                           <button
-                            onClick={() => setNoticePerRoom(false)}
+                            onClick={() => { setNoticePerRoom(false); setNoticeRooms(prev => prev.map(r => ({ ...r, notice: "" }))); }}
                             className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors
                               ${!noticePerRoom ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-500 border-gray-200"}`}>
                             전체 공통
                           </button>
                           <button
-                            onClick={() => setNoticePerRoom(true)}
+                            onClick={() => { setNoticePerRoom(true); setNoticeShared(""); }}
                             className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors
                               ${noticePerRoom ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-500 border-gray-200"}`}>
                             객실별 개별
