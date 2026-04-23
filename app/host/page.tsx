@@ -427,41 +427,62 @@ export default function HostDashboard() {
                     {/* 유의사항 편집 패널 */}
                     {noticeEditId === p.id && (
                       <div className="border-t border-gray-100 p-4 bg-gray-50 space-y-4">
-                        {/* 모드 토글 */}
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => { setNoticePerRoom(false); setNoticeRooms(prev => prev.map(r => ({ ...r, notice: "" }))); }}
-                            className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors
-                              ${!noticePerRoom ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-500 border-gray-200"}`}>
-                            전체 공통
-                          </button>
-                          <button
-                            onClick={() => { setNoticePerRoom(true); setNoticeShared(""); }}
-                            className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors
-                              ${noticePerRoom ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-500 border-gray-200"}`}>
-                            객실별 개별
-                          </button>
+
+                        {/* 안내 문구 */}
+                        <div className="bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 text-xs text-amber-700 flex items-start gap-2">
+                          <span className="shrink-0">💬</span>
+                          <p>예약 확정 알림톡 발송 시 게스트에게 함께 전달되는 이용 안내입니다. 체크인 방법, 주차, 시설 이용 규칙 등을 입력해주세요.</p>
                         </div>
 
-                        {/* 공통 유의사항 */}
+                        {/* 라디오 모드 선택 */}
+                        <div className="space-y-2">
+                          <label className="flex items-start gap-3 p-3 bg-white border rounded-xl cursor-pointer transition-colors hover:border-indigo-300"
+                            style={{ borderColor: !noticePerRoom ? "#6366f1" : undefined }}>
+                            <input
+                              type="radio" name={`notice-mode-${p.id}`}
+                              checked={!noticePerRoom}
+                              onChange={() => { setNoticePerRoom(false); setNoticeRooms(prev => prev.map(r => ({ ...r, notice: "" }))); }}
+                              className="mt-0.5 accent-indigo-600 shrink-0"
+                            />
+                            <div>
+                              <p className="text-sm font-semibold text-gray-800">전체 공통</p>
+                              <p className="text-xs text-gray-400 mt-0.5">모든 객실에 동일한 유의사항을 적용합니다.</p>
+                            </div>
+                          </label>
+                          <label className="flex items-start gap-3 p-3 bg-white border rounded-xl cursor-pointer transition-colors hover:border-indigo-300"
+                            style={{ borderColor: noticePerRoom ? "#6366f1" : undefined }}>
+                            <input
+                              type="radio" name={`notice-mode-${p.id}`}
+                              checked={noticePerRoom}
+                              onChange={() => { setNoticePerRoom(true); setNoticeShared(""); }}
+                              className="mt-0.5 accent-indigo-600 shrink-0"
+                            />
+                            <div>
+                              <p className="text-sm font-semibold text-gray-800">객실별 개별</p>
+                              <p className="text-xs text-gray-400 mt-0.5">객실마다 다른 유의사항을 입력합니다.</p>
+                            </div>
+                          </label>
+                        </div>
+
+                        {/* 공통 유의사항 입력 */}
                         {!noticePerRoom && (
                           <textarea
                             value={noticeShared}
                             onChange={e => setNoticeShared(e.target.value)}
-                            placeholder="숙소 이용 시 유의사항을 입력해주세요."
+                            placeholder="체크인 방법, 주차 안내, 시설 이용 규칙 등 게스트에게 전달할 내용을 입력해주세요."
                             rows={6}
                             className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none bg-white"
                           />
                         )}
 
-                        {/* 객실별 유의사항 */}
+                        {/* 객실별 유의사항 입력 */}
                         {noticePerRoom && noticeRooms.map((r, i) => (
-                          <div key={i}>
-                            <p className="text-xs font-semibold text-gray-500 mb-1.5">{r.name}</p>
+                          <div key={i} className="space-y-1.5">
+                            <p className="text-xs font-semibold text-gray-600">{r.name}</p>
                             <textarea
                               value={r.notice}
                               onChange={e => setNoticeRooms(prev => prev.map((nr, ni) => ni === i ? { ...nr, notice: e.target.value } : nr))}
-                              placeholder={`${r.name} 유의사항`}
+                              placeholder={`${r.name} 이용 유의사항`}
                               rows={4}
                               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none bg-white"
                             />
