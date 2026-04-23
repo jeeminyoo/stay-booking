@@ -424,88 +424,6 @@ export default function HostDashboard() {
                       </button>
                     </div>
 
-                    {/* 유의사항 편집 패널 */}
-                    {noticeEditId === p.id && (
-                      <div className="border-t border-gray-100 p-4 bg-gray-50 space-y-4">
-
-                        {/* 안내 문구 */}
-                        <div className="bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 text-xs text-amber-700 flex items-start gap-2">
-                          <span className="shrink-0">💬</span>
-                          <p>예약 확정 알림톡 발송 시 게스트에게 함께 전달되는 이용 안내입니다. 체크인 방법, 주차, 시설 이용 규칙 등을 입력해주세요.</p>
-                        </div>
-
-                        {/* 라디오 모드 선택 */}
-                        <div className="space-y-2">
-                          <label className="flex items-start gap-3 p-3 bg-white border rounded-xl cursor-pointer transition-colors hover:border-indigo-300"
-                            style={{ borderColor: !noticePerRoom ? "#6366f1" : undefined }}>
-                            <input
-                              type="radio" name={`notice-mode-${p.id}`}
-                              checked={!noticePerRoom}
-                              onChange={() => { setNoticePerRoom(false); setNoticeRooms(prev => prev.map(r => ({ ...r, notice: "" }))); }}
-                              className="mt-0.5 accent-indigo-600 shrink-0"
-                            />
-                            <div>
-                              <p className="text-sm font-semibold text-gray-800">전체 공통</p>
-                              <p className="text-xs text-gray-400 mt-0.5">모든 객실에 동일한 유의사항을 적용합니다.</p>
-                            </div>
-                          </label>
-                          <label className="flex items-start gap-3 p-3 bg-white border rounded-xl cursor-pointer transition-colors hover:border-indigo-300"
-                            style={{ borderColor: noticePerRoom ? "#6366f1" : undefined }}>
-                            <input
-                              type="radio" name={`notice-mode-${p.id}`}
-                              checked={noticePerRoom}
-                              onChange={() => { setNoticePerRoom(true); setNoticeShared(""); }}
-                              className="mt-0.5 accent-indigo-600 shrink-0"
-                            />
-                            <div>
-                              <p className="text-sm font-semibold text-gray-800">객실별 개별</p>
-                              <p className="text-xs text-gray-400 mt-0.5">객실마다 다른 유의사항을 입력합니다.</p>
-                            </div>
-                          </label>
-                        </div>
-
-                        {/* 공통 유의사항 입력 */}
-                        {!noticePerRoom && (
-                          <textarea
-                            value={noticeShared}
-                            onChange={e => setNoticeShared(e.target.value)}
-                            placeholder="체크인 방법, 주차 안내, 시설 이용 규칙 등 게스트에게 전달할 내용을 입력해주세요."
-                            rows={6}
-                            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none bg-white"
-                          />
-                        )}
-
-                        {/* 객실별 유의사항 입력 */}
-                        {noticePerRoom && noticeRooms.map((r, i) => (
-                          <div key={i} className="space-y-1.5">
-                            <p className="text-xs font-semibold text-gray-600">{r.name}</p>
-                            <textarea
-                              value={r.notice}
-                              onChange={e => setNoticeRooms(prev => prev.map((nr, ni) => ni === i ? { ...nr, notice: e.target.value } : nr))}
-                              placeholder={`${r.name} 이용 유의사항`}
-                              rows={4}
-                              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none bg-white"
-                            />
-                          </div>
-                        ))}
-
-                        {/* 유의사항 URL 안내 */}
-                        <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2.5 text-xs text-indigo-700 flex items-start gap-2">
-                          <span className="shrink-0 mt-0.5">🔗</span>
-                          <div>
-                            <p className="font-semibold mb-0.5">알림톡 링크용 URL</p>
-                            <p className="font-mono break-all select-all">{typeof window !== "undefined" ? window.location.origin : "https://staypick.info"}/s/{p.slug}/notice</p>
-                          </div>
-                        </div>
-
-                        <div className="flex gap-2">
-                          <button onClick={() => setNoticeEditId(null)} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors">취소</button>
-                          <button onClick={() => saveNotice(p)} disabled={noticeSaving} className="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50">
-                            {noticeSaving ? "저장 중..." : "저장"}
-                          </button>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
@@ -570,6 +488,103 @@ export default function HostDashboard() {
           </div>
         )}
       </main>
+
+      {/* ── 유의사항 편집 모달 ── */}
+      {noticeEditId && (() => {
+        const p = properties.find(prop => prop.id === noticeEditId);
+        if (!p) return null;
+        return (
+          <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
+            {/* backdrop */}
+            <div className="absolute inset-0 bg-black/50" onClick={() => setNoticeEditId(null)} />
+
+            {/* panel */}
+            <div className="relative bg-white w-full max-w-2xl md:rounded-2xl rounded-t-2xl shadow-xl flex flex-col max-h-[90vh]">
+              {/* 헤더 */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+                <div>
+                  <h2 className="font-bold text-gray-900">이용 유의사항</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">{p.name}</p>
+                </div>
+                <button onClick={() => setNoticeEditId(null)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition-colors">✕</button>
+              </div>
+
+              {/* 스크롤 영역 */}
+              <div className="overflow-y-auto flex-1 px-6 py-5 space-y-4">
+                {/* 안내 문구 */}
+                <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 text-xs text-amber-700 flex items-start gap-2">
+                  <span className="shrink-0">💬</span>
+                  <p>예약 확정 알림톡 발송 시 게스트에게 함께 전달되는 이용 안내입니다. 체크인 방법, 주차, 시설 이용 규칙 등을 입력해주세요.</p>
+                </div>
+
+                {/* 라디오 모드 선택 */}
+                <div className="space-y-2">
+                  <label className={`flex items-start gap-3 p-4 bg-white border-2 rounded-xl cursor-pointer transition-colors ${!noticePerRoom ? "border-indigo-500 bg-indigo-50/30" : "border-gray-200 hover:border-gray-300"}`}>
+                    <input type="radio" name={`notice-mode-${p.id}`} checked={!noticePerRoom}
+                      onChange={() => { setNoticePerRoom(false); setNoticeRooms(prev => prev.map(r => ({ ...r, notice: "" }))); }}
+                      className="mt-0.5 accent-indigo-600 shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800">전체 공통</p>
+                      <p className="text-xs text-gray-400 mt-0.5">모든 객실에 동일한 유의사항을 적용합니다.</p>
+                    </div>
+                  </label>
+                  <label className={`flex items-start gap-3 p-4 bg-white border-2 rounded-xl cursor-pointer transition-colors ${noticePerRoom ? "border-indigo-500 bg-indigo-50/30" : "border-gray-200 hover:border-gray-300"}`}>
+                    <input type="radio" name={`notice-mode-${p.id}`} checked={noticePerRoom}
+                      onChange={() => { setNoticePerRoom(true); setNoticeShared(""); }}
+                      className="mt-0.5 accent-indigo-600 shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800">객실별 개별</p>
+                      <p className="text-xs text-gray-400 mt-0.5">객실마다 다른 유의사항을 입력합니다.</p>
+                    </div>
+                  </label>
+                </div>
+
+                {/* 공통 유의사항 입력 */}
+                {!noticePerRoom && (
+                  <textarea
+                    value={noticeShared}
+                    onChange={e => setNoticeShared(e.target.value)}
+                    placeholder="체크인 방법, 주차 안내, 시설 이용 규칙 등 게스트에게 전달할 내용을 입력해주세요."
+                    rows={10}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
+                  />
+                )}
+
+                {/* 객실별 유의사항 입력 */}
+                {noticePerRoom && noticeRooms.map((r, i) => (
+                  <div key={i} className="space-y-1.5">
+                    <p className="text-xs font-semibold text-gray-600">{r.name}</p>
+                    <textarea
+                      value={r.notice}
+                      onChange={e => setNoticeRooms(prev => prev.map((nr, ni) => ni === i ? { ...nr, notice: e.target.value } : nr))}
+                      placeholder={`${r.name} 이용 유의사항`}
+                      rows={6}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
+                    />
+                  </div>
+                ))}
+
+                {/* 알림톡 URL */}
+                <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3 text-xs text-indigo-700 flex items-start gap-2">
+                  <span className="shrink-0 mt-0.5">🔗</span>
+                  <div>
+                    <p className="font-semibold mb-1">알림톡 링크용 URL</p>
+                    <p className="font-mono break-all select-all">{typeof window !== "undefined" ? window.location.origin : "https://staypick.info"}/s/{p.slug}/notice</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 하단 버튼 */}
+              <div className="px-6 py-4 border-t border-gray-100 flex gap-3 shrink-0">
+                <button onClick={() => setNoticeEditId(null)} className="flex-1 border border-gray-200 text-gray-600 py-3 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">취소</button>
+                <button onClick={() => saveNotice(p)} disabled={noticeSaving} className="flex-1 bg-indigo-600 text-white py-3 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50">
+                  {noticeSaving ? "저장 중..." : "저장"}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
