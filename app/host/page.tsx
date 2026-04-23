@@ -151,16 +151,24 @@ export default function HostDashboard() {
   async function saveNotice(p: SavedProperty) {
     setNoticeSaving(true);
     try {
-      const updatedRooms: RoomDraft[] = p.rooms.map((r, i) => ({
-        ...r,
-        notice: noticeRooms[i]?.notice ?? "",
-      }));
-      await patchPropertyNotice(p.id, noticeShared, noticePerRoom, updatedRooms);
-      setProperties(prev => prev.map(prop =>
-        prop.id === p.id
-          ? { ...prop, notice: noticeShared, notice_per_room: noticePerRoom, rooms: updatedRooms }
-          : prop
-      ));
+      if (noticePerRoom) {
+        // 객실별: 공통 유의사항 비우고, 객실별 저장
+        const updatedRooms: RoomDraft[] = p.rooms.map((r, i) => ({
+          ...r,
+          notice: noticeRooms[i]?.notice ?? "",
+        }));
+        await patchPropertyNotice(p.id, "", true, updatedRooms);
+        setProperties(prev => prev.map(prop =>
+          prop.id === p.id ? { ...prop, notice: "", notice_per_room: true, rooms: updatedRooms } : prop
+        ));
+      } else {
+        // 공통: 객실별 유의사항 모두 비우고, 공통 저장
+        const updatedRooms: RoomDraft[] = p.rooms.map(r => ({ ...r, notice: "" }));
+        await patchPropertyNotice(p.id, noticeShared, false, updatedRooms);
+        setProperties(prev => prev.map(prop =>
+          prop.id === p.id ? { ...prop, notice: noticeShared, notice_per_room: false, rooms: updatedRooms } : prop
+        ));
+      }
       setNoticeEditId(null);
       showToast("유의사항이 저장되었습니다");
     } finally {
