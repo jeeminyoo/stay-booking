@@ -565,6 +565,18 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
                 <p className="text-lg font-bold text-indigo-600">{calc.total.toLocaleString()}원</p>
               </div>
             )}
+
+            {(() => {
+              const noticeText = property.notice_per_room
+                ? (selectedRoom.notice ?? "")
+                : (property.notice ?? "");
+              return noticeText.trim() ? (
+                <div className="bg-gray-100 rounded-2xl px-4 py-3.5">
+                  <p className="text-xs font-semibold text-gray-400 mb-1.5">예약 전 확인사항</p>
+                  <p className="text-sm text-gray-500 whitespace-pre-line leading-relaxed">{noticeText}</p>
+                </div>
+              ) : null;
+            })()}
           </div>
         )}
 

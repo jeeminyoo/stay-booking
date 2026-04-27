@@ -33,6 +33,16 @@ export async function fetchPropertyBySlug(slug: string): Promise<SavedProperty |
   return data as SavedProperty;
 }
 
+export async function fetchPropertyBySlugAny(slug: string): Promise<SavedProperty | null> {
+  const { data, error } = await supabase
+    .from("properties")
+    .select("*")
+    .eq("slug", slug)
+    .single();
+  if (error) return null;
+  return data as SavedProperty;
+}
+
 export async function fetchHostProperties(hostId: string): Promise<SavedProperty[]> {
   const { data, error } = await supabase
     .from("properties")
@@ -52,13 +62,19 @@ export async function upsertProperty(property: SavedProperty): Promise<void> {
 
 export async function patchPropertyNotice(
   id: string,
-  notice: string,
-  notice_per_room: boolean,
-  rooms: import("./types").RoomDraft[],
+  data: {
+    notice: string;
+    notice_confirm: string;
+    notice_checkin: string;
+    notice_per_room: boolean;
+    notice_confirm_per_room: boolean;
+    notice_checkin_per_room: boolean;
+    rooms: import("./types").RoomDraft[];
+  },
 ): Promise<void> {
   const { error } = await supabase
     .from("properties")
-    .update({ notice, notice_per_room, rooms })
+    .update(data)
     .eq("id", id);
   if (error) throw error;
 }
@@ -140,6 +156,16 @@ export async function fetchBlockedDates(propertyId: string, roomName: string): P
     }
   }
   return blocked;
+}
+
+export async function fetchBookingById(id: string): Promise<Booking | null> {
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("*")
+    .eq("id", id)
+    .single();
+  if (error) return null;
+  return data as Booking;
 }
 
 export async function insertBooking(booking: Booking): Promise<void> {

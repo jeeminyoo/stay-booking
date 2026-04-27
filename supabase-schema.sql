@@ -157,3 +157,9 @@ create policy "allow_all" on weekly_block_exceptions for all using (true) with c
 -- ─── 마이그레이션: 숙소 상세주소 + 이미지 배열 저장 ────────────────────────────
 alter table properties add column if not exists address_detail text not null default '';
 alter table properties add column if not exists images jsonb not null default '[]';
+
+-- ─── 마이그레이션: 유의사항 3단계 분리 ───────────────────────────────────────
+alter table properties add column if not exists notice_confirm text not null default '';
+alter table properties add column if not exists notice_checkin text not null default '';
+alter table properties add column if not exists notice_confirm_per_room boolean not null default false;
+alter table properties add column if not exists notice_checkin_per_room boolean not null default false;

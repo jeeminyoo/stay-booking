@@ -154,7 +154,9 @@ export interface RoomDraft {
   extra_adult_price: number;
   extra_child_price: number;
   special_prices: SpecialPriceDraft[];
-  notice?: string;
+  notice?: string;          // 예약 진행 시
+  notice_confirm?: string;  // 예약 확정 알림톡
+  notice_checkin?: string;  // 체크인 당일 알림톡
 }
 
 export interface PropertyDraft {
@@ -172,8 +174,12 @@ export interface PropertyDraft {
   bank_account: string;
   bank_holder: string;
   rooms: RoomDraft[];
-  notice?: string;
+  notice?: string;                  // 예약 진행 시
+  notice_confirm?: string;          // 예약 확정 알림톡
+  notice_checkin?: string;          // 체크인 당일 알림톡
   notice_per_room?: boolean;
+  notice_confirm_per_room?: boolean;
+  notice_checkin_per_room?: boolean;
   is_active?: boolean;
 }
 
