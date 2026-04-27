@@ -8,9 +8,17 @@ export async function fetchProperties(): Promise<SavedProperty[]> {
     .from("properties")
     .select("*")
     .eq("is_draft", false)
+    .eq("is_active", true)
     .order("created_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as SavedProperty[];
+}
+
+export async function isSlugTaken(slug: string, excludeId?: string): Promise<boolean> {
+  let query = supabase.from("properties").select("id").eq("slug", slug);
+  if (excludeId) query = query.neq("id", excludeId);
+  const { data } = await query.limit(1);
+  return (data?.length ?? 0) > 0;
 }
 
 export async function fetchPropertyBySlug(slug: string): Promise<SavedProperty | null> {
@@ -19,6 +27,7 @@ export async function fetchPropertyBySlug(slug: string): Promise<SavedProperty |
     .select("*")
     .eq("slug", slug)
     .eq("is_draft", false)
+    .eq("is_active", true)
     .single();
   if (error) return null;
   return data as SavedProperty;
@@ -54,6 +63,11 @@ export async function patchPropertyNotice(
   if (error) throw error;
 }
 
+export async function patchPropertyActive(id: string, is_active: boolean): Promise<void> {
+  const { error } = await supabase.from("properties").update({ is_active }).eq("id", id);
+  if (error) throw error;
+}
+
 export async function deletePropertyById(id: string): Promise<void> {
   const { error } = await supabase
     .from("properties")
@@ -73,6 +87,36 @@ export async function fetchHostBookings(propertyIds: string[]): Promise<Booking[
     .order("created_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as Booking[];
+}
+
+const PAGE_SIZE = 10;
+
+export async function fetchHostBookingsPaged(
+  propertyIds: string[],
+  status: string | null,
+  cutoffDate: string,
+  page: number,
+): Promise<{ bookings: Booking[]; hasMore: boolean }> {
+  if (propertyIds.length === 0) return { bookings: [], hasMore: false };
+  const from = page * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
+
+  let query = supabase
+    .from("bookings")
+    .select("*", { count: "exact" })
+    .in("property_id", propertyIds)
+    .gte("check_in", cutoffDate)
+    .order("check_in", { ascending: false })
+    .range(from, to);
+
+  if (status) query = query.eq("status", status);
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+  return {
+    bookings: (data ?? []) as Booking[],
+    hasMore: (count ?? 0) > to + 1,
+  };
 }
 
 export async function fetchBlockedDates(propertyId: string, roomName: string): Promise<string[]> {

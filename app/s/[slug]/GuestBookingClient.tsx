@@ -144,6 +144,10 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
   const [infoError, setInfoError] = useState("");
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [step]);
+
+  useEffect(() => {
     if (infoError || phoneError) {
       window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
     }
@@ -209,6 +213,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
       pricing: {
         id: "", room_id: "", updated_at: "",
         weekday_price: selectedRoom.weekday_price,
+        friday_price: selectedRoom.friday_price ?? selectedRoom.weekend_price,
         weekend_price: selectedRoom.weekend_price,
         sunday_price: selectedRoom.sunday_price,
         extra_adult_price: selectedRoom.extra_adult_price,
@@ -218,7 +223,10 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
         id: String(i), room_id: "",
         start_date: sp.start_date,
         end_date: sp.end_date,
-        extra_amount: sp.extra_amount,
+        weekday_price: sp.weekday_price ?? 0,
+        friday_price: sp.friday_price ?? 0,
+        saturday_price: sp.saturday_price ?? 0,
+        sunday_price: sp.sunday_price ?? 0,
       })),
       baseGuests: selectedRoom.base_guests,
     });
@@ -385,9 +393,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
   const descTooLong = descText.length > DESC_LIMIT;
   const infantSub = infantNotAllowed
     ? "유아 미허용"
-    : maxInfants === undefined
-      ? "24개월 미만 · 요금 미포함"
-      : `24개월 미만 · 최대 ${maxInfants}명 · 요금 미포함`;
+    : "24개월 미만 · 요금 미포함";
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -416,8 +422,13 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
         </div>
       </header>
 
-      {/* ── Property hero ── */}
-      <ImageGallery images={getImages(property)} onClickImage={setLightboxUrl} />
+      {/* ── Hero image: step별 분기 ── */}
+      {step === "room" && (
+        <ImageGallery images={getImages(property)} onClickImage={setLightboxUrl} />
+      )}
+      {step === "date" && selectedRoom && (
+        <ImageGallery images={getImages(selectedRoom)} height="h-56" />
+      )}
 
       <main className="flex-1 max-w-2xl mx-auto w-full px-4 pb-2">
 
@@ -463,7 +474,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
                       ${isSelected ? "border-indigo-500 ring-2 ring-indigo-200 shadow-sm" : "border-gray-200 hover:border-indigo-300"}`}>
                     <div className="relative">
                       {getImages(room).length > 0
-                        ? <ImageGallery images={getImages(room)} onClickImage={(url) => { setLightboxUrl(url); }} height="h-44" />
+                        ? <ImageGallery images={getImages(room)} height="h-44" />
                         : <div className="h-32 w-full bg-gray-100 flex items-center justify-center text-gray-300 text-4xl">🛏</div>
                       }
                       {isSelected && (
@@ -608,7 +619,9 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
               <div>
                 <textarea value={guestMessage} onChange={(e) => setGuestMessage(e.target.value)}
                   placeholder="운영자에게 남길 메시지 (선택사항) — 예: 늦은 체크인 예정입니다."
+                  maxLength={100}
                   rows={2} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none" />
+                <p className="text-xs text-gray-400 text-right mt-1">{guestMessage.length}/100</p>
               </div>
             </div>
 
@@ -682,7 +695,9 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
             <div>
               <textarea value={paymentNote} onChange={(e) => setPaymentNote(e.target.value)}
                 placeholder="입금 완료 후 메시지를 남겨주세요 (예: 방금 이체 완료했습니다!)"
+                maxLength={100}
                 rows={2} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none" />
+              <p className="text-xs text-gray-400 text-right mt-1">{paymentNote.length}/100</p>
             </div>
           </div>
         )}

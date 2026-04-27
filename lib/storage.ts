@@ -17,7 +17,10 @@ function toDataUrl(dataUrl: string, maxDim: number, quality: number): Promise<st
       const h = Math.round(img.height * scale);
       const canvas = document.createElement("canvas");
       canvas.width = w; canvas.height = h;
-      canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+      const ctx = canvas.getContext("2d")!;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(img, 0, 0, w, h);
       const webp = canvas.toDataURL("image/webp", quality);
       resolve(webp.startsWith("data:image/webp") ? webp : canvas.toDataURL("image/jpeg", quality));
     };
@@ -28,8 +31,8 @@ function toDataUrl(dataUrl: string, maxDim: number, quality: number): Promise<st
 // Returns { thumbDataUrl (600px), mainDataUrl (1600px) }
 export async function processImageVariants(dataUrl: string): Promise<{ thumbDataUrl: string; mainDataUrl: string }> {
   const [thumbDataUrl, mainDataUrl] = await Promise.all([
-    toDataUrl(dataUrl, 600, 0.80),
-    toDataUrl(dataUrl, 1600, 0.85),
+    toDataUrl(dataUrl, 800, 0.88),
+    toDataUrl(dataUrl, 1920, 0.90),
   ]);
   return { thumbDataUrl, mainDataUrl };
 }

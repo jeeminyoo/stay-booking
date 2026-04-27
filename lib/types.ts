@@ -95,9 +95,10 @@ export interface Room {
 export interface Pricing {
   id: string;
   room_id: string;
-  weekday_price: number;
-  weekend_price: number;
-  sunday_price: number;
+  weekday_price: number;   // 월-목
+  friday_price: number;    // 금
+  weekend_price: number;   // 토
+  sunday_price: number;    // 일
   extra_adult_price: number;
   extra_child_price: number;
   updated_at: string;
@@ -111,7 +112,10 @@ export interface SpecialPrice {
   room_id: string;
   start_date: string;
   end_date: string;
-  extra_amount: number;
+  weekday_price: number;
+  friday_price: number;
+  saturday_price: number;
+  sunday_price: number;
 }
 
 // ─── Image ───────────────────────────────────────────────────────────────────
@@ -127,7 +131,10 @@ export interface ImageEntry {
 export interface SpecialPriceDraft {
   start_date: string;
   end_date: string;
-  extra_amount: number;
+  weekday_price: number;   // 월-목
+  friday_price: number;    // 금
+  saturday_price: number;  // 토
+  sunday_price: number;    // 일
 }
 
 export interface RoomDraft {
@@ -140,9 +147,10 @@ export interface RoomDraft {
   bathrooms: number;
   image_url: string;
   images?: ImageEntry[];
-  weekday_price: number;
-  weekend_price: number;
-  sunday_price: number;
+  weekday_price: number;   // 월-목
+  friday_price: number;    // 금
+  weekend_price: number;   // 토
+  sunday_price: number;    // 일
   extra_adult_price: number;
   extra_child_price: number;
   special_prices: SpecialPriceDraft[];
@@ -154,6 +162,7 @@ export interface PropertyDraft {
   name: string;
   description: string;
   address: string;
+  address_detail?: string;
   lat: number;
   lng: number;
   image_url: string;
@@ -204,5 +213,6 @@ export type SavedProperty = PropertyDraft & {
   id: string;
   host_id: string;
   is_draft: boolean;
+  is_active: boolean;
   created_at: string;
 };

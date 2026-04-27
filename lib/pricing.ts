@@ -46,26 +46,21 @@ export function calculateTotalPrice(params: CalcParams): CalcResult {
     let basePrice: number;
     let isSpecial = false;
 
+    const dow = cur.getDay(); // 0=일 1=월 … 5=금 6=토
+    const holiday = isHoliday(dateStr);
+
     if (special) {
-      // extra_amount: 요일별 기본요금에 더해지는 시즌 추가금
-      const dow = cur.getDay();
-      const holiday = isHoliday(dateStr);
-      const dayBase = dow === 0 ? pricing.sunday_price
-        : (dow >= 5 || holiday) ? pricing.weekend_price
-        : pricing.weekday_price;
-      basePrice = dayBase + special.extra_amount;
+      // 시즌 기간: 요일별 시즌 요금으로 override
+      if (dow === 0) basePrice = special.sunday_price;
+      else if (dow === 5) basePrice = special.friday_price;
+      else if (dow === 6 || holiday) basePrice = special.saturday_price;
+      else basePrice = special.weekday_price;
       isSpecial = true;
     } else {
-      const dow = cur.getDay(); // 0=일, 1=월, ..., 6=토
-      const holiday = isHoliday(dateStr);
-      if (dow === 0) {
-        basePrice = pricing.sunday_price;
-      } else if (dow >= 5 || holiday) {
-        // 금(5), 토(6), 공휴일
-        basePrice = pricing.weekend_price;
-      } else {
-        basePrice = pricing.weekday_price;
-      }
+      if (dow === 0) basePrice = pricing.sunday_price;
+      else if (dow === 5) basePrice = pricing.friday_price;
+      else if (dow === 6 || holiday) basePrice = pricing.weekend_price;  // 토, 공휴일
+      else basePrice = pricing.weekday_price;
     }
 
     // 추가 인원 요금: 성인 → 어린이 순으로 기준 인원 소진

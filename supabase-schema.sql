@@ -91,6 +91,13 @@ create table if not exists host_settings (
 
 -- bookings에 입금확인요청 메시지 컬럼 추가
 alter table bookings add column if not exists payment_note text;
+
+-- properties에 유의사항 컬럼 추가
+alter table properties add column if not exists notice text not null default '';
+alter table properties add column if not exists notice_per_room boolean not null default false;
+
+-- properties에 노출 여부 컬럼 추가 (기존 게시중 숙소는 true로 설정)
+alter table properties add column if not exists is_active boolean not null default true;
 -- host_settings에 입금대기 시간 컬럼 추가 (기존 테이블 마이그레이션)
 alter table host_settings add column if not exists waiting_deposit_minutes integer not null default 30;
 
@@ -146,3 +153,7 @@ create index if not exists idx_weekly_block_exceptions_room on weekly_block_exce
 
 alter table weekly_block_exceptions enable row level security;
 create policy "allow_all" on weekly_block_exceptions for all using (true) with check (true);
+
+-- ─── 마이그레이션: 숙소 상세주소 + 이미지 배열 저장 ────────────────────────────
+alter table properties add column if not exists address_detail text not null default '';
+alter table properties add column if not exists images jsonb not null default '[]';

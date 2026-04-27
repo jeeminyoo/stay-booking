@@ -4,7 +4,10 @@ import { useEffect, useRef, useState } from "react";
 
 interface Props {
   value: string;
-  onSelect: (address: string, lat: number, lng: number) => void;
+  detail?: string;
+  lat?: number;
+  lng?: number;
+  onSelect: (address: string, lat: number, lng: number, detail: string) => void;
 }
 
 declare global {
@@ -17,12 +20,12 @@ declare global {
   }
 }
 
-export default function KakaoAddressInput({ value, onSelect }: Props) {
+export default function KakaoAddressInput({ value, detail: initialDetail = "", lat: initialLat = 0, lng: initialLng = 0, onSelect }: Props) {
   const restKey = process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID;
   const [scriptReady, setScriptReady] = useState(false);
   const [baseAddress, setBaseAddress] = useState(value || "");
-  const [detail, setDetail] = useState("");
-  const [coords, setCoords] = useState<{ lat: number; lng: number }>({ lat: 0, lng: 0 });
+  const [detail, setDetail] = useState(initialDetail);
+  const [coords, setCoords] = useState<{ lat: number; lng: number }>({ lat: initialLat, lng: initialLng });
   const [geocoding, setGeocoding] = useState(false);
   const detailRef = useRef<HTMLInputElement>(null);
 
@@ -65,7 +68,7 @@ export default function KakaoAddressInput({ value, onSelect }: Props) {
         const c = await geocode(addr);
         setGeocoding(false);
         setCoords(c);
-        onSelect(addr, c.lat, c.lng);
+        onSelect(addr, c.lat, c.lng, "");
         setTimeout(() => detailRef.current?.focus(), 100);
       },
     }).open();
@@ -74,7 +77,7 @@ export default function KakaoAddressInput({ value, onSelect }: Props) {
   function handleDetailChange(v: string) {
     setDetail(v);
     if (baseAddress) {
-      onSelect(v ? `${baseAddress} ${v}` : baseAddress, coords.lat, coords.lng);
+      onSelect(baseAddress, coords.lat, coords.lng, v);
     }
   }
 

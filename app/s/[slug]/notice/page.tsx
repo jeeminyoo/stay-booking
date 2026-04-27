@@ -11,8 +11,11 @@ export default function NoticePage() {
   const router = useRouter();
   const [property, setProperty] = useState<SavedProperty | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [roomName, setRoomName] = useState<string | null>(null);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setRoomName(params.get("room"));
     fetchPropertyBySlug(slug).then((p) => {
       if (!p) setNotFound(true);
       else setProperty(p);
@@ -32,9 +35,22 @@ export default function NoticePage() {
     </div>
   );
 
+  // 객실별 개별 모드일 때 해당 객실만 필터링
+  const targetRoom = property.notice_per_room && roomName
+    ? property.rooms.find(r => r.name === roomName) ?? null
+    : null;
+
   const hasNotice = property.notice_per_room
-    ? property.rooms.some(r => r.notice?.trim())
+    ? (targetRoom ? !!targetRoom.notice?.trim() : property.rooms.some(r => r.notice?.trim()))
     : !!property.notice?.trim();
+
+  // 잘못된 접근: 객실별 모드인데 room 파라미터가 없거나 매칭 안 됨
+  if (property.notice_per_room && !targetRoom) return (
+    <div className="min-h-screen flex flex-col items-center justify-center text-center px-6">
+      <p className="text-lg font-bold text-gray-800 mb-2">잘못된 접근입니다</p>
+      <button onClick={() => router.push(`/s/${slug}`)} className="mt-4 text-sm text-indigo-600">숙소 페이지로</button>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -50,21 +66,18 @@ export default function NoticePage() {
       <main className="max-w-2xl mx-auto px-4 py-8">
         <div className="mb-6">
           <h1 className="text-2xl font-black text-gray-900 mb-1">이용 유의사항</h1>
-          <p className="text-sm text-gray-400">{property.name}</p>
+          <p className="text-sm text-gray-400">
+            {property.name}{targetRoom ? ` · ${targetRoom.name}` : ""}
+          </p>
         </div>
 
         {!hasNotice ? (
           <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
             <p className="text-gray-400 text-sm">등록된 유의사항이 없습니다.</p>
           </div>
-        ) : property.notice_per_room ? (
-          <div className="space-y-4">
-            {property.rooms.filter(r => r.notice?.trim()).map((room, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5">
-                <h2 className="text-sm font-bold text-indigo-600 mb-3">{room.name}</h2>
-                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{room.notice}</p>
-              </div>
-            ))}
+        ) : targetRoom ? (
+          <div className="bg-white rounded-2xl border border-gray-100 p-5">
+            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{targetRoom.notice}</p>
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-gray-100 p-5">
@@ -72,13 +85,6 @@ export default function NoticePage() {
           </div>
         )}
 
-        <div className="mt-8 text-center">
-          <button
-            onClick={() => router.push(`/s/${slug}`)}
-            className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-semibold text-sm hover:bg-indigo-700 transition-colors">
-            예약 페이지로 돌아가기
-          </button>
-        </div>
       </main>
     </div>
   );

@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useRef, useCallback } from "react";
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SavedProperty, KakaoUser, Booking, HostSettings } from "@/lib/types";
 import { getUser, clearUser } from "@/lib/auth";
-import { fetchHostProperties, fetchHostBookings, deletePropertyById, patchBooking, fetchHostSettings, upsertHostSettings, patchPropertyNotice } from "@/lib/db";
-import { RoomDraft } from "@/lib/types";
+import { fetchHostProperties, deletePropertyById, patchBooking, fetchHostSettings, upsertHostSettings, patchPropertyActive, fetchHostBookingsPaged } from "@/lib/db";
 import { expireOverdueBookings } from "@/lib/data";
 import AvailabilityTab from "@/components/host/AvailabilityTab";
 
@@ -66,6 +65,12 @@ export default function HostDashboard() {
   const [user, setUser] = useState<KakaoUser | null>(null);
   const [properties, setProperties] = useState<SavedProperty[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookingFilter, setBookingFilter] = useState<string | null>(null);
+  const [bookingPage, setBookingPage] = useState(0);
+  const [hasMoreBookings, setHasMoreBookings] = useState(false);
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [propertyIds, setPropertyIds] = useState<string[]>([]);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const [hasDraft, setHasDraft] = useState(false);
   const [checked, setChecked] = useState(false);
   const [tab, setTab] = useState<"bookings" | "availability" | "properties" | "settings">("bookings");
@@ -74,11 +79,7 @@ export default function HostDashboard() {
   const [settingsSaved, setSettingsSaved] = useState(false);
   const [toast, setToast] = useState("");
   const [highlightBookingId, setHighlightBookingId] = useState<string | null>(null);
-  const [noticeEditId, setNoticeEditId] = useState<string | null>(null);
-  const [noticePerRoom, setNoticePerRoom] = useState(false);
-  const [noticeShared, setNoticeShared] = useState("");
-  const [noticeRooms, setNoticeRooms] = useState<{ name: string; notice: string }[]>([]);
-  const [noticeSaving, setNoticeSaving] = useState(false);
+  const [noticeSheetProperty, setNoticeSheetProperty] = useState<SavedProperty | null>(null);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -89,6 +90,7 @@ export default function HostDashboard() {
     const params = new URLSearchParams(window.location.search);
     const t = params.get("tab") as "bookings" | "availability" | "properties" | "settings" | null;
     const bookingId = params.get("booking");
+    const registeredId = params.get("registered") === "1" ? params.get("id") : null;
     if (t) setTab(t);
     if (bookingId) { setTab("bookings"); setHighlightBookingId(bookingId); }
 
@@ -100,12 +102,57 @@ export default function HostDashboard() {
     expireOverdueBookings().catch(console.error);
     fetchHostProperties(u.id).then((props) => {
       setProperties(props);
-      return fetchHostBookings(props.map(p => p.id));
-    }).then(setBookings).catch(console.error);
+      const ids = props.map(p => p.id);
+      setPropertyIds(ids);
+      if (registeredId) {
+        const target = props.find(p => p.id === registeredId);
+        if (target && !target.notice?.trim() && !target.rooms.some(r => r.notice?.trim())) {
+          setNoticeSheetProperty(target);
+        }
+      }
+      return ids;
+    }).then((ids) => loadBookings(ids, null, 0, true)).catch(console.error);
     fetchHostSettings(u.id).then((s) => {
       setSettings(s ?? { host_id: u.id, updated_at: "", ...DEFAULT_SETTINGS });
     });
   }, []);
+
+  const getCutoff = useCallback(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 6);
+    return d.toISOString().split("T")[0];
+  }, []);
+
+  const loadBookings = useCallback(async (ids: string[], filter: string | null, page: number, reset: boolean) => {
+    if (ids.length === 0) return;
+    setBookingLoading(true);
+    try {
+      const { bookings: next, hasMore } = await fetchHostBookingsPaged(ids, filter, getCutoff(), page);
+      setBookings(prev => reset ? next : [...prev, ...next]);
+      setHasMoreBookings(hasMore);
+      setBookingPage(page);
+    } finally {
+      setBookingLoading(false);
+    }
+  }, [getCutoff]);
+
+  // 필터 변경 시 리셋
+  const handleFilterChange = useCallback((filter: string | null) => {
+    setBookingFilter(filter);
+    loadBookings(propertyIds, filter, 0, true);
+  }, [propertyIds, loadBookings]);
+
+  // 무한 스크롤 sentinel 감지
+  useEffect(() => {
+    if (!sentinelRef.current) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasMoreBookings && !bookingLoading) {
+        loadBookings(propertyIds, bookingFilter, bookingPage + 1, false);
+      }
+    }, { threshold: 0.1 });
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [hasMoreBookings, bookingLoading, bookingPage, bookingFilter, propertyIds, loadBookings]);
 
   // 예약 카드로 자동 스크롤
   useEffect(() => {
@@ -134,46 +181,37 @@ export default function HostDashboard() {
     setBookings(prev => prev.map(b => b.id === id ? { ...b, status: "confirmed" } : b));
   }
 
+  async function toggleActive(p: SavedProperty) {
+    const currentActive = p.is_active !== false; // null/undefined → true로 취급
+    const nextActive = !currentActive;
+    if (nextActive) {
+      const hasNotice = p.notice?.trim() || p.rooms.some(r => r.notice?.trim());
+      if (!hasNotice) {
+        alert("이용 유의사항을 먼저 등록해주세요.\n게시중으로 전환하려면 유의사항이 필요합니다.");
+        router.push(`/host/notice/${p.id}`);
+        return;
+      }
+    }
+    try {
+      await patchPropertyActive(p.id, nextActive);
+      setProperties(prev => prev.map(prop => prop.id === p.id ? { ...prop, is_active: nextActive } : prop));
+      showToast(nextActive ? "게시중으로 전환되었습니다" : "비노출로 전환되었습니다");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message
+        : (e as { message?: string })?.message
+        ?? JSON.stringify(e);
+      if (msg.includes("is_active") || msg.includes("schema cache")) {
+        alert("Supabase 마이그레이션이 필요합니다.\nSQL Editor에서 아래를 실행해주세요:\n\nalter table properties add column if not exists is_active boolean not null default true;");
+      } else {
+        alert("오류: " + msg);
+      }
+    }
+  }
+
   async function cancelBooking(id: string) {
     if (!confirm("이 예약을 취소하시겠습니까?")) return;
     await patchBooking(id, { status: "cancelled" });
     setBookings(prev => prev.map(b => b.id === id ? { ...b, status: "cancelled" } : b));
-  }
-
-  function openNoticeEdit(p: SavedProperty) {
-    if (noticeEditId === p.id) { setNoticeEditId(null); return; }
-    setNoticeEditId(p.id);
-    setNoticePerRoom(p.notice_per_room ?? false);
-    setNoticeShared(p.notice ?? "");
-    setNoticeRooms(p.rooms.map(r => ({ name: r.name, notice: r.notice ?? "" })));
-  }
-
-  async function saveNotice(p: SavedProperty) {
-    setNoticeSaving(true);
-    try {
-      if (noticePerRoom) {
-        // 객실별: 공통 유의사항 비우고, 객실별 저장
-        const updatedRooms: RoomDraft[] = p.rooms.map((r, i) => ({
-          ...r,
-          notice: noticeRooms[i]?.notice ?? "",
-        }));
-        await patchPropertyNotice(p.id, "", true, updatedRooms);
-        setProperties(prev => prev.map(prop =>
-          prop.id === p.id ? { ...prop, notice: "", notice_per_room: true, rooms: updatedRooms } : prop
-        ));
-      } else {
-        // 공통: 객실별 유의사항 모두 비우고, 공통 저장
-        const updatedRooms: RoomDraft[] = p.rooms.map(r => ({ ...r, notice: "" }));
-        await patchPropertyNotice(p.id, noticeShared, false, updatedRooms);
-        setProperties(prev => prev.map(prop =>
-          prop.id === p.id ? { ...prop, notice: noticeShared, notice_per_room: false, rooms: updatedRooms } : prop
-        ));
-      }
-      setNoticeEditId(null);
-      showToast("유의사항이 저장되었습니다");
-    } finally {
-      setNoticeSaving(false);
-    }
   }
 
   async function saveSettings() {
@@ -197,6 +235,39 @@ export default function HostDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* 유의사항 미등록 바텀시트 */}
+      {noticeSheetProperty && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setNoticeSheetProperty(null)} />
+          <div className="relative bg-white w-full max-w-lg rounded-t-3xl px-6 pt-6 pb-10 shadow-xl">
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-6" />
+            <div className="flex items-start gap-4 mb-6">
+              <span className="text-3xl">📋</span>
+              <div>
+                <p className="font-bold text-gray-900 text-base mb-1">유의사항을 등록해주세요</p>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  게스트가 예약 완료 후 확인하는 중요한 안내입니다.<br />
+                  입실·퇴실 규칙, 주의사항 등을 등록해두면<br />
+                  불필요한 문의를 줄일 수 있어요.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setNoticeSheetProperty(null)}
+                className="flex-1 border border-gray-200 text-gray-500 py-3.5 rounded-2xl text-sm font-semibold hover:bg-gray-50 transition-colors">
+                나중에
+              </button>
+              <button
+                onClick={() => { setNoticeSheetProperty(null); router.push(`/host/notice/${noticeSheetProperty.id}`); }}
+                className="flex-1 bg-indigo-600 text-white py-3.5 rounded-2xl text-sm font-bold hover:bg-indigo-700 transition-colors">
+                지금 등록하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {toast && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-sm font-medium px-4 py-2.5 rounded-full shadow-lg whitespace-nowrap">
           {toast}
@@ -209,7 +280,10 @@ export default function HostDashboard() {
             <span className="text-gray-300">|</span>
             <span className="text-gray-600 text-sm">호스트</span>
           </div>
-          <button onClick={handleLogout} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">로그아웃</button>
+          <div className="flex items-center gap-3">
+            <Link href="/host/help" className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-200 text-gray-400 hover:text-gray-600 hover:border-gray-300 transition-colors text-sm font-semibold">?</Link>
+            <button onClick={handleLogout} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">로그아웃</button>
+          </div>
         </div>
       </header>
 
@@ -225,29 +299,21 @@ export default function HostDashboard() {
 
         {/* 탭 */}
         <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-6 w-fit">
-          <button onClick={() => setTab("bookings")}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2
-              ${tab === "bookings" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
-            예약 알림
-            {actionNeededCount > 0 && (
-              <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{actionNeededCount}</span>
-            )}
-          </button>
-          <button onClick={() => setTab("availability")}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors
-              ${tab === "availability" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
-            예약 현황
-          </button>
-          <button onClick={() => setTab("properties")}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors
-              ${tab === "properties" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
-            내 숙소
-          </button>
-          <button onClick={() => setTab("settings")}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors
-              ${tab === "settings" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
-            설정
-          </button>
+          {[
+            { key: "bookings",     label: "예약\n알림" },
+            { key: "availability", label: "예약\n현황" },
+            { key: "properties",   label: "내\n숙소" },
+            { key: "settings",     label: "설정" },
+          ].map(({ key, label }) => (
+            <button key={key} onClick={() => setTab(key as typeof tab)}
+              className={`relative px-3 py-2 rounded-lg text-sm font-semibold transition-colors text-center whitespace-pre-line leading-tight
+                ${tab === key ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
+              {label}
+              {key === "bookings" && actionNeededCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center leading-none">{actionNeededCount}</span>
+              )}
+            </button>
+          ))}
         </div>
 
         {/* ─── 예약 현황 탭 ─── */}
@@ -258,11 +324,29 @@ export default function HostDashboard() {
         {/* ─── 예약 알림 탭 ─── */}
         {tab === "bookings" && (
           <div>
-            {bookings.length === 0 ? (
+            {/* 상태 필터 */}
+            <div className="mb-4 relative inline-block">
+              <select
+                value={bookingFilter ?? ""}
+                onChange={e => handleFilterChange(e.target.value || null)}
+                className="appearance-none border border-gray-200 rounded-xl pl-3 pr-10 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
+                <option value="">전체</option>
+                <option value="waiting_for_deposit">입금 대기</option>
+                <option value="deposit_requested">입금확인요청</option>
+                <option value="confirmed">확정</option>
+                <option value="auto_cancelled">자동취소</option>
+                <option value="cancelled">취소</option>
+              </select>
+              <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
+
+            {bookings.length === 0 && !bookingLoading ? (
               <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
                 <p className="text-4xl mb-3">📋</p>
-                <p className="text-base font-semibold text-gray-700 mb-1">아직 예약 내역이 없습니다</p>
-                <p className="text-sm text-gray-400">게스트가 예약하면 여기에 표시됩니다.</p>
+                <p className="text-base font-semibold text-gray-700 mb-1">예약 내역이 없습니다</p>
+                <p className="text-sm text-gray-400">최근 6개월 기준으로 표시됩니다.</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -290,32 +374,24 @@ export default function HostDashboard() {
                           <div><span className="text-gray-400">인원</span> 성인 {b.adults}{b.children > 0 ? ` · 어린이 ${b.children}` : ""}{b.infants > 0 ? ` · 유아 ${b.infants}` : ""}</div>
                           <div className="font-semibold text-gray-800"><span className="text-gray-400 font-normal">금액</span> {b.total_price.toLocaleString()}원</div>
                         </div>
-
-                        {/* 예약 전 메시지 */}
                         {b.guest_message && (
                           <div className="bg-gray-50 rounded-lg px-3 py-2 text-xs text-gray-600 border-l-2 border-indigo-200 mb-2">
                             <span className="text-gray-400 mr-1 font-medium">예약 메시지</span>{b.guest_message}
                           </div>
                         )}
-
-                        {/* 입금확인요청 메시지 */}
                         {b.payment_note && (
                           <div className="bg-blue-50 rounded-lg px-3 py-2 text-xs text-blue-700 border-l-2 border-blue-300 mb-2">
                             <span className="text-blue-400 mr-1 font-medium">입금 메시지</span>{b.payment_note}
                           </div>
                         )}
                       </div>
-
-                      {/* 호스트 액션 */}
                       {canAct && (
                         <div className="border-t border-gray-100 px-4 py-3 bg-gray-50 flex gap-2">
-                          <button
-                            onClick={() => confirmBooking(b.id)}
+                          <button onClick={() => confirmBooking(b.id)}
                             className="flex-1 bg-indigo-600 text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-indigo-700 transition-colors">
                             예약 확정
                           </button>
-                          <button
-                            onClick={() => cancelBooking(b.id)}
+                          <button onClick={() => cancelBooking(b.id)}
                             className="flex-1 border border-gray-200 text-gray-600 text-sm font-semibold py-2.5 rounded-xl hover:bg-gray-100 transition-colors">
                             예약 취소
                           </button>
@@ -324,6 +400,17 @@ export default function HostDashboard() {
                     </div>
                   );
                 })}
+
+                {/* 무한 스크롤 sentinel */}
+                <div ref={sentinelRef} className="h-4" />
+                {bookingLoading && (
+                  <div className="flex justify-center py-4">
+                    <div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
+                {!hasMoreBookings && bookings.length > 0 && (
+                  <p className="text-center text-xs text-gray-300 py-2">최근 6개월 예약 전체 표시됨</p>
+                )}
               </div>
             )}
           </div>
@@ -359,18 +446,37 @@ export default function HostDashboard() {
                       {p.image_url
                         ? <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" /> // eslint-disable-line @next/next/no-img-element
                         : <div className="w-full h-full flex items-center justify-center"><span className="text-5xl">🏡</span></div>}
-                      <span className={`absolute top-3 right-3 text-xs font-semibold px-2 py-1 rounded-full ${p.is_draft ? "bg-orange-100 text-orange-600" : "bg-green-100 text-green-600"}`}>
-                        {p.is_draft ? "임시저장" : "게시 중"}
-                      </span>
+                      {p.is_draft && (
+                        <span className="absolute top-3 right-3 text-xs font-semibold px-2 py-1 rounded-full bg-orange-100 text-orange-600">
+                          임시저장
+                        </span>
+                      )}
                     </div>
                     <div className="p-4">
                       <h2 className="font-bold text-gray-900 mb-0.5">{p.name}</h2>
                       <p className="text-sm text-gray-500 mb-3">{p.address}</p>
-                      <div className="flex items-center gap-2 text-xs text-gray-400 mb-4">
+                      <div className="flex items-center gap-2 text-xs text-gray-400 mb-3">
                         <span>객실 {p.rooms.length}개</span>
                         <span>·</span>
                         <span className="font-mono">/s/{p.slug}</span>
                       </div>
+                      {!p.is_draft && (
+                        <button
+                          type="button"
+                          onClick={() => toggleActive(p)}
+                          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border border-gray-100 bg-gray-50 hover:bg-gray-100 transition-colors mb-3">
+                          <span className="text-xs font-medium text-gray-600">게시 상태</span>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-xs font-semibold ${p.is_active !== false ? "text-green-600" : "text-gray-400"}`}>
+                              {p.is_active !== false ? "게시중" : "비노출"}
+                            </span>
+                            <div className={`w-10 rounded-full flex items-center px-0.5 transition-colors ${p.is_active !== false ? "bg-green-500" : "bg-gray-300"}`}
+                              style={{ height: "22px" }}>
+                              <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${p.is_active !== false ? "translate-x-[18px]" : "translate-x-0"}`} />
+                            </div>
+                          </div>
+                        </button>
+                      )}
                       <div className="flex gap-2">
                         <button
                           onClick={() => {
@@ -379,14 +485,16 @@ export default function HostDashboard() {
                               name: p.name,
                               description: p.description,
                               address: p.address,
+                              address_detail: p.address_detail ?? "",
                               lat: p.lat,
                               lng: p.lng,
                               image_url: p.image_url,
+                              images: p.images?.length ? p.images : (p.image_url ? [{ id: "cover-0", thumb_url: p.image_url, main_url: p.image_url }] : []),
                               slug: p.slug,
                               bank_name: p.bank_name,
                               bank_account: p.bank_account,
                               bank_holder: p.bank_holder,
-                              rooms: (p.rooms || []).map(r => ({
+                              rooms: (p.rooms || []).map((r, i) => ({
                                 name: r.name,
                                 max_guests: r.max_guests,
                                 base_guests: r.base_guests,
@@ -395,7 +503,9 @@ export default function HostDashboard() {
                                 beds: r.beds,
                                 bathrooms: r.bathrooms,
                                 image_url: r.image_url,
+                                images: r.images?.length ? r.images : (r.image_url ? [{ id: `room-${i}-0`, thumb_url: r.image_url, main_url: r.image_url }] : []),
                                 weekday_price: r.weekday_price || 0,
+                                friday_price: r.friday_price || 0,
                                 weekend_price: r.weekend_price || 0,
                                 sunday_price: r.sunday_price || 0,
                                 extra_adult_price: r.extra_adult_price || 0,
@@ -415,9 +525,26 @@ export default function HostDashboard() {
                         </button>
                         <button onClick={() => deleteProperty(p.id)} className="text-sm text-red-400 border border-red-100 px-3 py-2 rounded-lg hover:bg-red-50 transition-colors">삭제</button>
                       </div>
+                      {/* 유의사항 미등록 경고 */}
+                      {!(p.notice?.trim() || p.rooms.some(r => r.notice?.trim())) && (
+                        <div className="mt-2 flex items-center justify-between bg-orange-50 border border-orange-200 rounded-xl px-3 py-2.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-base">⚠️</span>
+                            <div>
+                              <p className="text-xs font-semibold text-orange-800">유의사항 미등록</p>
+                              <p className="text-xs text-orange-600">게스트 예약 후 안내 불가</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => router.push(`/host/notice/${p.id}`)}
+                            className="text-xs font-bold text-orange-700 bg-orange-100 border border-orange-200 px-3 py-1.5 rounded-lg hover:bg-orange-200 transition-colors shrink-0">
+                            등록하기 →
+                          </button>
+                        </div>
+                      )}
                       {/* 유의사항 버튼 */}
                       <button
-                        onClick={() => openNoticeEdit(p)}
+                        onClick={() => router.push(`/host/notice/${p.id}`)}
                         className="w-full mt-2 text-sm border border-gray-200 text-gray-600 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-1.5">
                         <span>📋</span>
                         <span>이용 유의사항 {(p.notice?.trim() || p.rooms.some(r => r.notice?.trim())) ? "수정" : "등록"}</span>
@@ -489,102 +616,16 @@ export default function HostDashboard() {
         )}
       </main>
 
-      {/* ── 유의사항 편집 모달 ── */}
-      {noticeEditId && (() => {
-        const p = properties.find(prop => prop.id === noticeEditId);
-        if (!p) return null;
-        return (
-          <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
-            {/* backdrop */}
-            <div className="absolute inset-0 bg-black/50" onClick={() => setNoticeEditId(null)} />
-
-            {/* panel */}
-            <div className="relative bg-white w-full max-w-2xl md:rounded-2xl rounded-t-2xl shadow-xl flex flex-col max-h-[90vh]">
-              {/* 헤더 */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
-                <div>
-                  <h2 className="font-bold text-gray-900">이용 유의사항</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">{p.name}</p>
-                </div>
-                <button onClick={() => setNoticeEditId(null)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition-colors">✕</button>
-              </div>
-
-              {/* 스크롤 영역 */}
-              <div className="overflow-y-auto flex-1 px-6 py-5 space-y-4">
-                {/* 안내 문구 */}
-                <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 text-xs text-amber-700 flex items-start gap-2">
-                  <span className="shrink-0">💬</span>
-                  <p>예약 확정 알림톡 발송 시 게스트에게 함께 전달되는 이용 안내입니다. 체크인 방법, 주차, 시설 이용 규칙 등을 입력해주세요.</p>
-                </div>
-
-                {/* 라디오 모드 선택 */}
-                <div className="space-y-2">
-                  <label className={`flex items-start gap-3 p-4 bg-white border-2 rounded-xl cursor-pointer transition-colors ${!noticePerRoom ? "border-indigo-500 bg-indigo-50/30" : "border-gray-200 hover:border-gray-300"}`}>
-                    <input type="radio" name={`notice-mode-${p.id}`} checked={!noticePerRoom}
-                      onChange={() => { setNoticePerRoom(false); setNoticeRooms(prev => prev.map(r => ({ ...r, notice: "" }))); }}
-                      className="mt-0.5 accent-indigo-600 shrink-0" />
-                    <div>
-                      <p className="text-sm font-semibold text-gray-800">전체 공통</p>
-                      <p className="text-xs text-gray-400 mt-0.5">모든 객실에 동일한 유의사항을 적용합니다.</p>
-                    </div>
-                  </label>
-                  <label className={`flex items-start gap-3 p-4 bg-white border-2 rounded-xl cursor-pointer transition-colors ${noticePerRoom ? "border-indigo-500 bg-indigo-50/30" : "border-gray-200 hover:border-gray-300"}`}>
-                    <input type="radio" name={`notice-mode-${p.id}`} checked={noticePerRoom}
-                      onChange={() => { setNoticePerRoom(true); setNoticeShared(""); }}
-                      className="mt-0.5 accent-indigo-600 shrink-0" />
-                    <div>
-                      <p className="text-sm font-semibold text-gray-800">객실별 개별</p>
-                      <p className="text-xs text-gray-400 mt-0.5">객실마다 다른 유의사항을 입력합니다.</p>
-                    </div>
-                  </label>
-                </div>
-
-                {/* 공통 유의사항 입력 */}
-                {!noticePerRoom && (
-                  <textarea
-                    value={noticeShared}
-                    onChange={e => setNoticeShared(e.target.value)}
-                    placeholder="체크인 방법, 주차 안내, 시설 이용 규칙 등 게스트에게 전달할 내용을 입력해주세요."
-                    rows={10}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
-                  />
-                )}
-
-                {/* 객실별 유의사항 입력 */}
-                {noticePerRoom && noticeRooms.map((r, i) => (
-                  <div key={i} className="space-y-1.5">
-                    <p className="text-xs font-semibold text-gray-600">{r.name}</p>
-                    <textarea
-                      value={r.notice}
-                      onChange={e => setNoticeRooms(prev => prev.map((nr, ni) => ni === i ? { ...nr, notice: e.target.value } : nr))}
-                      placeholder={`${r.name} 이용 유의사항`}
-                      rows={6}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
-                    />
-                  </div>
-                ))}
-
-                {/* 알림톡 URL */}
-                <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3 text-xs text-indigo-700 flex items-start gap-2">
-                  <span className="shrink-0 mt-0.5">🔗</span>
-                  <div>
-                    <p className="font-semibold mb-1">알림톡 링크용 URL</p>
-                    <p className="font-mono break-all select-all">{typeof window !== "undefined" ? window.location.origin : "https://staypick.info"}/s/{p.slug}/notice</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 하단 버튼 */}
-              <div className="px-6 py-4 border-t border-gray-100 flex gap-3 shrink-0">
-                <button onClick={() => setNoticeEditId(null)} className="flex-1 border border-gray-200 text-gray-600 py-3 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">취소</button>
-                <button onClick={() => saveNotice(p)} disabled={noticeSaving} className="flex-1 bg-indigo-600 text-white py-3 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50">
-                  {noticeSaving ? "저장 중..." : "저장"}
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
+      {/* 카카오 채널 채팅 플로팅 버튼 */}
+      <a
+        href="http://pf.kakao.com/_xbxbMjX/chat"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-4 z-50 flex items-center justify-center w-12 h-12 bg-[#FEE500] text-[#3A1D1D] rounded-full shadow-lg hover:brightness-95 transition-all active:scale-95">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 3C6.477 3 2 6.925 2 11.75c0 3.017 1.77 5.666 4.455 7.258L5.5 22l3.326-1.746C9.839 20.734 10.905 21 12 21c5.523 0 10-3.925 10-8.75S17.523 3 12 3z"/>
+        </svg>
+      </a>
     </div>
   );
 }

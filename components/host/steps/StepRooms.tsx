@@ -16,11 +16,12 @@ const DEFAULT_ROOM = (): RoomDraft => ({
   base_guests: 1,
   max_infants: 0,
   bedrooms: 0,
-  beds: 1,
-  bathrooms: 1,
+  beds: 0,
+  bathrooms: 0,
   image_url: "",
   images: [],
   weekday_price: 0,
+  friday_price: 0,
   weekend_price: 0,
   sunday_price: 0,
   extra_adult_price: 0,
@@ -105,13 +106,13 @@ export default function StepRooms({ draft, onChange, errors }: Props) {
               onChange={(images) => updateRoom(idx, { images, image_url: images[0]?.thumb_url ?? "" })}
             />
 
-            {/* 인원 */}
-            <div>
-              <p className="text-xs font-medium text-gray-500 mb-2">인원 설정</p>
-              <div className="grid grid-cols-2 gap-3 p-3 bg-gray-50 rounded-xl">
+            {/* 인원 설정 */}
+            <div className="border border-gray-100 rounded-xl overflow-hidden">
+              <p className="text-xs font-semibold text-gray-400 px-4 pt-3 pb-1">인원 설정</p>
+              <div className="divide-y divide-gray-100 px-4">
                 <NumberInput
                   label="최대 인원"
-                  unit="성인+어린이"
+                  description="수용 가능한 성인+어린이 합계"
                   value={room.max_guests}
                   min={1}
                   max={99}
@@ -119,15 +120,15 @@ export default function StepRooms({ draft, onChange, errors }: Props) {
                 />
                 <NumberInput
                   label="기준 인원"
-                  unit="요금 포함"
+                  description="요금에 포함되는 인원"
                   value={room.base_guests}
                   min={1}
-                  max={99}
+                  max={room.max_guests}
                   onChange={(v) => updateRoom(idx, { base_guests: v })}
                 />
                 <NumberInput
                   label="유아 최대"
-                  unit="요금 미포함"
+                  description="24개월 미만 · 요금 미포함"
                   value={room.max_infants ?? 0}
                   min={0}
                   max={99}
@@ -137,12 +138,12 @@ export default function StepRooms({ draft, onChange, errors }: Props) {
             </div>
 
             {/* 시설 */}
-            <div>
-              <p className="text-xs font-medium text-gray-500 mb-2">시설</p>
-              <div className="grid grid-cols-3 gap-2 p-3 bg-gray-50 rounded-xl">
+            <div className="border border-gray-100 rounded-xl overflow-hidden">
+              <p className="text-xs font-semibold text-gray-400 px-4 pt-3 pb-1">시설</p>
+              <div className="divide-y divide-gray-100 px-4">
                 <NumberInput label="침실" value={room.bedrooms} min={0} max={10} onChange={(v) => updateRoom(idx, { bedrooms: v })} />
-                <NumberInput label="침대" value={room.beds} min={1} max={20} onChange={(v) => updateRoom(idx, { beds: v })} />
-                <NumberInput label="욕실" value={room.bathrooms} min={1} max={10} onChange={(v) => updateRoom(idx, { bathrooms: v })} />
+                <NumberInput label="침대" value={room.beds} min={0} max={20} onChange={(v) => updateRoom(idx, { beds: v })} />
+                <NumberInput label="욕실" value={room.bathrooms} min={0} max={10} onChange={(v) => updateRoom(idx, { bathrooms: v })} />
               </div>
             </div>
 

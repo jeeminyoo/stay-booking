@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { PropertyDraft, KakaoUser } from "@/lib/types";
 import { generateSlug, normalizeSlug } from "@/lib/pricing";
-import { upsertProperty } from "@/lib/db";
+import { upsertProperty, isSlugTaken } from "@/lib/db";
 import { uploadImageEntry, isDataUrl } from "@/lib/storage";
 import KakaoAddressInput from "@/components/host/KakaoAddressInput";
 import BankSelector from "@/components/host/BankSelector";
@@ -38,6 +38,7 @@ const DEFAULT_DRAFT: PropertyDraft = {
     image_url: "",
     images: [],
     weekday_price: 0,
+    friday_price: 0,
     weekend_price: 0,
     sunday_price: 0,
     extra_adult_price: 0,
@@ -50,7 +51,16 @@ function loadDraft(): PropertyDraft {
   if (typeof window === "undefined") return DEFAULT_DRAFT;
   try {
     const raw = localStorage.getItem(DRAFT_KEY);
-    return raw ? JSON.parse(raw) : DEFAULT_DRAFT;
+    if (!raw) return DEFAULT_DRAFT;
+    const parsed: PropertyDraft = JSON.parse(raw);
+    // data URL이 strip된 빈 이미지 항목 제거
+    const validImgs = (imgs: typeof parsed.images) =>
+      (imgs ?? []).filter(img => img.thumb_url || img.main_url);
+    return {
+      ...parsed,
+      images: validImgs(parsed.images),
+      rooms: (parsed.rooms ?? []).map(r => ({ ...r, images: validImgs(r.images) })),
+    };
   } catch { return DEFAULT_DRAFT; }
 }
 
@@ -66,14 +76,29 @@ const STEPS: StepConfig[] = [
   { title: "숙소 이름을\n알려주세요", subtitle: "게스트가 처음 보게 될 이름입니다.", validate: (d) => d.name.trim() ? null : "숙소 이름을 입력해주세요." },
   { title: "숙소를\n소개해주세요", subtitle: "어떤 숙소인지 자유롭게 작성해주세요.", validate: () => null },
   { title: "위치를\n알려주세요", subtitle: "게스트가 찾아갈 수 있도록 정확한 주소를 입력해주세요.", validate: (d) => d.address.trim() ? null : "주소를 입력해주세요." },
-  { title: "대표 사진을\n등록해주세요", subtitle: "숙소의 매력을 잘 보여주는 사진을 등록해주세요.", validate: (d) => (d.images?.length ?? 0) > 0 ? null : "대표 사진을 1장 이상 등록해주세요." },
+  { title: "대표 사진을\n등록해주세요", subtitle: "숙소의 매력을 잘 보여주는 사진을 등록해주세요.", validate: (d) => (d.images ?? []).some(img => img.thumb_url || img.main_url) ? null : "대표 사진을 1장 이상 등록해주세요." },
   { title: "입금 계좌를\n입력해주세요", subtitle: "게스트가 직접 이체할 계좌 정보입니다.", validate: (d) => (d.bank_name && d.bank_account && d.bank_holder) ? null : "계좌 정보를 모두 입력해주세요." },
   { title: "객실을\n설정해주세요", subtitle: "최대 5개의 객실을 등록할 수 있습니다.", validate: (d) => {
     if (!d.rooms.every(r => r.name.trim())) return "모든 객실 이름을 입력해주세요.";
-    if (!d.rooms.every(r => (r.images?.length ?? 0) > 0 || r.image_url)) return "모든 객실 사진을 등록해주세요.";
+    if (!d.rooms.every(r => (r.images ?? []).some(img => img.thumb_url || img.main_url) || r.image_url)) return "모든 객실 사진을 등록해주세요.";
     return null;
   }},
-  { title: "요금을\n설정해주세요", subtitle: "요일별로 다른 요금을 설정할 수 있습니다.", validate: (d) => d.rooms.every(r => r.weekday_price > 0 || r.weekend_price > 0) ? null : "최소 1개 이상의 요금을 입력해주세요." },
+  { title: "요금을\n설정해주세요", subtitle: "요일별로 다른 요금을 설정할 수 있습니다.", validate: (d) => {
+    // 1순위: 시즌 기간 누락
+    for (const r of d.rooms) {
+      for (const sp of r.special_prices) {
+        if (!sp.start_date || !sp.end_date) return "시즌 요금 적용 기간을 설정해주세요.";
+      }
+    }
+    // 2순위: 금액 누락
+    const emptyRooms = d.rooms.filter((r) =>
+      !r.weekday_price || !r.friday_price || !r.weekend_price || !r.sunday_price ||
+      r.special_prices.some(sp => !sp.weekday_price || !sp.friday_price || !sp.saturday_price || !sp.sunday_price)
+    );
+    if (emptyRooms.length === 0) return null;
+    const names = emptyRooms.map((r) => r.name.trim() || `객실 ${d.rooms.indexOf(r) + 1}`).join(", ");
+    return `${names} 금액이 입력되지 않은 항목이 있습니다.`;
+  }},
   { title: "나만의 링크를\n만들어주세요", subtitle: "게스트에게 공유할 단축 링크입니다.", validate: (d) => (d.slug.length >= 3) ? null : "링크 주소를 입력해주세요 (3자 이상)." },
 ];
 
@@ -94,7 +119,21 @@ export default function PropertyStepper({ user }: { user: KakaoUser }) {
   const [toast, setToast] = useState("");
   const [bankModalOpen, setBankModalOpen] = useState(false);
   const [slugRaw, setSlugRaw] = useState(draft.slug);
+  const [slugTaken, setSlugTaken] = useState(false);
+  const [slugChecking, setSlugChecking] = useState(false);
   const slugComposing = useRef(false);
+
+  useEffect(() => {
+    const slug = draft.slug;
+    if (slug.length < 3) { setSlugTaken(false); return; }
+    setSlugChecking(true);
+    const timer = setTimeout(async () => {
+      const taken = await isSlugTaken(slug, draft.id);
+      setSlugTaken(taken);
+      setSlugChecking(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [draft.slug, draft.id]);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -126,7 +165,11 @@ export default function PropertyStepper({ user }: { user: KakaoUser }) {
 
   function goNext() {
     const err = STEPS[step].validate(draft);
-    if (err) { setError(err); return; }
+    if (err) { alert(err); return; }
+    if (step === TOTAL - 1 || STEPS[step].title.includes("링크")) {
+      if (slugChecking) { setError("링크 사용 가능 여부를 확인 중입니다."); return; }
+      if (slugTaken) { setError("이미 사용 중인 링크입니다. 다른 링크를 입력해주세요."); return; }
+    }
     setError(null);
     // 링크 스텝 진입 시 슬러그 자동생성
     if (step === STEPS.length - 2 && !slugSuggested) {
@@ -170,27 +213,32 @@ export default function PropertyStepper({ user }: { user: KakaoUser }) {
               uploadImageEntry(img, `stays/${propertyId}/rooms/${roomId}`)
             )
           );
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { images: _ri, ...roomForDb } = room;
           return {
-            ...room,
-            images: uploadedRoomImages,
+            ...roomForDb,
             image_url: uploadedRoomImages[0]?.thumb_url ?? room.image_url,
+            images: uploadedRoomImages,
           };
         })
       );
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { images: _imgs, ...draftForDb } = draft;
       const saved = {
-        ...draft,
-        images: uploadedCoverImages,
+        ...draftForDb,
         image_url: uploadedCoverImages[0]?.thumb_url ?? "",
+        images: uploadedCoverImages,
         rooms,
         id: propertyId,
         host_id: user.id,
         is_draft: false,
+        is_active: true,
         created_at: new Date().toISOString(),
       };
       await upsertProperty(saved);
       localStorage.removeItem(DRAFT_KEY);
-      router.push("/host?registered=1");
+      router.push(`/host?registered=1&id=${propertyId}`);
     } catch (e) {
       setLoading(false);
       const msg = e instanceof Error ? e.message
@@ -230,7 +278,10 @@ export default function PropertyStepper({ user }: { user: KakaoUser }) {
           <div className="space-y-3 w-full">
             <KakaoAddressInput
               value={draft.address}
-              onSelect={(address: string, lat: number, lng: number) => updateDraft({ address, lat, lng })}
+              detail={draft.address_detail ?? ""}
+              lat={draft.lat}
+              lng={draft.lng}
+              onSelect={(address, lat, lng, detail) => updateDraft({ address, lat, lng, address_detail: detail })}
             />
           </div>
         );
@@ -286,6 +337,7 @@ export default function PropertyStepper({ user }: { user: KakaoUser }) {
       // 8. 링크
       case 7: {
         const isValid = /^[a-z0-9][a-z0-9-]{1,}[a-z0-9]$/.test(draft.slug);
+        const slugStatus = slugChecking ? "checking" : slugTaken ? "taken" : isValid ? "ok" : "invalid";
         return (
           <div className="space-y-5 w-full">
             <div>
@@ -295,9 +347,7 @@ export default function PropertyStepper({ user }: { user: KakaoUser }) {
                 onChange={(e) => {
                   const raw = e.target.value;
                   setSlugRaw(raw);
-                  if (!slugComposing.current) {
-                    updateDraft({ slug: normalizeSlug(raw) });
-                  }
+                  if (!slugComposing.current) updateDraft({ slug: normalizeSlug(raw) });
                 }}
                 onCompositionStart={() => { slugComposing.current = true; }}
                 onCompositionEnd={(e) => {
@@ -315,18 +365,29 @@ export default function PropertyStepper({ user }: { user: KakaoUser }) {
             </div>
 
             {draft.slug.length > 0 && (
-              <div className={`p-4 rounded-xl border ${isValid ? "bg-green-50 border-green-100" : "bg-red-50 border-red-100"}`}>
-                <p className="text-xs text-gray-500 mb-1">게스트 공유 링크</p>
+              <div className={`p-4 rounded-xl border ${
+                slugStatus === "ok" ? "bg-green-50 border-green-100" :
+                slugStatus === "checking" ? "bg-gray-50 border-gray-200" :
+                "bg-red-50 border-red-100"
+              }`}>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-xs text-gray-500">게스트 공유 링크</p>
+                  {slugStatus === "checking" && <p className="text-xs text-gray-400">확인 중...</p>}
+                  {slugStatus === "taken" && <p className="text-xs text-red-500 font-medium">이미 사용 중인 링크</p>}
+                  {slugStatus === "ok" && <p className="text-xs text-green-600 font-medium">사용 가능</p>}
+                </div>
                 <div className="flex items-center gap-2">
-                  <p className={`text-sm font-mono font-bold flex-1 break-all ${isValid ? "text-gray-900" : "text-red-400"}`}>
+                  <p className={`text-sm font-mono font-bold flex-1 break-all ${
+                    slugStatus === "ok" ? "text-gray-900" :
+                    slugStatus === "checking" ? "text-gray-400" :
+                    "text-red-400"
+                  }`}>
                     {DOMAIN}/s/{draft.slug}
                   </p>
-                  {isValid && (
-                    <button
-                      type="button"
+                  {slugStatus === "ok" && (
+                    <button type="button"
                       onClick={() => { navigator.clipboard.writeText(`${DOMAIN}/s/${draft.slug}`); showToast("링크가 복사되었습니다"); }}
-                      className="shrink-0 text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
+                      className="shrink-0 text-xs bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors">
                       복사
                     </button>
                   )}

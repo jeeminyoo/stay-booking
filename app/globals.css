@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+html {
+  font-size: 112.5%; /* 16px → 18px: 40-60대 가독성 */
+}
+
 body {
   background: #f8f9fa;
   color: #1a1a1a;

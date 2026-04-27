@@ -15,12 +15,19 @@ export default function MultiImageUpload({ images, maxCount, onChange, required 
   const inputRef = useRef<HTMLInputElement>(null);
   const [processing, setProcessing] = useState(false);
   const [fileHashes] = useState(() => new Set<string>());
+  const fileHashByIdRef = useRef<Map<string, string>>(new Map());
 
   async function handleFiles(files: FileList) {
     const remaining = maxCount - images.length;
     if (remaining <= 0) return;
 
-    const allFiles = Array.from(files).slice(0, remaining);
+    const selected = Array.from(files);
+    if (selected.length > remaining) {
+      alert(`사진은 최대 ${maxCount}장까지 등록할 수 있습니다.\n${remaining}장만 추가할 수 있어요.`);
+      return;
+    }
+
+    const allFiles = selected;
     const dupes = allFiles.filter(f => fileHashes.has(`${f.name}-${f.size}-${f.lastModified}`));
     if (dupes.length > 0) {
       alert("이미 등록된 사진입니다.");
@@ -44,7 +51,11 @@ export default function MultiImageUpload({ images, maxCount, onChange, required 
           main_url: mainDataUrl,
         } satisfies ImageEntry;
       }));
-      toProcess.forEach(f => fileHashes.add(`${f.name}-${f.size}-${f.lastModified}`));
+      toProcess.forEach((f, i) => {
+        const hash = `${f.name}-${f.size}-${f.lastModified}`;
+        fileHashes.add(hash);
+        fileHashByIdRef.current.set(entries[i].id, hash);
+      });
       onChange([...images, ...entries]);
     } finally {
       setProcessing(false);
@@ -60,6 +71,9 @@ export default function MultiImageUpload({ images, maxCount, onChange, required 
   }
 
   function remove(idx: number) {
+    const id = images[idx].id;
+    const hash = fileHashByIdRef.current.get(id);
+    if (hash) { fileHashes.delete(hash); fileHashByIdRef.current.delete(id); }
     onChange(images.filter((_, i) => i !== idx));
   }
 
