@@ -30,7 +30,7 @@ function nightCount(checkIn: string, checkOut: string) {
   return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-type PageState = "loading" | "not_found" | "waiting" | "requesting" | "requested" | "confirmed" | "cancelled";
+type PageState = "loading" | "not_found" | "waiting" | "requested" | "confirmed" | "cancelled";
 
 export default function BookingPage() {
   const { id } = useParams<{ id: string }>();
@@ -38,6 +38,7 @@ export default function BookingPage() {
   const [pageState, setPageState] = useState<PageState>("loading");
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     fetchBookingById(id).then((b) => {
@@ -62,6 +63,14 @@ export default function BookingPage() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function handleCopy() {
+    if (!booking) return;
+    navigator.clipboard.writeText(booking.bank_account).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   }
 
   if (pageState === "loading") return (
@@ -109,6 +118,17 @@ export default function BookingPage() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
+              <p className="text-xs text-gray-400 mb-0.5">예약자</p>
+              <p className="text-sm font-semibold text-gray-800">{booking.guest_name}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 mb-0.5">인원</p>
+              <p className="text-sm font-semibold text-gray-800">{guestParts.join(", ")}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
               <p className="text-xs text-gray-400 mb-0.5">체크인</p>
               <p className="text-sm font-semibold text-gray-800">{formatDate(booking.check_in)}</p>
             </div>
@@ -118,15 +138,9 @@ export default function BookingPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <p className="text-xs text-gray-400 mb-0.5">숙박</p>
-              <p className="text-sm font-semibold text-gray-800">{nights}박</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-400 mb-0.5">인원</p>
-              <p className="text-sm font-semibold text-gray-800">{guestParts.join(", ")}</p>
-            </div>
+          <div>
+            <p className="text-xs text-gray-400 mb-0.5">숙박</p>
+            <p className="text-sm font-semibold text-gray-800">{nights}박</p>
           </div>
 
           <div className="h-px bg-gray-100" />
@@ -137,8 +151,8 @@ export default function BookingPage() {
           </div>
         </div>
 
-        {/* 계좌 정보 */}
-        {(pageState === "waiting" || pageState === "requesting") && (
+        {/* 계좌 정보 — 입금대기/입금확인요청 상태 */}
+        {(pageState === "waiting" || pageState === "requested") && (
           <div className="bg-indigo-50 rounded-2xl p-5 space-y-3">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-base">🏦</span>
@@ -156,12 +170,33 @@ export default function BookingPage() {
             </div>
             <div>
               <p className="text-xs text-indigo-400 mb-0.5">계좌번호</p>
-              <p className="text-base font-bold text-indigo-900 tracking-wide select-all">{booking.bank_account}</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <p className="text-base font-bold text-indigo-900 tracking-wide flex-1">{booking.bank_account}</p>
+                <button
+                  onClick={handleCopy}
+                  className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors
+                    ${copied ? "bg-green-500 text-white" : "bg-indigo-200 text-indigo-800 hover:bg-indigo-300"}`}>
+                  {copied ? "복사됨 ✓" : "복사"}
+                </button>
+              </div>
             </div>
-            <div className="bg-indigo-100 rounded-xl px-3 py-2 flex items-center gap-2">
-              <span className="text-xs">⏰</span>
-              <p className="text-xs text-indigo-700 font-semibold">입금 마감: {formatDeadline(booking.payment_deadline)}</p>
+            {pageState === "waiting" && (
+              <div className="bg-indigo-100 rounded-xl px-3 py-2 flex items-center gap-2">
+                <span className="text-xs">⏰</span>
+                <p className="text-xs text-indigo-700 font-semibold">입금 마감: {formatDeadline(booking.payment_deadline)}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 예약확정 — 계좌정보 대신 확정 메시지 */}
+        {pageState === "confirmed" && (
+          <div className="bg-green-50 rounded-2xl p-5 space-y-2">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-base">🎉</span>
+              <p className="font-bold text-green-900 text-sm">예약이 확정되었습니다</p>
             </div>
+            <p className="text-xs text-green-700 leading-relaxed">호스트가 입금을 확인하고 예약을 확정했습니다. 즐거운 여행 되세요!</p>
           </div>
         )}
 
@@ -191,14 +226,6 @@ export default function BookingPage() {
             <p className="text-2xl">✅</p>
             <p className="font-bold text-gray-900">입금 확인 요청 완료</p>
             <p className="text-sm text-gray-400 leading-relaxed">호스트가 입금을 확인한 후 예약을 확정해드립니다.</p>
-          </div>
-        )}
-
-        {pageState === "confirmed" && (
-          <div className="bg-white rounded-2xl p-5 text-center space-y-2">
-            <p className="text-2xl">🎉</p>
-            <p className="font-bold text-gray-900">예약이 확정되었습니다</p>
-            <p className="text-sm text-gray-400">즐거운 여행 되세요!</p>
           </div>
         )}
 
