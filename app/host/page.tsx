@@ -123,12 +123,32 @@ export default function HostDashboard() {
     return d.toISOString().split("T")[0];
   }, []);
 
+  const STATUS_PRIORITY: Record<string, number> = {
+    deposit_requested:   0,
+    waiting_for_deposit: 1,
+    confirmed:           2,
+    auto_cancelled:      3,
+    cancelled:           3,
+  };
+
+  function sortBookings(list: Booking[]): Booking[] {
+    return [...list].sort((a, b) => {
+      const pa = STATUS_PRIORITY[a.status] ?? 4;
+      const pb = STATUS_PRIORITY[b.status] ?? 4;
+      if (pa !== pb) return pa - pb;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+  }
+
   const loadBookings = useCallback(async (ids: string[], filter: string | null, page: number, reset: boolean) => {
     if (ids.length === 0) return;
     setBookingLoading(true);
     try {
       const { bookings: next, hasMore } = await fetchHostBookingsPaged(ids, filter, getCutoff(), page);
-      setBookings(prev => reset ? next : [...prev, ...next]);
+      setBookings(prev => {
+        const merged = reset ? next : [...prev, ...next];
+        return filter ? merged : sortBookings(merged);
+      });
       setHasMoreBookings(hasMore);
       setBookingPage(page);
     } finally {
@@ -178,7 +198,7 @@ export default function HostDashboard() {
 
   async function confirmBooking(id: string) {
     await patchBooking(id, { status: "confirmed" });
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: "confirmed" } : b));
+    setBookings(prev => sortBookings(prev.map(b => b.id === id ? { ...b, status: "confirmed" } : b)));
   }
 
   async function toggleActive(p: SavedProperty) {
@@ -211,7 +231,7 @@ export default function HostDashboard() {
   async function cancelBooking(id: string) {
     if (!confirm("이 예약을 취소하시겠습니까?")) return;
     await patchBooking(id, { status: "cancelled" });
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: "cancelled" } : b));
+    setBookings(prev => sortBookings(prev.map(b => b.id === id ? { ...b, status: "cancelled" } : b)));
   }
 
   async function saveSettings() {

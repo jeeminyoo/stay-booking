@@ -122,7 +122,7 @@ export async function fetchHostBookingsPaged(
     .select("*", { count: "exact" })
     .in("property_id", propertyIds)
     .gte("check_in", cutoffDate)
-    .order("check_in", { ascending: false })
+    .order("created_at", { ascending: false })
     .range(from, to);
 
   if (status) query = query.eq("status", status);
