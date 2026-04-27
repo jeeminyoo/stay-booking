@@ -86,11 +86,12 @@ interface Props {
   properties: SavedProperty[];
   bookings: Booking[];
   onConfirmBooking: (id: string) => Promise<void>;
+  onCancelBooking: (id: string) => Promise<void>;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function AvailabilityTab({ user: _user, properties, bookings, onConfirmBooking }: Props) {
+export default function AvailabilityTab({ user: _user, properties, bookings, onConfirmBooking, onCancelBooking }: Props) {
   const [propIdx, setPropIdx]   = useState(0);
   const [roomIdx, setRoomIdx]   = useState(0);
   const [manualBlocks, setManualBlocks]         = useState<ManualBlock[]>([]);
@@ -312,12 +313,15 @@ export default function AvailabilityTab({ user: _user, properties, bookings, onC
 
       {/* Property selector (multiple properties only) */}
       {properties.length > 1 && (
-        <div className="flex items-center gap-2">
+        <div className="relative inline-block">
           <select value={propIdx}
             onChange={e => { setPropIdx(Number(e.target.value)); setRoomIdx(0); setSelectedDate(null); exitBlockMode(); }}
-            className="text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white">
+            className="appearance-none border border-gray-200 rounded-xl pl-3 pr-10 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
             {properties.map((p, i) => <option key={p.id} value={i}>{p.name}</option>)}
           </select>
+          <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
         </div>
       )}
 
@@ -549,6 +553,19 @@ export default function AvailabilityTab({ user: _user, properties, bookings, onC
                             onClick={() => onConfirmBooking(b.id)}
                             className="w-full bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors">
                             예약 확정
+                          </button>
+                        </div>
+                      )}
+                      {b.status === "confirmed" && (
+                        <div className="mt-3 pt-3 border-t border-gray-100">
+                          <button
+                            onClick={() => {
+                              if (confirm(`게스트(${b.guest_name})에게 환불을 완료한 후 취소 처리하세요.\n\n환불 완료 후 취소 처리하시겠습니까?`)) {
+                                onCancelBooking(b.id);
+                              }
+                            }}
+                            className="w-full border border-red-200 text-red-500 text-sm font-semibold py-2.5 rounded-xl hover:bg-red-50 transition-colors">
+                            환불 후 예약 취소
                           </button>
                         </div>
                       )}

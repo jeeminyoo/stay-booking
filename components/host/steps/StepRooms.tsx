@@ -63,25 +63,25 @@ export default function StepRooms({ draft, onChange, errors }: Props) {
       {rooms.map((room, idx) => (
         <div key={idx} className="border border-gray-200 rounded-2xl overflow-hidden bg-white">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-100">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <span className="w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-xs font-bold shrink-0">
+          <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-gray-100">
+            <div className="flex items-center gap-2.5 flex-1 min-w-0">
+              <span className="w-5 h-5 bg-indigo-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold shrink-0">
                 {idx + 1}
               </span>
               <input
                 type="text"
                 value={room.name}
                 onChange={(e) => updateRoom(idx, { name: e.target.value })}
-                className="text-sm font-semibold text-gray-800 border border-gray-300 rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-indigo-400 bg-white w-36"
-                placeholder="객실 이름"
+                className="flex-1 min-w-0 text-base font-bold text-gray-900 bg-transparent outline-none placeholder:text-gray-300 placeholder:font-normal"
+                placeholder="객실 이름을 입력하세요"
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 shrink-0">
               {idx > 0 && (
                 <button
                   type="button"
                   onClick={() => copyFromFirst(idx)}
-                  className="text-xs text-indigo-600 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-lg hover:bg-indigo-100 transition-colors"
+                  className="text-xs text-indigo-500 hover:text-indigo-700 transition-colors"
                 >
                   1번 복사
                 </button>
@@ -107,9 +107,9 @@ export default function StepRooms({ draft, onChange, errors }: Props) {
             />
 
             {/* 인원 설정 */}
-            <div className="border border-gray-100 rounded-xl overflow-hidden">
-              <p className="text-xs font-semibold text-gray-400 px-4 pt-3 pb-1">인원 설정</p>
-              <div className="divide-y divide-gray-100 px-4">
+            <div>
+              <p className="text-xs font-semibold text-gray-400 mb-1">인원 설정</p>
+              <div className="divide-y divide-gray-100">
                 <NumberInput
                   label="최대 인원"
                   description="수용 가능한 성인+어린이 합계"
@@ -138,9 +138,9 @@ export default function StepRooms({ draft, onChange, errors }: Props) {
             </div>
 
             {/* 시설 */}
-            <div className="border border-gray-100 rounded-xl overflow-hidden">
-              <p className="text-xs font-semibold text-gray-400 px-4 pt-3 pb-1">시설</p>
-              <div className="divide-y divide-gray-100 px-4">
+            <div>
+              <p className="text-xs font-semibold text-gray-400 mb-1">시설</p>
+              <div className="divide-y divide-gray-100">
                 <NumberInput label="침실" value={room.bedrooms} min={0} max={10} onChange={(v) => updateRoom(idx, { bedrooms: v })} />
                 <NumberInput label="침대" value={room.beds} min={0} max={20} onChange={(v) => updateRoom(idx, { beds: v })} />
                 <NumberInput label="욕실" value={room.bathrooms} min={0} max={10} onChange={(v) => updateRoom(idx, { bathrooms: v })} />

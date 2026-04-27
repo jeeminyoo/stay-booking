@@ -174,6 +174,7 @@ export interface PropertyDraft {
   rooms: RoomDraft[];
   notice?: string;
   notice_per_room?: boolean;
+  is_active?: boolean;
 }
 
 // ─── ManualBlock (수동 블락) ───────────────────────────────────────────────────

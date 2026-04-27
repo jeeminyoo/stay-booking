@@ -13,7 +13,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
 
       {/* Header */}
-      <header className="bg-white border-b border-gray-100 px-5 py-4">
+      <header className="bg-white px-5 py-2">
         <Link href="/"><Logo /></Link>
       </header>
 

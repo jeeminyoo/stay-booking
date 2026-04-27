@@ -174,8 +174,8 @@ function AccordionItem({ q, a }: { q: string; a: string | React.ReactNode }) {
 export default function HelpPage() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="bg-white">
+        <div className="max-w-2xl mx-auto px-4 py-2 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Logo />
             <span className="text-gray-300">|</span>

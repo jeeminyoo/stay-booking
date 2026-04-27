@@ -326,8 +326,8 @@ export default function AvailabilityPage() {
     <div className="min-h-screen bg-[#f7f7f7]">
 
       {/* ── Header ── */}
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
-        <div className="max-w-lg mx-auto px-4 py-4 flex items-center gap-3">
+      <header className="bg-white sticky top-0 z-10">
+        <div className="max-w-lg mx-auto px-4 py-2 flex items-center gap-3">
           <Link href="/host" className="p-1.5 -ml-1 rounded-xl hover:bg-gray-100 transition-colors text-gray-400">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M19 12H5M12 19l-7-7 7-7"/>
@@ -335,11 +335,16 @@ export default function AvailabilityPage() {
           </Link>
           <h1 className="font-bold text-gray-900">예약 현황</h1>
           {properties.length > 1 && (
-            <select value={propIdx}
-              onChange={e => { setPropIdx(Number(e.target.value)); setRoomIdx(0); setSelectedDate(null); exitBlockMode(); }}
-              className="ml-auto text-sm border border-gray-200 rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white">
-              {properties.map((p, i) => <option key={p.id} value={i}>{p.name}</option>)}
-            </select>
+            <div className="relative inline-block ml-auto">
+              <select value={propIdx}
+                onChange={e => { setPropIdx(Number(e.target.value)); setRoomIdx(0); setSelectedDate(null); exitBlockMode(); }}
+                className="appearance-none border border-gray-200 rounded-xl pl-3 pr-10 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
+                {properties.map((p, i) => <option key={p.id} value={i}>{p.name}</option>)}
+              </select>
+              <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
           )}
         </div>
       </header>

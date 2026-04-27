@@ -54,8 +54,8 @@ export default function NoticePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 py-3.5 flex items-center justify-between">
+      <header className="bg-white sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto px-4 py-2 flex items-center justify-between">
           <button onClick={() => router.push(`/s/${slug}`)} className="cursor-pointer">
             <Logo />
           </button>

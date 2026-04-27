@@ -273,8 +273,8 @@ export default function HostDashboard() {
           {toast}
         </div>
       )}
-      <header className="bg-white border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="bg-white">
+        <div className="max-w-4xl mx-auto px-4 py-2 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/"><Logo /></Link>
             <span className="text-gray-300">|</span>
@@ -298,19 +298,19 @@ export default function HostDashboard() {
         )}
 
         {/* 탭 */}
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-6 w-fit">
+        <div className="flex border-b border-gray-200 mb-6">
           {[
-            { key: "bookings",     label: "예약\n알림" },
-            { key: "availability", label: "예약\n현황" },
-            { key: "properties",   label: "내\n숙소" },
+            { key: "bookings",     label: "예약 알림" },
+            { key: "availability", label: "예약 현황" },
+            { key: "properties",   label: "내 숙소" },
             { key: "settings",     label: "설정" },
           ].map(({ key, label }) => (
             <button key={key} onClick={() => setTab(key as typeof tab)}
-              className={`relative px-3 py-2 rounded-lg text-sm font-semibold transition-colors text-center whitespace-pre-line leading-tight
-                ${tab === key ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
+              className={`relative flex-1 py-2.5 text-sm font-semibold transition-colors text-center border-b-2 -mb-px
+                ${tab === key ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-400 hover:text-gray-600"}`}>
               {label}
               {key === "bookings" && actionNeededCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center leading-none">{actionNeededCount}</span>
+                <span className="absolute top-1.5 ml-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 inline-flex items-center justify-center leading-none">{actionNeededCount}</span>
               )}
             </button>
           ))}
@@ -318,7 +318,7 @@ export default function HostDashboard() {
 
         {/* ─── 예약 현황 탭 ─── */}
         {tab === "availability" && user && (
-          <AvailabilityTab user={user} properties={properties} bookings={bookings} onConfirmBooking={confirmBooking} />
+          <AvailabilityTab user={user} properties={properties} bookings={bookings} onConfirmBooking={confirmBooking} onCancelBooking={cancelBooking} />
         )}
 
         {/* ─── 예약 알림 탭 ─── */}
@@ -353,6 +353,7 @@ export default function HostDashboard() {
                 {bookings.map((b) => {
                   const s = STATUS_LABEL[b.status] ?? STATUS_LABEL.cancelled;
                   const canAct = b.status === "waiting_for_deposit" || b.status === "deposit_requested";
+                  const isConfirmed = b.status === "confirmed";
                   const isHighlighted = highlightBookingId === b.id;
                   return (
                     <div key={b.id} id={`booking-${b.id}`}
@@ -394,6 +395,19 @@ export default function HostDashboard() {
                           <button onClick={() => cancelBooking(b.id)}
                             className="flex-1 border border-gray-200 text-gray-600 text-sm font-semibold py-2.5 rounded-xl hover:bg-gray-100 transition-colors">
                             예약 취소
+                          </button>
+                        </div>
+                      )}
+                      {isConfirmed && (
+                        <div className="border-t border-gray-100 px-4 py-3">
+                          <button
+                            onClick={() => {
+                              if (confirm(`게스트(${b.guest_name})에게 환불을 완료한 후 취소 처리하세요.\n\n환불 완료 후 취소 처리하시겠습니까?`)) {
+                                cancelBooking(b.id);
+                              }
+                            }}
+                            className="w-full border border-red-200 text-red-500 text-sm font-semibold py-2.5 rounded-xl hover:bg-red-50 transition-colors">
+                            환불 후 예약 취소
                           </button>
                         </div>
                       )}
@@ -470,9 +484,8 @@ export default function HostDashboard() {
                             <span className={`text-xs font-semibold ${p.is_active !== false ? "text-green-600" : "text-gray-400"}`}>
                               {p.is_active !== false ? "게시중" : "비노출"}
                             </span>
-                            <div className={`w-10 rounded-full flex items-center px-0.5 transition-colors ${p.is_active !== false ? "bg-green-500" : "bg-gray-300"}`}
-                              style={{ height: "22px" }}>
-                              <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${p.is_active !== false ? "translate-x-[18px]" : "translate-x-0"}`} />
+                            <div className={`w-10 h-6 rounded-full flex items-center px-0.5 transition-colors ${p.is_active !== false ? "bg-green-500" : "bg-gray-300"}`}>
+                              <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${p.is_active !== false ? "translate-x-4" : "translate-x-0"}`} />
                             </div>
                           </div>
                         </button>
@@ -494,6 +507,7 @@ export default function HostDashboard() {
                               bank_name: p.bank_name,
                               bank_account: p.bank_account,
                               bank_holder: p.bank_holder,
+                              is_active: p.is_active,
                               rooms: (p.rooms || []).map((r, i) => ({
                                 name: r.name,
                                 max_guests: r.max_guests,

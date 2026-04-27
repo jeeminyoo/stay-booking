@@ -69,8 +69,8 @@ export default function NoticeEditPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 py-3.5 flex items-center justify-between">
+      <header className="bg-white sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto px-4 py-2 flex items-center justify-between">
           <button onClick={() => router.push("/host?tab=properties")} className="cursor-pointer">
             <Logo />
           </button>
@@ -189,6 +189,12 @@ export default function NoticeEditPage() {
           className={`w-full py-4 rounded-2xl text-sm font-bold transition-colors
             ${saved ? "bg-green-600 text-white" : "bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"}`}>
           {saving ? "저장 중..." : saved ? "저장됨 ✓" : "저장"}
+        </button>
+
+        <button
+          onClick={() => router.push("/host?tab=properties")}
+          className="w-full py-4 rounded-2xl text-sm font-semibold border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
+          마이페이지로 이동
         </button>
       </main>
     </div>

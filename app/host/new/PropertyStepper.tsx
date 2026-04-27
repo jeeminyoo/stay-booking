@@ -225,6 +225,7 @@ export default function PropertyStepper({ user }: { user: KakaoUser }) {
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { images: _imgs, ...draftForDb } = draft;
+      const hasNotice = !!draft.notice?.trim() || draft.rooms.some(r => !!r.notice?.trim());
       const saved = {
         ...draftForDb,
         image_url: uploadedCoverImages[0]?.thumb_url ?? "",
@@ -233,7 +234,7 @@ export default function PropertyStepper({ user }: { user: KakaoUser }) {
         id: propertyId,
         host_id: user.id,
         is_draft: false,
-        is_active: true,
+        is_active: (draft.is_active === true) && hasNotice,
         created_at: new Date().toISOString(),
       };
       await upsertProperty(saved);
@@ -429,8 +430,8 @@ export default function PropertyStepper({ user }: { user: KakaoUser }) {
         </div>
       )}
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-white border-b border-gray-100">
-        <div className="relative flex items-center justify-center px-4 py-3 max-w-lg mx-auto">
+      <header className="sticky top-0 z-10 bg-white">
+        <div className="relative flex items-center justify-center px-4 py-2 max-w-lg mx-auto">
           <button onClick={() => router.push("/")} className="absolute left-4">
             <Logo />
           </button>

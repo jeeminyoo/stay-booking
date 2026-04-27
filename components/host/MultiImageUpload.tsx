@@ -23,7 +23,7 @@ export default function MultiImageUpload({ images, maxCount, onChange, required 
 
     const selected = Array.from(files);
     if (selected.length > remaining) {
-      alert(`사진은 최대 ${maxCount}장까지 등록할 수 있습니다.\n${remaining}장만 추가할 수 있어요.`);
+      alert(`사진은 최대 ${maxCount}장까지 등록할 수 있습니다.`);
       return;
     }
 

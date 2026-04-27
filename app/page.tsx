@@ -197,8 +197,8 @@ export default function Home() {
     <div className="min-h-screen bg-white">
 
       {/* ── Header ── */}
-      <header className="bg-white/90 backdrop-blur-md border-b border-gray-100 sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 py-3.5 flex items-center justify-between">
+      <header className="bg-white/90 backdrop-blur-md sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-4 py-2 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <Logo />
             <span className="text-[10px] bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-full font-bold hidden sm:inline">수수료 0%</span>
