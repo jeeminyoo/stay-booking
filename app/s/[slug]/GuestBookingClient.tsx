@@ -153,6 +153,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
     }
   }, [infoError, phoneError]);
   const [autoCancelMinutes, setAutoCancelMinutes] = useState(60);
+  const [longStayDiscounts, setLongStayDiscounts] = useState<import("@/lib/types").LongStayDiscount[]>([]);
   const [descExpanded, setDescExpanded] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -182,6 +183,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
       } catch {}
       const hs = await fetchHostSettings(found.host_id);
       if (hs?.auto_cancel_minutes) setAutoCancelMinutes(hs.auto_cancel_minutes);
+      if (hs?.long_stay_discounts?.length) setLongStayDiscounts(hs.long_stay_discounts);
       if (found.rooms.length === 1) {
         const room = found.rooms[0];
         setSelectedRoom(room);
@@ -229,8 +231,9 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
         sunday_price: sp.sunday_price ?? 0,
       })),
       baseGuests: selectedRoom.base_guests,
+      longStayDiscounts,
     });
-  }, [selectedRoom, checkIn, checkOut, guests]);
+  }, [selectedRoom, checkIn, checkOut, guests, longStayDiscounts]);
 
   async function handleConfirmBooking() {
     if (!property || !selectedRoom) return;
@@ -339,7 +342,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
     onBack?: () => void; backLabel?: string;
     onNext?: () => void; nextLabel?: string; nextDisabled?: boolean;
     nextDanger?: boolean;
-    priceSummary?: { nights: number; total: number; adults: number; children: number; infants: number } | null;
+    priceSummary?: { nights: number; total: number; subtotal: number; discountPercent: number; discountAmount: number; adults: number; children: number; infants: number } | null;
   }) {
     return (
       <div className="sticky bottom-0 bg-white border-t border-gray-100 px-4 pt-2.5 pb-3 z-10">
@@ -347,11 +350,19 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
           <div className="max-w-2xl mx-auto flex items-center justify-between mb-2 px-0.5">
             <div>
               <p className="text-xs font-semibold text-gray-500">총액</p>
+              {priceSummary.discountPercent > 0 && (
+                <p className="text-[10px] text-indigo-500 font-semibold">{priceSummary.discountPercent}% 할인 적용 중</p>
+              )}
               {priceSummary.infants > 0 && (
                 <p className="text-[10px] text-gray-400">유아 {priceSummary.infants}명 요금 미포함</p>
               )}
             </div>
-            <p className="text-base font-bold text-gray-900">{priceSummary.total.toLocaleString()}원</p>
+            <div className="text-right">
+              {priceSummary.discountPercent > 0 && (
+                <p className="text-xs text-gray-400 line-through">{priceSummary.subtotal.toLocaleString()}원</p>
+              )}
+              <p className="text-base font-bold text-gray-900">{priceSummary.total.toLocaleString()}원</p>
+            </div>
           </div>
         )}
         <div className="max-w-2xl mx-auto flex gap-3">
@@ -754,7 +765,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
           onBack={() => setStep("room")} backLabel="이전"
           onNext={() => setStep("info")} nextLabel="다음"
           nextDisabled={!checkIn || !checkOut}
-          priceSummary={calc ? { nights, total: calc.total, adults: guests.adults, children: guests.children, infants: guests.infants } : null}
+          priceSummary={calc ? { nights, total: calc.total, subtotal: calc.subtotal, discountPercent: calc.discountPercent, discountAmount: calc.discountAmount, adults: guests.adults, children: guests.children, infants: guests.infants } : null}
         />
       )}
       {step === "info" && (

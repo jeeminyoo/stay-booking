@@ -15,12 +15,18 @@ export type BookingStatus =
   | "auto_cancelled"        // 자동취소
   | "cancelled";            // 예약취소
 
+export interface LongStayDiscount {
+  nights: number;   // 최소 박수
+  percent: number;  // 할인율 (%)
+}
+
 export interface HostSettings {
   host_id: string;
   auto_cancel_minutes: number;  // 두 상태 공통 자동취소 시간 (기본 60분)
   unavailable_start: string;    // "HH:MM"
   unavailable_end: string;      // "HH:MM"
   updated_at: string;
+  long_stay_discounts: LongStayDiscount[];
 }
 
 export interface Booking {

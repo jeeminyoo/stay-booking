@@ -58,6 +58,7 @@ const DEFAULT_SETTINGS: Omit<HostSettings, "host_id" | "updated_at"> = {
   auto_cancel_minutes: 60,
   unavailable_start: "21:00",
   unavailable_end: "08:00",
+  long_stay_discounts: [],
 };
 
 export default function HostDashboard() {
@@ -681,6 +682,60 @@ export default function HostDashboard() {
                     onChange={e => setSettings(s => s ? { ...s, unavailable_end: e.target.value } : s)}
                     className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent" />
                 </div>
+              </div>
+            </div>
+
+            {/* 연박 할인 */}
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-50">
+                <p className="font-semibold text-gray-900 text-sm">연박 할인</p>
+                <p className="text-xs text-gray-400 mt-0.5">n박 이상 예약 시 자동으로 할인을 적용합니다.</p>
+              </div>
+              <div className="px-5 py-4 space-y-3">
+                {(settings.long_stay_discounts ?? []).map((d, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <div className="relative inline-block">
+                      <select
+                        value={d.nights}
+                        onChange={e => setSettings(s => {
+                          if (!s) return s;
+                          const next = [...(s.long_stay_discounts ?? [])];
+                          next[i] = { ...next[i], nights: Number(e.target.value) };
+                          return { ...s, long_stay_discounts: next };
+                        })}
+                        className="appearance-none border border-gray-200 rounded-xl pl-3 pr-8 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
+                        {[2,3,4,5,6,7,10,14].map(n => <option key={n} value={n}>{n}박 이상</option>)}
+                      </select>
+                      <svg className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+                    </div>
+                    <div className="relative inline-block">
+                      <select
+                        value={d.percent}
+                        onChange={e => setSettings(s => {
+                          if (!s) return s;
+                          const next = [...(s.long_stay_discounts ?? [])];
+                          next[i] = { ...next[i], percent: Number(e.target.value) };
+                          return { ...s, long_stay_discounts: next };
+                        })}
+                        className="appearance-none border border-gray-200 rounded-xl pl-3 pr-8 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
+                        {[3,5,7,10,15,20,25,30].map(p => <option key={p} value={p}>{p}% 할인</option>)}
+                      </select>
+                      <svg className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSettings(s => s ? { ...s, long_stay_discounts: (s.long_stay_discounts ?? []).filter((_, j) => j !== i) } : s)}
+                      className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-red-400 transition-colors shrink-0">
+                      ✕
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setSettings(s => s ? { ...s, long_stay_discounts: [...(s.long_stay_discounts ?? []), { nights: 3, percent: 5 }] } : s)}
+                  className="flex items-center gap-1.5 text-sm text-indigo-600 font-semibold hover:text-indigo-700 transition-colors">
+                  <span className="text-lg leading-none">+</span> 할인 조건 추가
+                </button>
               </div>
             </div>
 

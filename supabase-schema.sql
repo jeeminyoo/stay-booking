@@ -163,6 +163,7 @@ alter table properties add column if not exists notice_confirm text not null def
 alter table properties add column if not exists notice_checkin text not null default '';
 alter table properties add column if not exists notice_confirm_per_room boolean not null default false;
 alter table properties add column if not exists notice_checkin_per_room boolean not null default false;
+alter table host_settings add column if not exists long_stay_discounts jsonb not null default '[]';
 
 -- ─── Reviews (게스트 리뷰) ──────────────────────────────────────────────────────
 

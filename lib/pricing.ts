@@ -1,4 +1,4 @@
-import { Pricing, SpecialPrice } from "./types";
+import { Pricing, SpecialPrice, LongStayDiscount } from "./types";
 import { isHoliday } from "./holidays";
 
 // ─── 요금 계산 ────────────────────────────────────────────────────────────────
@@ -12,13 +12,17 @@ export interface CalcParams {
   pricing: Pricing;
   specialPrices: SpecialPrice[];
   baseGuests: number;
+  longStayDiscounts?: LongStayDiscount[];
 }
 
 export interface CalcResult {
   nights: number;
   breakdown: DayBreakdown[];
   extraPersonTotal: number;
-  total: number;
+  subtotal: number;        // 할인 전 합계
+  discountPercent: number; // 적용된 할인율 (0이면 미적용)
+  discountAmount: number;  // 할인 금액
+  total: number;           // 최종 결제 금액
 }
 
 interface DayBreakdown {
@@ -29,7 +33,7 @@ interface DayBreakdown {
 }
 
 export function calculateTotalPrice(params: CalcParams): CalcResult {
-  const { checkIn, checkOut, adults, children, pricing, specialPrices, baseGuests } = params;
+  const { checkIn, checkOut, adults, children, pricing, specialPrices, baseGuests, longStayDiscounts = [] } = params;
 
   const breakdown: DayBreakdown[] = [];
   const cur = new Date(checkIn + "T00:00:00");
@@ -78,9 +82,17 @@ export function calculateTotalPrice(params: CalcParams): CalcResult {
 
   const nights = breakdown.length;
   const extraPersonTotal = nights > 0 ? breakdown[0].extraPersonCharge * nights : 0;
-  const total = breakdown.reduce((sum, d) => sum + d.basePrice + d.extraPersonCharge, 0);
+  const subtotal = breakdown.reduce((sum, d) => sum + d.basePrice + d.extraPersonCharge, 0);
 
-  return { nights, breakdown, extraPersonTotal, total };
+  // 연박 할인: nights 이상인 규칙 중 가장 높은 할인율 적용
+  const applicable = longStayDiscounts
+    .filter(d => nights >= d.nights && d.percent > 0)
+    .sort((a, b) => b.percent - a.percent);
+  const discountPercent = applicable.length > 0 ? applicable[0].percent : 0;
+  const discountAmount = discountPercent > 0 ? Math.round(subtotal * discountPercent / 100) : 0;
+  const total = subtotal - discountAmount;
+
+  return { nights, breakdown, extraPersonTotal, subtotal, discountPercent, discountAmount, total };
 }
 
 function calcExtraPersonCharge(
