@@ -689,7 +689,7 @@ export default function HostDashboard() {
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
               <div className="px-5 py-4 border-b border-gray-50">
                 <p className="font-semibold text-gray-900 text-sm">연박 할인</p>
-                <p className="text-xs text-gray-400 mt-0.5">n박 이상 예약 시 자동으로 할인을 적용합니다.</p>
+                <p className="text-xs text-gray-400 mt-0.5">2박 이상 예약 시 자동으로 할인을 적용합니다.</p>
               </div>
               <div className="px-5 py-4 space-y-3">
                 {(() => {

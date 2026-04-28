@@ -570,10 +570,30 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
               최대 {maxGuests}인 (성인+어린이 기준)
             </p>
 
+            {/* 연박 할인 힌트 */}
+            {longStayDiscounts.length > 0 && (() => {
+              const minNights = Math.min(...longStayDiscounts.map(d => d.nights));
+              return (
+                <p className="text-xs text-gray-400 px-0.5">
+                  {minNights}박 이상 예약 시 자동으로 할인을 적용합니다.
+                </p>
+              );
+            })()}
+
             {checkIn && checkOut && calc && (
-              <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex items-center justify-between">
-                <p className="text-sm text-gray-500">{nights}박 · 성인 {guests.adults}명{guests.children > 0 ? ` · 어린이 ${guests.children}명` : ""}{guests.infants > 0 ? ` · 유아 ${guests.infants}명` : ""}</p>
-                <p className="text-lg font-bold text-indigo-600">{calc.total.toLocaleString()}원</p>
+              <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-gray-500">{nights}박 · 성인 {guests.adults}명{guests.children > 0 ? ` · 어린이 ${guests.children}명` : ""}{guests.infants > 0 ? ` · 유아 ${guests.infants}명` : ""}</p>
+                  <div className="text-right">
+                    {calc.discountPercent > 0 && (
+                      <p className="text-xs text-gray-400 line-through leading-tight">{calc.subtotal.toLocaleString()}원</p>
+                    )}
+                    <p className="text-lg font-bold text-indigo-600">{calc.total.toLocaleString()}원</p>
+                  </div>
+                </div>
+                {calc.discountPercent > 0 && (
+                  <p className="text-xs text-indigo-400 mt-1.5">{nights}박 이상 {calc.discountPercent}% 할인 적용 · {calc.discountAmount.toLocaleString()}원 절약</p>
+                )}
               </div>
             )}
 
