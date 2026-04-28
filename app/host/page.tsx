@@ -694,8 +694,9 @@ export default function HostDashboard() {
               <div className="px-5 py-4 space-y-3">
                 {(settings.long_stay_discounts ?? []).map((d, i) => (
                   <div key={i} className="flex items-center gap-2">
-                    <div className="relative inline-block">
-                      <select
+                    <div className="flex items-center gap-1.5 border border-gray-200 rounded-xl px-3 py-2 bg-white focus-within:ring-2 focus-within:ring-indigo-400">
+                      <input
+                        type="number" min={2} max={365}
                         value={d.nights}
                         onChange={e => setSettings(s => {
                           if (!s) return s;
@@ -703,13 +704,13 @@ export default function HostDashboard() {
                           next[i] = { ...next[i], nights: Number(e.target.value) };
                           return { ...s, long_stay_discounts: next };
                         })}
-                        className="appearance-none border border-gray-200 rounded-xl pl-3 pr-8 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
-                        {[2,3,4,5,6,7,10,14].map(n => <option key={n} value={n}>{n}박 이상</option>)}
-                      </select>
-                      <svg className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+                        className="w-10 text-sm text-gray-700 bg-transparent outline-none text-center"
+                      />
+                      <span className="text-sm text-gray-400 shrink-0">박 이상</span>
                     </div>
-                    <div className="relative inline-block">
-                      <select
+                    <div className="flex items-center gap-1.5 border border-gray-200 rounded-xl px-3 py-2 bg-white focus-within:ring-2 focus-within:ring-indigo-400">
+                      <input
+                        type="number" min={1} max={99}
                         value={d.percent}
                         onChange={e => setSettings(s => {
                           if (!s) return s;
@@ -717,10 +718,9 @@ export default function HostDashboard() {
                           next[i] = { ...next[i], percent: Number(e.target.value) };
                           return { ...s, long_stay_discounts: next };
                         })}
-                        className="appearance-none border border-gray-200 rounded-xl pl-3 pr-8 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
-                        {[3,5,7,10,15,20,25,30].map(p => <option key={p} value={p}>{p}% 할인</option>)}
-                      </select>
-                      <svg className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+                        className="w-10 text-sm text-gray-700 bg-transparent outline-none text-center"
+                      />
+                      <span className="text-sm text-gray-400 shrink-0">% 할인</span>
                     </div>
                     <button
                       type="button"
