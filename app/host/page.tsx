@@ -322,9 +322,9 @@ export default function HostDashboard() {
         {/* 탭 */}
         <div className="flex border-b border-gray-200 mb-6">
           {[
-            { key: "bookings",     label: "예약 알림" },
-            { key: "availability", label: "예약 현황" },
-            { key: "properties",   label: "내 숙소" },
+            { key: "bookings",     label: "예약알림" },
+            { key: "availability", label: "예약현황" },
+            { key: "properties",   label: "내숙소" },
             { key: "reviews",      label: "리뷰" },
             { key: "settings",     label: "설정" },
           ].map(({ key, label }) => (
