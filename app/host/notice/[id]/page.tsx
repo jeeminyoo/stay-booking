@@ -210,7 +210,7 @@ export default function NoticeEditPage() {
 
               {/* 펼쳐진 영역 */}
               {isOpen && (
-                <div className="border-t border-gray-50 px-5 pb-5 pt-4 space-y-4">
+                <div className="border-t border-gray-50 px-5 pb-6 pt-5 space-y-4">
                   <p className="text-xs text-gray-400 leading-relaxed">{s.desc}</p>
 
                   {/* 공통/객실별 모드 선택 */}
@@ -254,7 +254,7 @@ export default function NoticeEditPage() {
                       value={shared[s.key]}
                       onChange={e => updateShared(s.key, e.target.value)}
                       placeholder={s.placeholder}
-                      rows={10}
+                      rows={14}
                       className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none bg-gray-50/50 placeholder:text-gray-300"
                     />
                   ) : (
@@ -263,7 +263,7 @@ export default function NoticeEditPage() {
                       value={rooms[roomIdx]?.[s.key] ?? ""}
                       onChange={e => updateRoom(s.key, roomIdx, e.target.value)}
                       placeholder={`${rooms[roomIdx]?.name} · ${s.placeholder}`}
-                      rows={10}
+                      rows={14}
                       className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none bg-gray-50/50 placeholder:text-gray-300"
                     />
                   )}
@@ -297,20 +297,20 @@ export default function NoticeEditPage() {
           );
         })}
 
-        {/* 저장 버튼 */}
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className={`w-full py-4 rounded-2xl text-sm font-bold transition-colors
-            ${saved ? "bg-green-600 text-white" : "bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"}`}>
-          {saving ? "저장 중..." : saved ? "저장됨 ✓" : "저장"}
-        </button>
-
-        <button
-          onClick={() => router.push("/host?tab=properties")}
-          className="w-full py-4 rounded-2xl text-sm font-semibold border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
-          마이페이지로 이동
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => router.push("/host?tab=properties")}
+            className="flex-1 py-4 rounded-2xl text-sm font-semibold border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
+            마이페이지
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className={`flex-1 py-4 rounded-2xl text-sm font-bold transition-colors
+              ${saved ? "bg-green-600 text-white" : "bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"}`}>
+            {saving ? "저장 중..." : saved ? "저장됨 ✓" : "저장"}
+          </button>
+        </div>
       </main>
     </div>
   );
