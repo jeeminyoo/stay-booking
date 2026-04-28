@@ -692,6 +692,13 @@ export default function HostDashboard() {
                 <p className="text-xs text-gray-400 mt-0.5">n박 이상 예약 시 자동으로 할인을 적용합니다.</p>
               </div>
               <div className="px-5 py-4 space-y-3">
+                {(() => {
+                  const nights = (settings.long_stay_discounts ?? []).map(d => d.nights);
+                  const hasDupe = nights.some((n, i) => nights.indexOf(n) !== i);
+                  return hasDupe ? (
+                    <p className="text-xs text-red-500 font-semibold">숙박일수가 중복된 조건이 있습니다. 각 조건의 숙박일수는 달라야 합니다.</p>
+                  ) : null;
+                })()}
                 {(settings.long_stay_discounts ?? []).map((d, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <div className="flex items-center gap-1.5 border border-gray-200 rounded-xl px-3 py-2 bg-white focus-within:ring-2 focus-within:ring-indigo-400">
@@ -739,7 +746,7 @@ export default function HostDashboard() {
               </div>
             </div>
 
-            <button onClick={saveSettings} disabled={settingsSaving}
+            <button onClick={saveSettings} disabled={settingsSaving || (() => { const ns = (settings.long_stay_discounts ?? []).map(d => d.nights); return ns.some((n, i) => ns.indexOf(n) !== i); })()}
               className={`w-full py-3.5 rounded-2xl text-sm font-bold transition-colors
                 ${settingsSaved
                   ? "bg-green-600 text-white"
