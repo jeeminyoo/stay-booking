@@ -61,6 +61,7 @@ export default function NoticeEditPage() {
   const [shared, setShared] = useState<SharedNotices>({ notice: "", notice_confirm: "", notice_checkin: "" });
   const [rooms, setRooms] = useState<RoomNotices[]>([]);
   const [activeRoomIdx, setActiveRoomIdx] = useState<Record<NoticeKey, number>>({ notice: 0, notice_confirm: 0, notice_checkin: 0 });
+  const [openKey, setOpenKey] = useState<NoticeKey | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -98,13 +99,13 @@ export default function NoticeEditPage() {
     setRooms(prev => prev.map((r, i) => i === roomIdx ? { ...r, [key]: value } : r));
   }
 
-  function setActiveRoom(key: NoticeKey, idx: number) {
-    setActiveRoomIdx(prev => ({ ...prev, [key]: idx }));
-  }
-
   function hasContent(key: NoticeKey): boolean {
     if (perRoom[key]) return rooms.some(r => r[key].trim());
     return shared[key].trim().length > 0;
+  }
+
+  function toggleSection(key: NoticeKey) {
+    setOpenKey(prev => prev === key ? null : key);
   }
 
   async function handleSave() {
@@ -160,126 +161,141 @@ export default function NoticeEditPage() {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-8 space-y-5">
-        <div>
+      <main className="max-w-2xl mx-auto px-4 py-8 space-y-3">
+        <div className="mb-2">
           <h1 className="text-2xl font-black text-gray-900 mb-1">이용 유의사항</h1>
           <p className="text-sm text-gray-400">{property.name}</p>
         </div>
 
         {SECTIONS.map((s) => {
+          const isOpen = openKey === s.key;
           const isPerRoom = perRoom[s.key];
           const roomIdx = activeRoomIdx[s.key];
+          const filled = hasContent(s.key);
 
           return (
             <div key={s.key} className="bg-white rounded-2xl overflow-hidden">
-              {/* 섹션 헤더 */}
-              <div className="px-4 pt-4 pb-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-base">{s.icon}</span>
-                  <p className="font-bold text-gray-900 text-sm">{s.title}</p>
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${s.badgeColor}`}>{s.badge}</span>
-                  {hasContent(s.key) && (
-                    <span className="ml-auto w-2 h-2 rounded-full bg-indigo-400 shrink-0" />
+              {/* 드롭다운 헤더 */}
+              <button
+                type="button"
+                onClick={() => toggleSection(s.key)}
+                className="w-full px-5 py-4 flex items-center gap-3 text-left">
+                <span className="text-lg shrink-0">{s.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-bold text-gray-900 text-sm">{s.title}</p>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${s.badgeColor}`}>{s.badge}</span>
+                  </div>
+                  {!isOpen && filled && (
+                    <p className="text-xs text-gray-400 mt-0.5 truncate">
+                      {isPerRoom
+                        ? `객실별 개별 · ${rooms.filter(r => r[s.key].trim()).length}개 작성됨`
+                        : shared[s.key]}
+                    </p>
+                  )}
+                  {!isOpen && !filled && (
+                    <p className="text-xs text-gray-300 mt-0.5">미작성</p>
                   )}
                 </div>
-                <p className="text-xs text-gray-400 leading-relaxed">{s.desc}</p>
-              </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {filled && <span className="w-2 h-2 rounded-full bg-indigo-400" />}
+                  <svg
+                    className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                    strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </div>
+              </button>
 
-              {/* 공통/객실별 모드 선택 (객실 2개 이상일 때만) */}
-              {multiRoom && (
-                <div className="px-4 pb-3 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPerRoom(prev => ({ ...prev, [s.key]: false }))}
-                    className={`flex-1 py-2 rounded-xl text-xs font-semibold border-2 transition-colors
-                      ${!isPerRoom ? "border-indigo-500 text-indigo-600 bg-indigo-50/50" : "border-gray-200 text-gray-500 bg-white"}`}>
-                    전체 공통
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPerRoom(prev => ({ ...prev, [s.key]: true }))}
-                    className={`flex-1 py-2 rounded-xl text-xs font-semibold border-2 transition-colors
-                      ${isPerRoom ? "border-indigo-500 text-indigo-600 bg-indigo-50/50" : "border-gray-200 text-gray-500 bg-white"}`}>
-                    객실별 개별
-                  </button>
+              {/* 펼쳐진 영역 */}
+              {isOpen && (
+                <div className="border-t border-gray-50 px-5 pb-5 pt-4 space-y-4">
+                  <p className="text-xs text-gray-400 leading-relaxed">{s.desc}</p>
+
+                  {/* 공통/객실별 모드 선택 */}
+                  {multiRoom && (
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPerRoom(prev => ({ ...prev, [s.key]: false }))}
+                        className={`flex-1 py-2 rounded-xl text-xs font-semibold border-2 transition-colors
+                          ${!isPerRoom ? "border-indigo-500 text-indigo-600 bg-indigo-50/50" : "border-gray-200 text-gray-500 bg-white"}`}>
+                        전체 공통
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPerRoom(prev => ({ ...prev, [s.key]: true }))}
+                        className={`flex-1 py-2 rounded-xl text-xs font-semibold border-2 transition-colors
+                          ${isPerRoom ? "border-indigo-500 text-indigo-600 bg-indigo-50/50" : "border-gray-200 text-gray-500 bg-white"}`}>
+                        객실별 개별
+                      </button>
+                    </div>
+                  )}
+
+                  {/* 객실별 탭 */}
+                  {isPerRoom && (
+                    <div className="flex gap-1.5 overflow-x-auto">
+                      {rooms.map((r, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setActiveRoomIdx(prev => ({ ...prev, [s.key]: i }))}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors flex-shrink-0
+                            ${roomIdx === i ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
+                          {r.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* 텍스트 입력 */}
+                  {!isPerRoom ? (
+                    <textarea
+                      value={shared[s.key]}
+                      onChange={e => updateShared(s.key, e.target.value)}
+                      placeholder={s.placeholder}
+                      rows={10}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none bg-gray-50/50 placeholder:text-gray-300"
+                    />
+                  ) : (
+                    <textarea
+                      key={`${s.key}-${roomIdx}`}
+                      value={rooms[roomIdx]?.[s.key] ?? ""}
+                      onChange={e => updateRoom(s.key, roomIdx, e.target.value)}
+                      placeholder={`${rooms[roomIdx]?.name} · ${s.placeholder}`}
+                      rows={10}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none bg-gray-50/50 placeholder:text-gray-300"
+                    />
+                  )}
+
+                  {/* 알림톡 URL (예약확정/체크인 항목만) */}
+                  {(s.key === "notice_confirm" || s.key === "notice_checkin") && (
+                    <div className="bg-indigo-50 rounded-xl px-4 py-3 text-xs text-indigo-700 space-y-1.5">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span>🔗</span>
+                        <p className="font-semibold">알림톡 링크용 URL</p>
+                      </div>
+                      {isPerRoom ? (
+                        rooms.map((r, i) => (
+                          <div key={i}>
+                            <p className="text-indigo-400 mb-0.5">{r.name}</p>
+                            <p className="font-mono break-all select-all">
+                              {origin}/s/{property.slug}/{s.key === "notice_confirm" ? "notice-confirm" : "notice-checkin"}?room={encodeURIComponent(r.name)}
+                            </p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="font-mono break-all select-all">
+                          {origin}/s/{property.slug}/{s.key === "notice_confirm" ? "notice-confirm" : "notice-checkin"}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
-
-              {/* 객실별 모드일 때 탭 */}
-              {isPerRoom && (
-                <div className="px-4 pb-3 flex gap-1.5 overflow-x-auto">
-                  {rooms.map((r, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setActiveRoom(s.key, i)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors flex-shrink-0
-                        ${roomIdx === i ? "bg-gray-900 text-white" : "bg-white text-gray-500 border border-gray-200 hover:border-gray-300"}`}>
-                      {r.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* 입력 영역 */}
-              <div className="px-4 pb-4">
-                {!isPerRoom ? (
-                  <textarea
-                    value={shared[s.key]}
-                    onChange={e => updateShared(s.key, e.target.value)}
-                    placeholder={s.placeholder}
-                    rows={6}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none bg-gray-50/50 placeholder:text-gray-300"
-                  />
-                ) : (
-                  <textarea
-                    key={`${s.key}-${roomIdx}`}
-                    value={rooms[roomIdx]?.[s.key] ?? ""}
-                    onChange={e => updateRoom(s.key, roomIdx, e.target.value)}
-                    placeholder={`${rooms[roomIdx]?.name} · ${s.placeholder}`}
-                    rows={6}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none bg-gray-50/50 placeholder:text-gray-300"
-                  />
-                )}
-              </div>
             </div>
           );
         })}
-
-        {/* 알림톡 URL - 예약확정안내 */}
-        <div className="bg-indigo-50 rounded-xl px-4 py-3 text-xs text-indigo-700 space-y-1.5">
-          <div className="flex items-center gap-1.5 mb-1">
-            <span>🔗</span>
-            <p className="font-semibold">알림톡 링크용 URL · 예약 확정 안내</p>
-          </div>
-          {perRoom.notice_confirm ? (
-            rooms.map((r, i) => (
-              <div key={i}>
-                <p className="text-indigo-400 mb-0.5">{r.name}</p>
-                <p className="font-mono break-all select-all">{origin}/s/{property.slug}/notice-confirm?room={encodeURIComponent(r.name)}</p>
-              </div>
-            ))
-          ) : (
-            <p className="font-mono break-all select-all">{origin}/s/{property.slug}/notice-confirm</p>
-          )}
-        </div>
-
-        {/* 알림톡 URL - 체크인당일안내 */}
-        <div className="bg-indigo-50 rounded-xl px-4 py-3 text-xs text-indigo-700 space-y-1.5">
-          <div className="flex items-center gap-1.5 mb-1">
-            <span>🔗</span>
-            <p className="font-semibold">알림톡 링크용 URL · 체크인 당일 안내</p>
-          </div>
-          {perRoom.notice_checkin ? (
-            rooms.map((r, i) => (
-              <div key={i}>
-                <p className="text-indigo-400 mb-0.5">{r.name}</p>
-                <p className="font-mono break-all select-all">{origin}/s/{property.slug}/notice-checkin?room={encodeURIComponent(r.name)}</p>
-              </div>
-            ))
-          ) : (
-            <p className="font-mono break-all select-all">{origin}/s/{property.slug}/notice-checkin</p>
-          )}
-        </div>
 
         {/* 저장 버튼 */}
         <button
