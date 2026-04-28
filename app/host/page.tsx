@@ -355,7 +355,7 @@ export default function HostDashboard() {
               <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center">
                 <p className="text-3xl mb-3">💬</p>
                 <p className="font-semibold text-gray-700 mb-1">아직 등록된 리뷰가 없습니다</p>
-                <p className="text-sm text-gray-400">체크아웃 후 게스트에게 리뷰 링크를 공유해보세요</p>
+                <p className="text-sm text-gray-400 leading-relaxed">리뷰는 체크인 당일 게스트에게 발송되는<br />알림톡을 통해 작성할 수 있어요.</p>
               </div>
             ) : reviews.map((r) => (
               <div key={r.id} className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
