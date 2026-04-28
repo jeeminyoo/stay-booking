@@ -307,3 +307,8 @@ export async function insertReview(review: Omit<Review, "id" | "created_at">): P
   const { error } = await supabase.from("reviews").insert(row);
   if (error) throw error;
 }
+
+export async function updateReview(id: string, updates: { rating: number; content: string }): Promise<void> {
+  const { error } = await supabase.from("reviews").update(updates).eq("id", id);
+  if (error) throw error;
+}

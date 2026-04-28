@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Logo from "@/components/Logo";
-import { fetchBookingById, fetchReviewByBookingId, insertReview } from "@/lib/db";
-import { Booking } from "@/lib/types";
+import { fetchBookingById, fetchReviewByBookingId, insertReview, updateReview } from "@/lib/db";
+import { Booking, Review } from "@/lib/types";
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
@@ -13,11 +13,12 @@ function formatDate(dateStr: string) {
 
 const STAR_LABELS = ["", "별로였어요", "아쉬웠어요", "괜찮았어요", "좋았어요", "최고였어요"];
 
-type PageState = "loading" | "not_found" | "too_early" | "already" | "form" | "done";
+type PageState = "loading" | "not_found" | "too_early" | "form" | "done";
 
 export default function ReviewPage() {
   const { bookingId } = useParams<{ bookingId: string }>();
   const [booking, setBooking] = useState<Booking | null>(null);
+  const [existingReview, setExistingReview] = useState<Review | null>(null);
   const [pageState, setPageState] = useState<PageState>("loading");
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -27,16 +28,20 @@ export default function ReviewPage() {
   useEffect(() => {
     async function load() {
       const b = await fetchBookingById(bookingId);
-      if (!b) { setPageState("not_found"); return; }
-      if (b.status === "cancelled" || b.status === "auto_cancelled") { setPageState("not_found"); return; }
+      if (!b || b.status === "cancelled" || b.status === "auto_cancelled") {
+        setPageState("not_found"); return;
+      }
 
       const today = new Date().toISOString().split("T")[0];
-      if (b.check_out > today) { setBooking(b); setPageState("too_early"); return; }
+      if (b.check_in > today) { setBooking(b); setPageState("too_early"); return; }
 
       const existing = await fetchReviewByBookingId(bookingId);
-      if (existing) { setPageState("already"); return; }
-
       setBooking(b);
+      if (existing) {
+        setExistingReview(existing);
+        setRating(existing.rating);
+        setContent(existing.content);
+      }
       setPageState("form");
     }
     load();
@@ -46,17 +51,22 @@ export default function ReviewPage() {
     if (!booking || rating === 0 || !content.trim()) return;
     setSubmitting(true);
     try {
-      await insertReview({
-        booking_id: booking.id,
-        property_id: booking.property_id,
-        property_name: booking.property_name,
-        room_name: booking.room_name,
-        guest_name: booking.guest_name,
-        check_in: booking.check_in,
-        check_out: booking.check_out,
-        rating,
-        content: content.trim(),
-      });
+      if (existingReview) {
+        await updateReview(existingReview.id, { rating, content: content.trim() });
+        setExistingReview(prev => prev ? { ...prev, rating, content: content.trim() } : prev);
+      } else {
+        await insertReview({
+          booking_id: booking.id,
+          property_id: booking.property_id,
+          property_name: booking.property_name,
+          room_name: booking.room_name,
+          guest_name: booking.guest_name,
+          check_in: booking.check_in,
+          check_out: booking.check_out,
+          rating,
+          content: content.trim(),
+        });
+      }
       setPageState("done");
     } finally {
       setSubmitting(false);
@@ -82,24 +92,11 @@ export default function ReviewPage() {
       </header>
       <main className="max-w-lg mx-auto px-4 py-12 text-center space-y-3">
         <p className="text-3xl">⏳</p>
-        <p className="font-bold text-gray-900">아직 체크아웃 전이에요</p>
-        <p className="text-sm text-gray-400">체크아웃 이후에 리뷰를 작성할 수 있습니다.</p>
+        <p className="font-bold text-gray-900">아직 체크인 전이에요</p>
+        <p className="text-sm text-gray-400">체크인 당일부터 리뷰를 작성할 수 있습니다.</p>
         {booking && (
-          <p className="text-sm font-semibold text-gray-600">체크아웃: {formatDate(booking.check_out)}</p>
+          <p className="text-sm font-semibold text-gray-600">체크인: {formatDate(booking.check_in)}</p>
         )}
-      </main>
-    </div>
-  );
-
-  if (pageState === "already") return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white sticky top-0 z-10">
-        <div className="max-w-lg mx-auto px-4 py-2"><Logo /></div>
-      </header>
-      <main className="max-w-lg mx-auto px-4 py-12 text-center space-y-3">
-        <p className="text-3xl">✅</p>
-        <p className="font-bold text-gray-900">이미 리뷰를 작성하셨습니다</p>
-        <p className="text-sm text-gray-400">소중한 의견 감사합니다.</p>
       </main>
     </div>
   );
@@ -111,8 +108,12 @@ export default function ReviewPage() {
       </header>
       <main className="max-w-lg mx-auto px-4 py-12 text-center space-y-3">
         <p className="text-4xl">🙏</p>
-        <p className="font-bold text-gray-900 text-lg">리뷰가 등록되었습니다</p>
-        <p className="text-sm text-gray-400 leading-relaxed">소중한 후기를 남겨주셔서 감사합니다.<br />더 나은 서비스로 보답하겠습니다.</p>
+        <p className="font-bold text-gray-900 text-lg">
+          {existingReview ? "리뷰가 수정되었습니다" : "리뷰가 등록되었습니다"}
+        </p>
+        <p className="text-sm text-gray-400 leading-relaxed">
+          소중한 후기를 남겨주셔서 감사합니다.<br />더 나은 서비스로 보답하겠습니다.
+        </p>
       </main>
     </div>
   );
@@ -120,6 +121,7 @@ export default function ReviewPage() {
   if (!booking) return null;
 
   const displayRating = hoverRating || rating;
+  const isEditing = !!existingReview;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -133,7 +135,9 @@ export default function ReviewPage() {
       <main className="max-w-lg mx-auto px-4 py-8 space-y-4">
 
         <div>
-          <h1 className="text-2xl font-black text-gray-900 mb-1">투숙 후기</h1>
+          <h1 className="text-2xl font-black text-gray-900 mb-1">
+            {isEditing ? "후기 수정" : "투숙 후기"}
+          </h1>
           <p className="text-sm text-gray-400">호스트에게만 전달되는 솔직한 후기를 남겨주세요</p>
         </div>
 
@@ -187,7 +191,7 @@ export default function ReviewPage() {
           onClick={handleSubmit}
           disabled={submitting || rating === 0 || !content.trim()}
           className="w-full py-4 rounded-2xl text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors disabled:opacity-40">
-          {submitting ? "등록 중..." : "후기 등록"}
+          {submitting ? "저장 중..." : isEditing ? "후기 수정" : "후기 등록"}
         </button>
 
       </main>
