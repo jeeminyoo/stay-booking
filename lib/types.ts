@@ -214,6 +214,22 @@ export interface WeeklyBlockException {
   created_at: string;
 }
 
+// ─── Review ──────────────────────────────────────────────────────────────────
+
+export interface Review {
+  id: string;
+  booking_id: string;
+  property_id: string;
+  property_name: string;
+  room_name: string;
+  guest_name: string;
+  check_in: string;
+  check_out: string;
+  rating: number;
+  content: string;
+  created_at: string;
+}
+
 // ─── Saved Property (localStorage) ───────────────────────────────────────────
 
 export type SavedProperty = PropertyDraft & {

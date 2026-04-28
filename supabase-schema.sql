@@ -163,3 +163,24 @@ alter table properties add column if not exists notice_confirm text not null def
 alter table properties add column if not exists notice_checkin text not null default '';
 alter table properties add column if not exists notice_confirm_per_room boolean not null default false;
 alter table properties add column if not exists notice_checkin_per_room boolean not null default false;
+
+-- ─── Reviews (게스트 리뷰) ──────────────────────────────────────────────────────
+
+create table if not exists reviews (
+  id           text primary key,
+  booking_id   text not null unique,
+  property_id  text not null,
+  property_name text not null,
+  room_name    text not null,
+  guest_name   text not null,
+  check_in     date not null,
+  check_out    date not null,
+  rating       integer not null check (rating >= 1 and rating <= 5),
+  content      text not null,
+  created_at   timestamptz not null default now()
+);
+
+create index if not exists idx_reviews_property on reviews(property_id);
+
+alter table reviews enable row level security;
+create policy "allow_all" on reviews for all using (true) with check (true);

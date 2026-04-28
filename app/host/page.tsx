@@ -4,9 +4,9 @@ import { useEffect, useState, Suspense, useRef, useCallback } from "react";
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import { useRouter, useSearchParams } from "next/navigation";
-import { SavedProperty, KakaoUser, Booking, HostSettings } from "@/lib/types";
+import { SavedProperty, KakaoUser, Booking, HostSettings, Review } from "@/lib/types";
 import { getUser, clearUser } from "@/lib/auth";
-import { fetchHostProperties, deletePropertyById, patchBooking, fetchHostSettings, upsertHostSettings, patchPropertyActive, fetchHostBookingsPaged } from "@/lib/db";
+import { fetchHostProperties, deletePropertyById, patchBooking, fetchHostSettings, upsertHostSettings, patchPropertyActive, fetchHostBookingsPaged, fetchHostReviews } from "@/lib/db";
 import { expireOverdueBookings } from "@/lib/data";
 import AvailabilityTab from "@/components/host/AvailabilityTab";
 
@@ -73,7 +73,9 @@ export default function HostDashboard() {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [hasDraft, setHasDraft] = useState(false);
   const [checked, setChecked] = useState(false);
-  const [tab, setTab] = useState<"bookings" | "availability" | "properties" | "settings">("bookings");
+  const [tab, setTab] = useState<"bookings" | "availability" | "properties" | "reviews" | "settings">("bookings");
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewsLoaded, setReviewsLoaded] = useState(false);
   const [settings, setSettings] = useState<HostSettings | null>(null);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
@@ -323,9 +325,15 @@ export default function HostDashboard() {
             { key: "bookings",     label: "예약 알림" },
             { key: "availability", label: "예약 현황" },
             { key: "properties",   label: "내 숙소" },
+            { key: "reviews",      label: "리뷰" },
             { key: "settings",     label: "설정" },
           ].map(({ key, label }) => (
-            <button key={key} onClick={() => setTab(key as typeof tab)}
+            <button key={key} onClick={() => {
+              setTab(key as typeof tab);
+              if (key === "reviews" && !reviewsLoaded && propertyIds.length > 0) {
+                fetchHostReviews(propertyIds).then(r => { setReviews(r); setReviewsLoaded(true); });
+              }
+            }}
               className={`relative flex-1 py-2.5 text-sm font-semibold transition-colors text-center border-b-2 -mb-px
                 ${tab === key ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-400 hover:text-gray-600"}`}>
               {label}
@@ -335,6 +343,42 @@ export default function HostDashboard() {
             </button>
           ))}
         </div>
+
+        {/* ─── 리뷰 탭 ─── */}
+        {tab === "reviews" && (
+          <div className="space-y-4">
+            {!reviewsLoaded ? (
+              <div className="flex justify-center py-12">
+                <div className="w-7 h-7 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : reviews.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center">
+                <p className="text-3xl mb-3">💬</p>
+                <p className="font-semibold text-gray-700 mb-1">아직 등록된 리뷰가 없습니다</p>
+                <p className="text-sm text-gray-400">체크아웃 후 게스트에게 리뷰 링크를 공유해보세요</p>
+              </div>
+            ) : reviews.map((r) => (
+              <div key={r.id} className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-bold text-gray-900 text-sm">{r.property_name}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{r.room_name} · {r.guest_name}</p>
+                    <p className="text-xs text-gray-400">{r.check_in} ~ {r.check_out}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="flex gap-0.5 justify-end">
+                      {[1,2,3,4,5].map(s => (
+                        <span key={s} className={`text-lg ${s <= r.rating ? "text-yellow-400" : "text-gray-200"}`}>★</span>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-gray-300 mt-0.5">{new Date(r.created_at).toLocaleDateString("ko-KR")}</p>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap border-t border-gray-50 pt-3">{r.content}</p>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* ─── 예약 현황 탭 ─── */}
         {tab === "availability" && user && (

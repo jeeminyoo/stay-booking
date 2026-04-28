@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { SavedProperty, Booking, HostSettings, ManualBlock, WeeklyBlock, WeeklyBlockException } from "./types";
+import { SavedProperty, Booking, HostSettings, ManualBlock, WeeklyBlock, WeeklyBlockException, Review } from "./types";
 
 // ─── Properties ──────────────────────────────────────────────────────────────
 
@@ -276,5 +276,34 @@ export async function createWeeklyBlockException(
 
 export async function deleteWeeklyBlockException(id: string): Promise<void> {
   const { error } = await supabase.from("weekly_block_exceptions").delete().eq("id", id);
+  if (error) throw error;
+}
+
+// ─── Reviews ─────────────────────────────────────────────────────────────────
+
+export async function fetchReviewByBookingId(bookingId: string): Promise<Review | null> {
+  const { data, error } = await supabase
+    .from("reviews")
+    .select("*")
+    .eq("booking_id", bookingId)
+    .single();
+  if (error) return null;
+  return data as Review;
+}
+
+export async function fetchHostReviews(propertyIds: string[]): Promise<Review[]> {
+  if (propertyIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from("reviews")
+    .select("*")
+    .in("property_id", propertyIds)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as Review[];
+}
+
+export async function insertReview(review: Omit<Review, "id" | "created_at">): Promise<void> {
+  const row = { ...review, id: `RV-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, created_at: new Date().toISOString() };
+  const { error } = await supabase.from("reviews").insert(row);
   if (error) throw error;
 }
