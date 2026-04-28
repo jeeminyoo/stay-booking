@@ -649,17 +649,18 @@ export default function HostDashboard() {
                 </p>
               </div>
               <div className="px-5 py-4">
-                <div className="flex gap-2 flex-wrap">
-                  {AUTO_CANCEL_OPTIONS.map(opt => (
-                    <button key={opt.value} type="button"
-                      onClick={() => setSettings(s => s ? { ...s, auto_cancel_minutes: opt.value } : s)}
-                      className={`px-4 py-2 rounded-xl text-sm font-medium border transition-colors
-                        ${settings.auto_cancel_minutes === opt.value
-                          ? "bg-indigo-600 text-white border-indigo-600"
-                          : "bg-white text-gray-700 border-gray-200 hover:border-indigo-300"}`}>
-                      {opt.label}
-                    </button>
-                  ))}
+                <div className="relative inline-block">
+                  <select
+                    value={settings.auto_cancel_minutes}
+                    onChange={e => setSettings(s => s ? { ...s, auto_cancel_minutes: Number(e.target.value) } : s)}
+                    className="appearance-none border border-gray-200 rounded-xl pl-3 pr-10 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
+                    {AUTO_CANCEL_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                  <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
                 </div>
               </div>
             </div>
