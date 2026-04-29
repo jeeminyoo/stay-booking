@@ -76,6 +76,7 @@ export default function HostDashboard() {
   const [hasDraft, setHasDraft] = useState(false);
   const [checked, setChecked] = useState(false);
   const [tab, setTab] = useState<"bookings" | "availability" | "properties" | "reviews" | "settings">("bookings");
+  const [settingsTab, setSettingsTab] = useState<"account" | "property">("account");
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewsLoaded, setReviewsLoaded] = useState(false);
   const [settings, setSettings] = useState<HostSettings | null>(null);
@@ -647,22 +648,74 @@ export default function HostDashboard() {
         {tab === "settings" && settings && (
           <div className="max-w-xl space-y-4">
 
-            {/* 휴대폰 번호 */}
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-50">
-                <p className="font-semibold text-gray-900 text-sm">휴대폰 번호</p>
-                <p className="text-xs text-gray-400 mt-0.5">카카오 알림톡 수신에 사용됩니다.</p>
-              </div>
-              <div className="px-5 py-4">
-                <input
-                  type="tel"
-                  value={settings.host_phone ?? ""}
-                  onChange={e => setSettings(s => s ? { ...s, host_phone: e.target.value } : s)}
-                  placeholder="010-0000-0000"
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
-                />
-              </div>
+            {/* 서브탭 */}
+            <div className="flex gap-2">
+              {(["account", "property"] as const).map(t => (
+                <button
+                  key={t}
+                  onClick={() => setSettingsTab(t)}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                    settingsTab === t
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white border border-gray-200 text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  {t === "account" ? "판매자 계정" : "숙소 설정"}
+                </button>
+              ))}
             </div>
+
+            {/* ── 판매자 계정 ── */}
+            {settingsTab === "account" && (
+              <div className="space-y-4">
+
+                {/* 휴대폰 번호 */}
+                <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                  <div className="px-5 py-4 border-b border-gray-50">
+                    <p className="font-semibold text-gray-900 text-sm">휴대폰 번호</p>
+                    <p className="text-xs text-gray-400 mt-0.5">카카오 알림톡 수신에 사용됩니다.</p>
+                  </div>
+                  <div className="px-5 py-4">
+                    <input
+                      type="tel"
+                      value={settings.host_phone ?? ""}
+                      onChange={e => setSettings(s => s ? { ...s, host_phone: e.target.value } : s)}
+                      placeholder="010-0000-0000"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                <button onClick={saveSettings} disabled={settingsSaving}
+                  className={`w-full py-3.5 rounded-2xl text-sm font-bold transition-colors ${
+                    settingsSaved ? "bg-green-600 text-white" : "bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
+                  }`}>
+                  {settingsSaving ? "저장 중..." : settingsSaved ? "저장됨 ✓" : "저장"}
+                </button>
+
+                {/* 로그아웃 */}
+                <button onClick={handleLogout}
+                  className="w-full py-3.5 rounded-2xl text-sm font-semibold border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
+                  로그아웃
+                </button>
+
+                {/* 회원탈퇴 */}
+                <button
+                  onClick={() => {
+                    if (confirm("정말 탈퇴하시겠습니까?\n탈퇴 후에는 계정 정보를 복구할 수 없습니다.")) {
+                      alert("탈퇴 요청이 접수되었습니다. 관리자가 확인 후 처리해 드립니다.");
+                    }
+                  }}
+                  className="w-full py-3 text-xs text-gray-300 hover:text-red-400 transition-colors">
+                  회원탈퇴
+                </button>
+
+              </div>
+            )}
+
+            {/* ── 숙소 설정 ── */}
+            {settingsTab === "property" && (
+              <div className="space-y-4">
 
             {/* 자동취소 시간 */}
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
@@ -820,13 +873,17 @@ export default function HostDashboard() {
               </div>
             </div>
 
-            <button onClick={saveSettings} disabled={settingsSaving || (() => { const ns = (settings.long_stay_discounts ?? []).map(d => d.nights); return ns.some((n, i) => ns.indexOf(n) !== i); })()}
-              className={`w-full py-3.5 rounded-2xl text-sm font-bold transition-colors
-                ${settingsSaved
-                  ? "bg-green-600 text-white"
-                  : "bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"}`}>
-              {settingsSaving ? "저장 중..." : settingsSaved ? "저장됨 ✓" : "설정 저장"}
-            </button>
+                <button onClick={saveSettings} disabled={settingsSaving || (() => { const ns = (settings.long_stay_discounts ?? []).map(d => d.nights); return ns.some((n, i) => ns.indexOf(n) !== i); })()}
+                  className={`w-full py-3.5 rounded-2xl text-sm font-bold transition-colors
+                    ${settingsSaved
+                      ? "bg-green-600 text-white"
+                      : "bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"}`}>
+                  {settingsSaving ? "저장 중..." : settingsSaved ? "저장됨 ✓" : "설정 저장"}
+                </button>
+
+              </div>
+            )}
+
           </div>
         )}
       </main>
