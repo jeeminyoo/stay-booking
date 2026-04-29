@@ -28,6 +28,9 @@ export interface HostSettings {
   updated_at: string;
   long_stay_discounts: LongStayDiscount[];
   host_phone?: string;          // 알림톡 수신 번호
+  booking_window_type: "none" | "fixed" | "rolling"; // 예약 가능 기간 유형
+  booking_window_end?: string;    // YYYY-MM-DD (fixed 시 사용)
+  booking_window_months?: number; // 개월 수 (rolling 시 사용)
 }
 
 export interface Booking {

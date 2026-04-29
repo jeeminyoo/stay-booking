@@ -154,6 +154,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
   }, [infoError, phoneError]);
   const [autoCancelMinutes, setAutoCancelMinutes] = useState(60);
   const [longStayDiscounts, setLongStayDiscounts] = useState<import("@/lib/types").LongStayDiscount[]>([]);
+  const [bookingMaxDate, setBookingMaxDate] = useState<string | undefined>(undefined);
   const [descExpanded, setDescExpanded] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -184,6 +185,13 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
       const hs = await fetchHostSettings(found.host_id);
       if (hs?.auto_cancel_minutes) setAutoCancelMinutes(hs.auto_cancel_minutes);
       if (hs?.long_stay_discounts?.length) setLongStayDiscounts(hs.long_stay_discounts);
+      if (hs?.booking_window_type === "fixed" && hs.booking_window_end) {
+        setBookingMaxDate(hs.booking_window_end);
+      } else if (hs?.booking_window_type === "rolling" && hs.booking_window_months) {
+        const d = new Date();
+        d.setMonth(d.getMonth() + hs.booking_window_months);
+        setBookingMaxDate(d.toISOString().split("T")[0]);
+      }
       if (found.rooms.length === 1) {
         const room = found.rooms[0];
         setSelectedRoom(room);
@@ -526,6 +534,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
                 onRangeSelect={(ci, co) => { setCheckIn(ci); setCheckOut(co); }}
                 selectedCheckIn={checkIn}
                 selectedCheckOut={checkOut}
+                maxDate={bookingMaxDate}
               />
               {(checkIn || checkOut) && (
                 <div className="flex items-center justify-center gap-3 mt-3 pt-3 border-t border-gray-100">

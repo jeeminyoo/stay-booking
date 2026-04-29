@@ -59,6 +59,7 @@ const DEFAULT_SETTINGS: Omit<HostSettings, "host_id" | "updated_at"> = {
   unavailable_start: "21:00",
   unavailable_end: "08:00",
   long_stay_discounts: [],
+  booking_window_type: "none",
 };
 
 export default function HostDashboard() {
@@ -699,6 +700,57 @@ export default function HostDashboard() {
                     onChange={e => setSettings(s => s ? { ...s, unavailable_end: e.target.value } : s)}
                     className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent" />
                 </div>
+              </div>
+            </div>
+
+            {/* 예약 가능 기간 */}
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-50">
+                <p className="font-semibold text-gray-900 text-sm">예약 가능 기간</p>
+                <p className="text-xs text-gray-400 mt-0.5">게스트가 예약할 수 있는 날짜 범위를 제한합니다.</p>
+              </div>
+              <div className="px-5 py-4 space-y-3">
+                <div className="relative inline-block w-full">
+                  <select
+                    value={settings.booking_window_type ?? "none"}
+                    onChange={e => setSettings(s => s ? { ...s, booking_window_type: e.target.value as "none" | "fixed" | "rolling" } : s)}
+                    className="appearance-none w-full border border-gray-200 rounded-xl pl-3 pr-10 py-2.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                  >
+                    <option value="none">제한 없음</option>
+                    <option value="fixed">특정 날짜까지</option>
+                    <option value="rolling">오늘부터 n개월</option>
+                  </select>
+                  <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </div>
+                {settings.booking_window_type === "fixed" && (
+                  <input
+                    type="date"
+                    value={settings.booking_window_end ?? ""}
+                    onChange={e => setSettings(s => s ? { ...s, booking_window_end: e.target.value } : s)}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                  />
+                )}
+                {settings.booking_window_type === "rolling" && (
+                  <div className="relative inline-block w-full">
+                    <select
+                      value={settings.booking_window_months ?? 3}
+                      onChange={e => setSettings(s => s ? { ...s, booking_window_months: Number(e.target.value) } : s)}
+                      className="appearance-none w-full border border-gray-200 rounded-xl pl-3 pr-10 py-2.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                    >
+                      <option value={1}>1개월</option>
+                      <option value={2}>2개월</option>
+                      <option value={3}>3개월</option>
+                      <option value={6}>6개월</option>
+                      <option value={12}>1년</option>
+                      <option value={24}>2년</option>
+                    </select>
+                    <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </div>
+                )}
               </div>
             </div>
 

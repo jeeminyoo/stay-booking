@@ -8,6 +8,7 @@ interface Props {
   onRangeSelect: (checkIn: string, checkOut: string) => void;
   selectedCheckIn: string;
   selectedCheckOut: string;
+  maxDate?: string; // YYYY-MM-DD, 이 날짜 이후는 선택 불가
 }
 
 function toKSTDateString(date: Date): string {
@@ -22,6 +23,7 @@ export default function BookingCalendar({
   onRangeSelect,
   selectedCheckIn,
   selectedCheckOut,
+  maxDate,
 }: Props) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -50,6 +52,11 @@ export default function BookingCalendar({
     return dateStr < toKSTDateString(today);
   }
 
+  function isBeyondWindow(dateStr: string) {
+    if (!maxDate) return false;
+    return dateStr > maxDate;
+  }
+
   function isInRange(dateStr: string) {
     const end = hoverDate || selectedCheckOut;
     if (!selectedCheckIn || !end) return false;
@@ -60,7 +67,7 @@ export default function BookingCalendar({
   }
 
   function handleClick(dateStr: string) {
-    if (isBlocked(dateStr) || isPast(dateStr)) return;
+    if (isBlocked(dateStr) || isPast(dateStr) || isBeyondWindow(dateStr)) return;
 
     if (!selectedCheckIn || (selectedCheckIn && selectedCheckOut)) {
       onRangeSelect(dateStr, "");
@@ -139,6 +146,7 @@ export default function BookingCalendar({
 
           const blocked = isBlocked(dateStr);
           const past = isPast(dateStr);
+          const beyondWindow = isBeyondWindow(dateStr);
           const isCheckIn = dateStr === selectedCheckIn;
           const isCheckOut = dateStr === selectedCheckOut;
           const inRange = isInRange(dateStr);
@@ -150,7 +158,7 @@ export default function BookingCalendar({
           let cellClass =
             "relative flex items-center justify-center h-9 text-sm transition-colors";
 
-          if (blocked || past) {
+          if (blocked || past || beyondWindow) {
             cellClass += " text-gray-300 cursor-not-allowed line-through";
           } else if (isCheckIn || isCheckOut) {
             cellClass += " bg-indigo-600 text-white font-bold rounded-full cursor-pointer z-10";
