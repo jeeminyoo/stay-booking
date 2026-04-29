@@ -252,6 +252,9 @@ export default function HostDashboard() {
       await upsertHostSettings({ ...settings, host_id: user.id, updated_at: new Date().toISOString() });
       setSettingsSaved(true);
       setTimeout(() => setSettingsSaved(false), 2000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      alert("저장 실패: " + msg);
     } finally {
       setSettingsSaving(false);
     }
