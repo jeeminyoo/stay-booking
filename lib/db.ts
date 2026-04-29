@@ -312,3 +312,23 @@ export async function updateReview(id: string, updates: { rating: number; conten
   const { error } = await supabase.from("reviews").update(updates).eq("id", id);
   if (error) throw error;
 }
+
+// ─── Admin ────────────────────────────────────────────────────────────────────
+
+export async function fetchAllPropertiesAdmin(): Promise<SavedProperty[]> {
+  const { data, error } = await supabase
+    .from("properties")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as SavedProperty[];
+}
+
+export async function fetchAllBookingsAdmin(): Promise<import("./types").Booking[]> {
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as import("./types").Booking[];
+}
