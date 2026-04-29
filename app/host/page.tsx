@@ -80,6 +80,7 @@ export default function HostDashboard() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewsLoaded, setReviewsLoaded] = useState(false);
   const [settings, setSettings] = useState<HostSettings | null>(null);
+  const [savedSettings, setSavedSettings] = useState<HostSettings | null>(null);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
   const [toast, setToast] = useState("");
@@ -118,7 +119,9 @@ export default function HostDashboard() {
       return ids;
     }).then((ids) => loadBookings(ids, null, 0, true)).catch(console.error);
     fetchHostSettings(u.id).then((s) => {
-      setSettings(s ?? { host_id: u.id, updated_at: "", ...DEFAULT_SETTINGS });
+      const loaded = s ?? { host_id: u.id, updated_at: "", ...DEFAULT_SETTINGS };
+      setSettings(loaded);
+      setSavedSettings(loaded);
     });
   }, []);
 
@@ -249,7 +252,9 @@ export default function HostDashboard() {
     }
     setSettingsSaving(true);
     try {
-      await upsertHostSettings({ ...settings, host_id: user.id, updated_at: new Date().toISOString() });
+      const updated = { ...settings, host_id: user.id, updated_at: new Date().toISOString() };
+      await upsertHostSettings(updated);
+      setSavedSettings(updated);
       setSettingsSaved(true);
       setTimeout(() => setSettingsSaved(false), 2000);
     } catch (err: unknown) {
@@ -697,7 +702,7 @@ export default function HostDashboard() {
                 </div>
 
                 <div className="pt-8 space-y-3">
-                  <button onClick={saveSettings} disabled={settingsSaving}
+                  <button onClick={saveSettings} disabled={settingsSaving || JSON.stringify(settings) === JSON.stringify(savedSettings)}
                     className={`w-full py-3.5 rounded-2xl text-sm font-bold transition-colors ${
                       settingsSaved ? "bg-green-600 text-white" : "bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
                     }`}>
@@ -885,7 +890,7 @@ export default function HostDashboard() {
               </div>
             </div>
 
-                <button onClick={saveSettings} disabled={settingsSaving || (() => { const ns = (settings.long_stay_discounts ?? []).map(d => d.nights); return ns.some((n, i) => ns.indexOf(n) !== i); })()}
+                <button onClick={saveSettings} disabled={settingsSaving || JSON.stringify(settings) === JSON.stringify(savedSettings) || (() => { const ns = (settings.long_stay_discounts ?? []).map(d => d.nights); return ns.some((n, i) => ns.indexOf(n) !== i); })()}
                   className={`w-full py-3.5 rounded-2xl text-sm font-bold transition-colors
                     ${settingsSaved
                       ? "bg-green-600 text-white"
