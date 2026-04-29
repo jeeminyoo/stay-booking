@@ -30,7 +30,7 @@ function nightCount(checkIn: string, checkOut: string) {
   return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-type PageState = "loading" | "not_found" | "waiting" | "requested" | "confirmed" | "cancelled";
+type PageState = "loading" | "not_found" | "waiting" | "requested" | "confirmed" | "auto_cancelled" | "cancelled";
 
 export default function BookingPage() {
   const { id } = useParams<{ id: string }>();
@@ -47,6 +47,7 @@ export default function BookingPage() {
       if (b.status === "waiting_for_deposit") setPageState("waiting");
       else if (b.status === "deposit_requested") setPageState("requested");
       else if (b.status === "confirmed") setPageState("confirmed");
+      else if (b.status === "auto_cancelled") setPageState("auto_cancelled");
       else setPageState("cancelled");
     });
   }, [id]);
@@ -226,6 +227,14 @@ export default function BookingPage() {
             <p className="text-2xl">✅</p>
             <p className="font-bold text-gray-900">입금 확인 요청 완료</p>
             <p className="text-sm text-gray-400 leading-relaxed">호스트가 입금을 확인한 후 예약을 확정해드립니다.</p>
+          </div>
+        )}
+
+        {pageState === "auto_cancelled" && (
+          <div className="bg-white rounded-2xl p-5 text-center space-y-2">
+            <p className="text-2xl">⏰</p>
+            <p className="font-bold text-gray-900">입금 기한이 만료되어 자동 취소되었습니다</p>
+            <p className="text-sm text-gray-400 leading-relaxed">다시 예약을 진행해주세요.</p>
           </div>
         )}
 

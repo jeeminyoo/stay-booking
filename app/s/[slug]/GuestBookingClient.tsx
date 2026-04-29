@@ -275,6 +275,11 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
       }
 
       const calc = priceCalc();
+      if (!calc || calc.total <= 0) {
+        setInfoError("요금을 계산할 수 없습니다. 페이지를 새로고침 후 다시 시도해주세요.");
+        setLoading(false);
+        return;
+      }
       try { localStorage.setItem("guest_phone", guestPhone); } catch {}
       const newBooking = await createBooking({
         property_id: property.id,
