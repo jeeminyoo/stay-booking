@@ -240,6 +240,11 @@ export default function HostDashboard() {
 
   async function saveSettings() {
     if (!settings || !user) return;
+    const phone = settings.host_phone?.trim() ?? "";
+    if (phone && !/^01[0-9]-?\d{3,4}-?\d{4}$/.test(phone)) {
+      alert("휴대폰 번호 형식이 올바르지 않습니다.\n예) 010-1234-5678");
+      return;
+    }
     setSettingsSaving(true);
     try {
       await upsertHostSettings({ ...settings, host_id: user.id, updated_at: new Date().toISOString() });
