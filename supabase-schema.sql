@@ -165,6 +165,7 @@ alter table properties add column if not exists notice_confirm_per_room boolean 
 alter table properties add column if not exists notice_checkin_per_room boolean not null default false;
 alter table host_settings add column if not exists long_stay_discounts jsonb not null default '[]';
 alter table host_settings add column if not exists host_phone text not null default '';
+alter table host_settings add column if not exists host_name text not null default '';
 alter table host_settings add column if not exists booking_window_type text not null default 'none';
 alter table host_settings add column if not exists booking_window_end date;
 alter table host_settings add column if not exists booking_window_months integer;

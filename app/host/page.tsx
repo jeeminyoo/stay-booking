@@ -252,7 +252,7 @@ export default function HostDashboard() {
     }
     setSettingsSaving(true);
     try {
-      const updated = { ...settings, host_id: user.id, updated_at: new Date().toISOString() };
+      const updated = { ...settings, host_id: user.id, host_name: user.nickname, updated_at: new Date().toISOString() };
       await upsertHostSettings(updated);
       setSavedSettings(updated);
       setSettingsSaved(true);

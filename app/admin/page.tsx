@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getUser } from "@/lib/auth";
-import { fetchAllPropertiesAdmin, fetchAllBookingsAdmin } from "@/lib/db";
-import { SavedProperty, Booking, KakaoUser } from "@/lib/types";
+import { fetchAllPropertiesAdmin, fetchAllBookingsAdmin, fetchAllHostSettingsAdmin } from "@/lib/db";
+import { SavedProperty, Booking, KakaoUser, HostSettings } from "@/lib/types";
 
 const ADMIN_ID = "4855799810";
 
@@ -34,6 +34,7 @@ export default function AdminPage() {
   const [checked, setChecked] = useState(false);
   const [properties, setProperties] = useState<SavedProperty[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [hostSettings, setHostSettings] = useState<HostSettings[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"overview" | "bookings" | "properties">("overview");
   const [search, setSearch] = useState("");
@@ -50,10 +51,11 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!checked) return;
-    Promise.all([fetchAllPropertiesAdmin(), fetchAllBookingsAdmin()])
-      .then(([props, bks]) => {
+    Promise.all([fetchAllPropertiesAdmin(), fetchAllBookingsAdmin(), fetchAllHostSettingsAdmin()])
+      .then(([props, bks, hs]) => {
         setProperties(props);
         setBookings(bks);
+        setHostSettings(hs);
       })
       .finally(() => setLoading(false));
   }, [checked]);
@@ -195,10 +197,11 @@ export default function AdminPage() {
                 {Array.from(new Set(properties.map(p => p.host_id))).map(hostId => {
                   const hostProps = properties.filter(p => p.host_id === hostId);
                   const firstProp = hostProps[0];
+                  const hs = hostSettings.find(s => s.host_id === hostId);
                   return (
                     <div key={hostId} className="flex items-center gap-3 text-sm">
                       <div className="flex-1 min-w-0">
-                        <p className="text-gray-800 font-medium truncate">{hostProps[0]?.name ?? "-"}</p>
+                        <p className="text-gray-800 font-medium truncate">{hs?.host_name ?? "-"}</p>
                         <p className="text-xs text-gray-400 mt-0.5">카카오 ID: {hostId}</p>
                       </div>
                       <span className="text-gray-400 text-xs shrink-0">숙소 {hostProps.length}개</span>

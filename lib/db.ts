@@ -332,3 +332,11 @@ export async function fetchAllBookingsAdmin(): Promise<import("./types").Booking
   if (error) throw error;
   return (data ?? []) as import("./types").Booking[];
 }
+
+export async function fetchAllHostSettingsAdmin(): Promise<import("./types").HostSettings[]> {
+  const { data, error } = await supabase
+    .from("host_settings")
+    .select("host_id, host_name, host_phone");
+  if (error) return [];
+  return (data ?? []) as import("./types").HostSettings[];
+}
