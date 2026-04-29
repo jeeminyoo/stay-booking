@@ -641,6 +641,23 @@ export default function HostDashboard() {
         {tab === "settings" && settings && (
           <div className="max-w-xl space-y-4">
 
+            {/* 휴대폰 번호 */}
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-50">
+                <p className="font-semibold text-gray-900 text-sm">휴대폰 번호</p>
+                <p className="text-xs text-gray-400 mt-0.5">카카오 알림톡 수신에 사용됩니다.</p>
+              </div>
+              <div className="px-5 py-4">
+                <input
+                  type="tel"
+                  value={settings.host_phone ?? ""}
+                  onChange={e => setSettings(s => s ? { ...s, host_phone: e.target.value } : s)}
+                  placeholder="010-0000-0000"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                />
+              </div>
+            </div>
+
             {/* 자동취소 시간 */}
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
               <div className="px-5 py-4 border-b border-gray-50">

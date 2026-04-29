@@ -27,6 +27,7 @@ export interface HostSettings {
   unavailable_end: string;      // "HH:MM"
   updated_at: string;
   long_stay_discounts: LongStayDiscount[];
+  host_phone?: string;          // 알림톡 수신 번호
 }
 
 export interface Booking {
