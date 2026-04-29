@@ -253,7 +253,7 @@ export default function HostDashboard() {
       setSettingsSaved(true);
       setTimeout(() => setSettingsSaved(false), 2000);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
+      const msg = err instanceof Error ? err.message : JSON.stringify(err);
       alert("저장 실패: " + msg);
     } finally {
       setSettingsSaving(false);
