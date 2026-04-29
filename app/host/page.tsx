@@ -686,18 +686,20 @@ export default function HostDashboard() {
                   </div>
                 </div>
 
-                <button onClick={saveSettings} disabled={settingsSaving}
-                  className={`w-full py-3.5 rounded-2xl text-sm font-bold transition-colors ${
-                    settingsSaved ? "bg-green-600 text-white" : "bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
-                  }`}>
-                  {settingsSaving ? "저장 중..." : settingsSaved ? "저장됨 ✓" : "저장"}
-                </button>
+                <div className="pt-8 space-y-3">
+                  <button onClick={saveSettings} disabled={settingsSaving}
+                    className={`w-full py-3.5 rounded-2xl text-sm font-bold transition-colors ${
+                      settingsSaved ? "bg-green-600 text-white" : "bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
+                    }`}>
+                    {settingsSaving ? "저장 중..." : settingsSaved ? "저장됨 ✓" : "저장"}
+                  </button>
 
-                {/* 로그아웃 */}
-                <button onClick={handleLogout}
-                  className="w-full py-3.5 rounded-2xl text-sm font-semibold border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
-                  로그아웃
-                </button>
+                  {/* 로그아웃 */}
+                  <button onClick={handleLogout}
+                    className="w-full py-3.5 rounded-2xl text-sm font-semibold border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
+                    로그아웃
+                  </button>
+                </div>
 
                 {/* 회원탈퇴 */}
                 <button
