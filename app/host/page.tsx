@@ -718,7 +718,7 @@ export default function HostDashboard() {
                   >
                     <option value="none">제한 없음</option>
                     <option value="fixed">특정 날짜까지</option>
-                    <option value="rolling">오늘부터 n개월</option>
+                    <option value="rolling">오늘부터 ~개월까지</option>
                   </select>
                   <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="6 9 12 15 18 9" />
