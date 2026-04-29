@@ -680,7 +680,13 @@ export default function HostDashboard() {
                     <input
                       type="tel"
                       value={settings.host_phone ?? ""}
-                      onChange={e => setSettings(s => s ? { ...s, host_phone: e.target.value } : s)}
+                      onChange={e => {
+                        const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+                        let formatted = digits;
+                        if (digits.length > 7) formatted = digits.slice(0,3) + "-" + digits.slice(3,7) + "-" + digits.slice(7);
+                        else if (digits.length > 3) formatted = digits.slice(0,3) + "-" + digits.slice(3);
+                        setSettings(s => s ? { ...s, host_phone: formatted } : s);
+                      }}
                       placeholder="010-0000-0000"
                       className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
                     />
