@@ -58,6 +58,16 @@ create table if not exists bookings (
 create index if not exists idx_bookings_property on bookings(property_id);
 create index if not exists idx_bookings_status   on bookings(status);
 
+-- 동시 예약 중복 방지 (날짜 범위 겹침 exclusion constraint)
+create extension if not exists btree_gist;
+alter table bookings add constraint no_overlapping_bookings
+  exclude using gist (
+    property_id with =,
+    room_id with =,
+    daterange(check_in, check_out, '[)') with &&
+  )
+  where (status not in ('cancelled', 'auto_cancelled'));
+
 -- ─── RLS (Row Level Security) ────────────────────────────────────────────────
 -- 현재는 전체 허용 (카카오 로그인 연동 후 host_id 기반으로 교체 예정)
 
