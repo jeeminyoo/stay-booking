@@ -662,7 +662,14 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
               </div>
               <div>
                 <input type="tel" value={guestPhone}
-                  onChange={(e) => { setGuestPhone(e.target.value); setPhoneError(""); }}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+                    let formatted = digits;
+                    if (digits.length > 7) formatted = digits.slice(0,3) + "-" + digits.slice(3,7) + "-" + digits.slice(7);
+                    else if (digits.length > 3) formatted = digits.slice(0,3) + "-" + digits.slice(3);
+                    setGuestPhone(formatted);
+                    setPhoneError("");
+                  }}
                   onBlur={() => { if (guestPhone && !isValidPhone(guestPhone)) setPhoneError("올바른 휴대폰번호 형식이 아닙니다. (예: 010-1234-5678)"); }}
                   placeholder="휴대폰번호 (예: 010-1234-5678)"
                   className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 ${phoneError ? "border-red-300" : "border-gray-200"}`} />
