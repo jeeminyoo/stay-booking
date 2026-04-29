@@ -343,6 +343,16 @@ export async function fetchAllHostSettingsAdmin(): Promise<import("./types").Hos
 
 // ─── Subscriptions ────────────────────────────────────────────────────────────
 
+export async function fetchSubscriptionByHostId(hostId: string): Promise<Subscription | null> {
+  const { data, error } = await supabase
+    .from("subscriptions")
+    .select("*")
+    .eq("host_id", hostId)
+    .single();
+  if (error) return null;
+  return data as Subscription;
+}
+
 export async function fetchAllSubscriptions(): Promise<Subscription[]> {
   const { data, error } = await supabase
     .from("subscriptions")

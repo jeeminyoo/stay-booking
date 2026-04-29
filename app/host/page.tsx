@@ -4,9 +4,9 @@ import { useEffect, useState, Suspense, useRef, useCallback } from "react";
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import { useRouter, useSearchParams } from "next/navigation";
-import { SavedProperty, KakaoUser, Booking, HostSettings, Review } from "@/lib/types";
+import { SavedProperty, KakaoUser, Booking, HostSettings, Review, Subscription } from "@/lib/types";
 import { getUser, clearUser } from "@/lib/auth";
-import { fetchHostProperties, deletePropertyById, patchBooking, fetchHostSettings, upsertHostSettings, patchPropertyActive, fetchHostBookingsPaged, fetchHostReviews } from "@/lib/db";
+import { fetchHostProperties, deletePropertyById, patchBooking, fetchHostSettings, upsertHostSettings, patchPropertyActive, fetchHostBookingsPaged, fetchHostReviews, fetchSubscriptionByHostId, upsertSubscription } from "@/lib/db";
 import { expireOverdueBookings } from "@/lib/data";
 import AvailabilityTab from "@/components/host/AvailabilityTab";
 
@@ -81,6 +81,7 @@ export default function HostDashboard() {
   const [reviewsLoaded, setReviewsLoaded] = useState(false);
   const [settings, setSettings] = useState<HostSettings | null>(null);
   const [savedSettings, setSavedSettings] = useState<HostSettings | null>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
   const [toast, setToast] = useState("");
@@ -122,6 +123,25 @@ export default function HostDashboard() {
       const loaded = s ?? { host_id: u.id, updated_at: "", ...DEFAULT_SETTINGS };
       setSettings(loaded);
       setSavedSettings(loaded);
+    });
+    fetchSubscriptionByHostId(u.id).then(async (sub) => {
+      if (sub) {
+        setSubscription(sub);
+      } else {
+        const today = new Date().toISOString().slice(0, 10);
+        const trialEnd = new Date();
+        trialEnd.setMonth(trialEnd.getMonth() + 3);
+        const newSub: Subscription = {
+          host_id: u.id,
+          status: "trial",
+          trial_start: today,
+          trial_end: trialEnd.toISOString().slice(0, 10),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        await upsertSubscription(newSub);
+        setSubscription(newSub);
+      }
     });
   }, []);
 
@@ -677,6 +697,24 @@ export default function HostDashboard() {
             {/* ── 판매자 계정 ── */}
             {settingsTab === "account" && (
               <div className="space-y-4">
+
+                {/* 무료체험 안내 */}
+                {subscription?.status === "trial" && (() => {
+                  const today = new Date().toISOString().slice(0, 10);
+                  const remaining = Math.ceil((new Date(subscription.trial_end).getTime() - new Date(today).getTime()) / 86400000);
+                  return (
+                    <div className={`rounded-2xl px-5 py-4 ${remaining > 7 ? "bg-indigo-50 border border-indigo-100" : "bg-orange-50 border border-orange-100"}`}>
+                      <p className={`text-sm font-semibold ${remaining > 7 ? "text-indigo-700" : "text-orange-700"}`}>
+                        무료체험 이용중
+                      </p>
+                      <p className={`text-xs mt-1 ${remaining > 7 ? "text-indigo-500" : "text-orange-500"}`}>
+                        {remaining > 0
+                          ? `${subscription.trial_end.replace(/-/g, ".")} 까지 · ${remaining}일 남았습니다.`
+                          : "무료체험 기간이 종료되었습니다."}
+                      </p>
+                    </div>
+                  );
+                })()}
 
                 {/* 휴대폰 번호 */}
                 <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
