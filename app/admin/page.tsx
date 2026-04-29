@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getUser } from "@/lib/auth";
-import { fetchAllPropertiesAdmin, fetchAllBookingsAdmin, fetchAllHostSettingsAdmin } from "@/lib/db";
-import { SavedProperty, Booking, KakaoUser, HostSettings } from "@/lib/types";
+import { fetchAllPropertiesAdmin, fetchAllBookingsAdmin, fetchAllHostSettingsAdmin, fetchAllSubscriptions, upsertSubscription } from "@/lib/db";
+import { SavedProperty, Booking, KakaoUser, HostSettings, Subscription, SubscriptionStatus } from "@/lib/types";
 
 const ADMIN_ID = "4855799810";
 
@@ -35,9 +35,11 @@ export default function AdminPage() {
   const [properties, setProperties] = useState<SavedProperty[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [hostSettings, setHostSettings] = useState<HostSettings[]>([]);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"overview" | "bookings" | "properties">("overview");
+  const [tab, setTab] = useState<"overview" | "bookings" | "properties" | "subscriptions">("overview");
   const [search, setSearch] = useState("");
+  const [subSaving, setSubSaving] = useState<string | null>(null);
 
   useEffect(() => {
     const u = getUser();
@@ -51,11 +53,12 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!checked) return;
-    Promise.all([fetchAllPropertiesAdmin(), fetchAllBookingsAdmin(), fetchAllHostSettingsAdmin()])
-      .then(([props, bks, hs]) => {
+    Promise.all([fetchAllPropertiesAdmin(), fetchAllBookingsAdmin(), fetchAllHostSettingsAdmin(), fetchAllSubscriptions()])
+      .then(([props, bks, hs, subs]) => {
         setProperties(props);
         setBookings(bks);
         setHostSettings(hs);
+        setSubscriptions(subs);
       })
       .finally(() => setLoading(false));
   }, [checked]);
@@ -116,7 +119,7 @@ export default function AdminPage() {
         </div>
         {/* 탭 */}
         <div className="max-w-5xl mx-auto px-4 flex gap-0 border-t border-gray-100">
-          {(["overview", "bookings", "properties"] as const).map(t => (
+          {(["overview", "bookings", "properties", "subscriptions"] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -124,7 +127,7 @@ export default function AdminPage() {
                 tab === t ? "border-indigo-500 text-indigo-600" : "border-transparent text-gray-400 hover:text-gray-600"
               }`}
             >
-              {t === "overview" ? "개요" : t === "bookings" ? "예약" : "숙소"}
+              {t === "overview" ? "개요" : t === "bookings" ? "예약" : t === "properties" ? "숙소" : "구독"}
             </button>
           ))}
         </div>
@@ -285,6 +288,114 @@ export default function AdminPage() {
             ))}
           </div>
         )}
+
+        {/* ─── 구독 탭 ─────────────────────────────────────────────────────── */}
+        {tab === "subscriptions" && (() => {
+          const today = new Date().toISOString().slice(0, 10);
+          const hostIds = Array.from(new Set(properties.map(p => p.host_id)));
+
+          const SUB_LABEL: Record<SubscriptionStatus, { label: string; className: string }> = {
+            trial:   { label: "무료체험", className: "bg-blue-100 text-blue-600" },
+            active:  { label: "구독중",   className: "bg-green-100 text-green-600" },
+            expired: { label: "만료",     className: "bg-red-100 text-red-500" },
+          };
+
+          async function handleSave(sub: Subscription) {
+            setSubSaving(sub.host_id);
+            try {
+              await upsertSubscription(sub);
+              setSubscriptions(prev => {
+                const idx = prev.findIndex(s => s.host_id === sub.host_id);
+                if (idx >= 0) { const next = [...prev]; next[idx] = sub; return next; }
+                return [...prev, sub];
+              });
+            } finally {
+              setSubSaving(null);
+            }
+          }
+
+          return (
+            <div className="space-y-3">
+              {hostIds.map(hostId => {
+                const hs = hostSettings.find(s => s.host_id === hostId);
+                const sub = subscriptions.find(s => s.host_id === hostId);
+                const hostName = hs?.host_name || hostId;
+                const trialRemaining = sub ? Math.ceil((new Date(sub.trial_end).getTime() - new Date(today).getTime()) / 86400000) : null;
+
+                return (
+                  <div key={hostId} className="bg-white rounded-2xl border border-gray-100 px-5 py-4 space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">{hostName}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{hostId}</p>
+                      </div>
+                      {sub ? (
+                        <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${SUB_LABEL[sub.status].className}`}>
+                          {SUB_LABEL[sub.status].label}
+                          {sub.status === "trial" && trialRemaining !== null && (
+                            <span className="ml-1">· {trialRemaining > 0 ? `${trialRemaining}일 남음` : "기간 만료"}</span>
+                          )}
+                          {sub.status === "active" && sub.paid_until && (
+                            <span className="ml-1">· {fmt(sub.paid_until)}까지</span>
+                          )}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">미등록</span>
+                      )}
+                    </div>
+
+                    {sub ? (
+                      <div className="space-y-2">
+                        <div className="flex gap-2 flex-wrap">
+                          {(["trial", "active", "expired"] as SubscriptionStatus[]).map(s => (
+                            <button key={s} onClick={() => handleSave({ ...sub, status: s })}
+                              disabled={sub.status === s || subSaving === hostId}
+                              className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-40 ${
+                                sub.status === s ? `${SUB_LABEL[s].className} cursor-default` : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                              }`}>
+                              {SUB_LABEL[s].label}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="flex gap-2 items-center text-xs text-gray-500">
+                          <span>무료체험</span>
+                          <input type="date" value={sub.trial_start}
+                            onChange={e => setSubscriptions(prev => prev.map(s => s.host_id === hostId ? { ...s, trial_start: e.target.value } : s))}
+                            className="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400" />
+                          <span>~</span>
+                          <input type="date" value={sub.trial_end}
+                            onChange={e => setSubscriptions(prev => prev.map(s => s.host_id === hostId ? { ...s, trial_end: e.target.value } : s))}
+                            className="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400" />
+                        </div>
+                        <div className="flex gap-2 items-center text-xs text-gray-500">
+                          <span>유료구독 만료일</span>
+                          <input type="date" value={sub.paid_until ?? ""}
+                            onChange={e => setSubscriptions(prev => prev.map(s => s.host_id === hostId ? { ...s, paid_until: e.target.value } : s))}
+                            className="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400" />
+                        </div>
+                        <input type="text" value={sub.memo ?? ""} placeholder="메모"
+                          onChange={e => setSubscriptions(prev => prev.map(s => s.host_id === hostId ? { ...s, memo: e.target.value } : s))}
+                          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-400" />
+                        <button onClick={() => handleSave(sub)} disabled={subSaving === hostId}
+                          className="w-full py-2 rounded-xl text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                          {subSaving === hostId ? "저장 중..." : "저장"}
+                        </button>
+                      </div>
+                    ) : (
+                      <button onClick={() => handleSave({
+                        host_id: hostId, status: "trial",
+                        trial_start: today, trial_end: new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString().slice(0,10),
+                        created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+                      })} className="w-full py-2 rounded-xl text-xs font-semibold border border-indigo-300 text-indigo-600 hover:bg-indigo-50 transition-colors">
+                        무료체험으로 등록 (3개월)
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
 
       </div>
     </div>

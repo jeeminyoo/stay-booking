@@ -241,6 +241,21 @@ export interface Review {
   created_at: string;
 }
 
+// ─── Subscription (호스트 구독) ───────────────────────────────────────────────
+
+export type SubscriptionStatus = "trial" | "active" | "expired";
+
+export interface Subscription {
+  host_id: string;
+  status: SubscriptionStatus;
+  trial_start: string;  // YYYY-MM-DD
+  trial_end: string;    // YYYY-MM-DD
+  paid_until?: string;  // YYYY-MM-DD
+  memo?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // ─── Saved Property (localStorage) ───────────────────────────────────────────
 
 export type SavedProperty = PropertyDraft & {

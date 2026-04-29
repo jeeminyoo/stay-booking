@@ -190,3 +190,20 @@ create index if not exists idx_reviews_property on reviews(property_id);
 
 alter table reviews enable row level security;
 create policy "allow_all" on reviews for all using (true) with check (true);
+
+-- ─── Subscriptions (호스트 구독 관리) ─────────────────────────────────────────
+
+create table if not exists subscriptions (
+  host_id     text primary key,
+  status      text not null default 'trial'
+                check (status in ('trial','active','expired')),
+  trial_start date not null,
+  trial_end   date not null,
+  paid_until  date,
+  memo        text,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+
+alter table subscriptions enable row level security;
+create policy "allow_all" on subscriptions for all using (true) with check (true);

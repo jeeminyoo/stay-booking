@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { SavedProperty, Booking, HostSettings, ManualBlock, WeeklyBlock, WeeklyBlockException, Review } from "./types";
+import { SavedProperty, Booking, HostSettings, ManualBlock, WeeklyBlock, WeeklyBlockException, Review, Subscription } from "./types";
 
 // ─── Properties ──────────────────────────────────────────────────────────────
 
@@ -339,4 +339,22 @@ export async function fetchAllHostSettingsAdmin(): Promise<import("./types").Hos
     .select("host_id, host_name, host_phone");
   if (error) return [];
   return (data ?? []) as import("./types").HostSettings[];
+}
+
+// ─── Subscriptions ────────────────────────────────────────────────────────────
+
+export async function fetchAllSubscriptions(): Promise<Subscription[]> {
+  const { data, error } = await supabase
+    .from("subscriptions")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) return [];
+  return (data ?? []) as Subscription[];
+}
+
+export async function upsertSubscription(sub: Subscription): Promise<void> {
+  const { error } = await supabase
+    .from("subscriptions")
+    .upsert({ ...sub, updated_at: new Date().toISOString() });
+  if (error) throw error;
 }
