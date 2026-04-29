@@ -198,10 +198,11 @@ export default function AdminPage() {
                   return (
                     <div key={hostId} className="flex items-center gap-3 text-sm">
                       <div className="flex-1 min-w-0">
-                        <span className="text-gray-800 font-medium">{hostId}</span>
+                        <p className="text-gray-800 font-medium truncate">{hostProps[0]?.name ?? "-"}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">카카오 ID: {hostId}</p>
                       </div>
-                      <span className="text-gray-400 text-xs">숙소 {hostProps.length}개</span>
-                      <span className="text-gray-400 text-xs">{fmt(firstProp?.created_at?.slice(0,10) ?? "")}</span>
+                      <span className="text-gray-400 text-xs shrink-0">숙소 {hostProps.length}개</span>
+                      <span className="text-gray-400 text-xs shrink-0">{fmt(firstProp?.created_at?.slice(0,10) ?? "")}</span>
                     </div>
                   );
                 })}
