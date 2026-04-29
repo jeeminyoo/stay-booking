@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
 import { getUser } from "@/lib/auth";
-import { fetchHostProperties, patchPropertyNotice } from "@/lib/db";
+import { fetchHostProperties } from "@/lib/db";
+import { apiPatchPropertyNotice } from "@/lib/api";
 import { SavedProperty, RoomDraft } from "@/lib/types";
 
 type NoticeKey = "notice" | "notice_confirm" | "notice_checkin";
@@ -118,7 +119,7 @@ export default function NoticeEditPage() {
         notice_confirm: perRoom.notice_confirm ? (rooms[i]?.notice_confirm ?? "") : "",
         notice_checkin: perRoom.notice_checkin ? (rooms[i]?.notice_checkin ?? "") : "",
       }));
-      await patchPropertyNotice(property.id, {
+      await apiPatchPropertyNotice(property.id, {
         notice: perRoom.notice ? "" : shared.notice,
         notice_confirm: perRoom.notice_confirm ? "" : shared.notice_confirm,
         notice_checkin: perRoom.notice_checkin ? "" : shared.notice_checkin,

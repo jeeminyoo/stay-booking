@@ -2,11 +2,15 @@
 
 import { useEffect, useState, useMemo } from "react";
 import {
-  fetchManualBlocks, createManualBlock, deleteManualBlock,
-  fetchWeeklyBlocks, upsertWeeklyBlock, deleteWeeklyBlock,
-  fetchWeeklyBlockExceptions, createWeeklyBlockException, deleteWeeklyBlockException,
-  patchBooking,
+  fetchManualBlocks, fetchWeeklyBlocks,
+  fetchWeeklyBlockExceptions,
 } from "@/lib/db";
+import {
+  apiCreateManualBlock, apiDeleteManualBlock,
+  apiUpsertWeeklyBlock, apiDeleteWeeklyBlock,
+  apiCreateWeeklyBlockException, apiDeleteWeeklyBlockException,
+  apiPatchBookingHost,
+} from "@/lib/api";
 import {
   SavedProperty, KakaoUser, Booking, ManualBlock,
   WeeklyBlock, WeeklyBlockException, RoomDraft,
@@ -114,7 +118,7 @@ export default function AvailabilityTab({ user: _user, properties, bookings, onC
   async function saveMemo(bookingId: string, memo: string) {
     setMemoSaving(prev => ({ ...prev, [bookingId]: true }));
     try {
-      await patchBooking(bookingId, { host_memo: memo });
+      await apiPatchBookingHost(bookingId, { host_memo: memo });
       setMemoSaved(prev => ({ ...prev, [bookingId]: true }));
       setTimeout(() => setMemoSaved(prev => ({ ...prev, [bookingId]: false })), 2000);
     } finally {
@@ -230,7 +234,7 @@ export default function AvailabilityTab({ user: _user, properties, bookings, onC
     try {
       const newBlocks = await Promise.all(
         Array.from(selectedDates).map(date =>
-          createManualBlock({ property_id: property.id, room_id: room.name, date, note: blockNote || undefined })
+          apiCreateManualBlock({ property_id: property.id, room_id: room.name, date, note: blockNote || undefined })
         )
       );
       setManualBlocks(prev => [...prev, ...newBlocks]);
@@ -243,7 +247,7 @@ export default function AvailabilityTab({ user: _user, properties, bookings, onC
   }
 
   async function handleDeleteManualBlock(id: string) {
-    await deleteManualBlock(id);
+    await apiDeleteManualBlock(id);
     setManualBlocks(prev => prev.filter(b => b.id !== id));
   }
 
@@ -251,10 +255,10 @@ export default function AvailabilityTab({ user: _user, properties, bookings, onC
     if (!property || !room) return;
     const existing = weeklyBlocks.find(b => b.day_of_week === dow);
     if (existing) {
-      await deleteWeeklyBlock(existing.id);
+      await apiDeleteWeeklyBlock(existing.id);
       setWeeklyBlocks(prev => prev.filter(b => b.id !== existing.id));
     } else {
-      await upsertWeeklyBlock({ property_id: property.id, room_id: room.name, day_of_week: dow });
+      await apiUpsertWeeklyBlock({ property_id: property.id, room_id: room.name, day_of_week: dow });
       setWeeklyBlocks(await fetchWeeklyBlocks(property.id, room.name));
     }
   }
@@ -262,7 +266,7 @@ export default function AvailabilityTab({ user: _user, properties, bookings, onC
   async function handleAddException(date: string) {
     if (!property || !room) return;
     try {
-      const exc = await createWeeklyBlockException({ property_id: property.id, room_id: room.name, date });
+      const exc = await apiCreateWeeklyBlockException({ property_id: property.id, room_id: room.name, date });
       setWeeklyExceptions(prev => [...prev, exc]);
     } catch (e) {
       alert("예외 처리 실패: " + (e instanceof Error ? e.message : JSON.stringify(e)));
@@ -272,7 +276,7 @@ export default function AvailabilityTab({ user: _user, properties, bookings, onC
   async function handleRemoveException(date: string) {
     const exc = weeklyExceptions.find(e => e.date === date);
     if (!exc) return;
-    await deleteWeeklyBlockException(exc.id);
+    await apiDeleteWeeklyBlockException(exc.id);
     setWeeklyExceptions(prev => prev.filter(e => e.id !== exc.id));
   }
 

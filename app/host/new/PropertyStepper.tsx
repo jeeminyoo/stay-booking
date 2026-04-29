@@ -4,7 +4,8 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { PropertyDraft, KakaoUser } from "@/lib/types";
 import { generateSlug, normalizeSlug } from "@/lib/pricing";
-import { upsertProperty, isSlugTaken } from "@/lib/db";
+import { isSlugTaken } from "@/lib/db";
+import { apiUpsertProperty } from "@/lib/api";
 import { uploadImageEntry, isDataUrl } from "@/lib/storage";
 import KakaoAddressInput from "@/components/host/KakaoAddressInput";
 import BankSelector from "@/components/host/BankSelector";
@@ -237,7 +238,7 @@ export default function PropertyStepper({ user }: { user: KakaoUser }) {
         is_active: (draft.is_active === true) && hasNotice,
         created_at: new Date().toISOString(),
       };
-      await upsertProperty(saved);
+      await apiUpsertProperty(saved);
       localStorage.removeItem(DRAFT_KEY);
       router.push(`/host?registered=1&id=${propertyId}`);
     } catch (e) {

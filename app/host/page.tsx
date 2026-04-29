@@ -6,7 +6,8 @@ import Logo from "@/components/Logo";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SavedProperty, KakaoUser, Booking, HostSettings, Review, Subscription } from "@/lib/types";
 import { getUser, clearUser } from "@/lib/auth";
-import { fetchHostProperties, deletePropertyById, patchBooking, fetchHostSettings, upsertHostSettings, patchPropertyActive, fetchHostBookingsPaged, fetchHostReviews, fetchSubscriptionByHostId, upsertSubscription } from "@/lib/db";
+import { fetchHostProperties, fetchHostSettings, fetchHostBookingsPaged, fetchHostReviews, fetchSubscriptionByHostId, upsertSubscription } from "@/lib/db";
+import { apiDeleteProperty, apiPatchBookingHost, apiUpsertHostSettings, apiPatchPropertyActive, apiLogout } from "@/lib/api";
 import { expireOverdueBookings } from "@/lib/data";
 import AvailabilityTab from "@/components/host/AvailabilityTab";
 
@@ -211,7 +212,8 @@ export default function HostDashboard() {
     }
   }, [highlightBookingId, bookings]);
 
-  function handleLogout() {
+  async function handleLogout() {
+    await apiLogout();
     clearUser();
     setUser(null);
     router.refresh();
@@ -219,18 +221,18 @@ export default function HostDashboard() {
 
   async function deleteProperty(id: string) {
     if (!confirm("이 숙소를 삭제하시겠습니까?")) return;
-    await deletePropertyById(id);
+    await apiDeleteProperty(id);
     setProperties(prev => prev.filter(p => p.id !== id));
     setBookings(prev => prev.filter(b => b.property_id !== id));
   }
 
   async function confirmBooking(id: string) {
-    await patchBooking(id, { status: "confirmed" });
+    await apiPatchBookingHost(id, { status: "confirmed" });
     setBookings(prev => sortBookings(prev.map(b => b.id === id ? { ...b, status: "confirmed" } : b)));
   }
 
   async function toggleActive(p: SavedProperty) {
-    const currentActive = p.is_active !== false; // null/undefined → true로 취급
+    const currentActive = p.is_active !== false;
     const nextActive = !currentActive;
     if (nextActive) {
       const hasNotice = p.notice?.trim() || p.rooms.some(r => r.notice?.trim());
@@ -241,24 +243,17 @@ export default function HostDashboard() {
       }
     }
     try {
-      await patchPropertyActive(p.id, nextActive);
+      await apiPatchPropertyActive(p.id, nextActive);
       setProperties(prev => prev.map(prop => prop.id === p.id ? { ...prop, is_active: nextActive } : prop));
       showToast(nextActive ? "게시중으로 전환되었습니다" : "비노출로 전환되었습니다");
     } catch (e) {
-      const msg = e instanceof Error ? e.message
-        : (e as { message?: string })?.message
-        ?? JSON.stringify(e);
-      if (msg.includes("is_active") || msg.includes("schema cache")) {
-        alert("Supabase 마이그레이션이 필요합니다.\nSQL Editor에서 아래를 실행해주세요:\n\nalter table properties add column if not exists is_active boolean not null default true;");
-      } else {
-        alert("오류: " + msg);
-      }
+      alert("오류: " + (e instanceof Error ? e.message : JSON.stringify(e)));
     }
   }
 
   async function cancelBooking(id: string) {
     if (!confirm("이 예약을 취소하시겠습니까?")) return;
-    await patchBooking(id, { status: "cancelled" });
+    await apiPatchBookingHost(id, { status: "cancelled" });
     setBookings(prev => sortBookings(prev.map(b => b.id === id ? { ...b, status: "cancelled" } : b)));
   }
 
@@ -273,7 +268,7 @@ export default function HostDashboard() {
     setSettingsSaving(true);
     try {
       const updated = { ...settings, host_id: user.id, host_name: user.nickname, updated_at: new Date().toISOString() };
-      await upsertHostSettings(updated);
+      await apiUpsertHostSettings(updated);
       setSavedSettings(updated);
       setSettingsSaved(true);
       setTimeout(() => setSettingsSaved(false), 2000);

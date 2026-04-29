@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createSession } from "@/lib/session";
 
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
@@ -39,5 +40,13 @@ export async function GET(req: NextRequest) {
     profile_image: kakaoUser.kakao_account?.profile?.profile_image_url ?? "",
   };
 
-  return NextResponse.json(user);
+  const res = NextResponse.json(user);
+  res.cookies.set("session", createSession(user.id), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30, // 30일
+  });
+  return res;
 }
