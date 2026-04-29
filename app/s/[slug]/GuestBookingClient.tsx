@@ -153,6 +153,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
     }
   }, [infoError, phoneError]);
   const [autoCancelMinutes, setAutoCancelMinutes] = useState(60);
+  const [hostSettingsLoaded, setHostSettingsLoaded] = useState(false);
   const [longStayDiscounts, setLongStayDiscounts] = useState<import("@/lib/types").LongStayDiscount[]>([]);
   const [bookingMaxDate, setBookingMaxDate] = useState<string | undefined>(undefined);
   const [descExpanded, setDescExpanded] = useState(false);
@@ -185,6 +186,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
       const hs = await fetchHostSettings(found.host_id);
       if (hs?.auto_cancel_minutes) setAutoCancelMinutes(hs.auto_cancel_minutes);
       if (hs?.long_stay_discounts?.length) setLongStayDiscounts(hs.long_stay_discounts);
+      setHostSettingsLoaded(true);
       if (hs?.booking_window_type === "fixed" && hs.booking_window_end) {
         setBookingMaxDate(hs.booking_window_end);
       } else if (hs?.booking_window_type === "rolling" && hs.booking_window_months) {
@@ -812,8 +814,8 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
       {step === "info" && (
         <BottomNav
           onBack={() => setStep("date")} backLabel="이전"
-          onNext={handleConfirmBooking} nextLabel={loading ? "처리 중..." : "예약 요청"}
-          nextDisabled={loading}
+          onNext={handleConfirmBooking} nextLabel={loading ? "처리 중..." : !hostSettingsLoaded ? "로딩 중..." : "예약 요청"}
+          nextDisabled={loading || !hostSettingsLoaded}
         />
       )}
       {step === "payment" && (
