@@ -250,6 +250,19 @@ export default function HostDashboard() {
     const currentActive = p.is_active !== false;
     const nextActive = !currentActive;
     if (nextActive) {
+      const phoneDigits = (settings?.host_phone ?? "").replace(/-/g, "");
+      if (!phoneDigits || !/^01[0-9]\d{7,8}$/.test(phoneDigits)) {
+        alert("설정 > 판매자 계정에서 휴대폰 번호를 먼저 등록해주세요.");
+        setTab("settings");
+        setSettingsTab("account");
+        return;
+      }
+      if (!settings?.bank_account?.trim() || !settings?.bank_name?.trim() || !settings?.bank_holder?.trim()) {
+        alert("설정 > 판매자 계정에서 입금 계좌를 먼저 등록해주세요.");
+        setTab("settings");
+        setSettingsTab("account");
+        return;
+      }
       const hasNotice = p.notice?.trim() || p.rooms.some(r => r.notice?.trim());
       if (!hasNotice) {
         alert("이용 유의사항을 먼저 등록해주세요.\n게시중으로 전환하려면 유의사항이 필요합니다.");
