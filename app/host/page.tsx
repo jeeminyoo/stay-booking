@@ -600,9 +600,6 @@ export default function HostDashboard() {
                               image_url: p.image_url,
                               images: p.images?.length ? p.images : (p.image_url ? [{ id: "cover-0", thumb_url: p.image_url, main_url: p.image_url }] : []),
                               slug: p.slug,
-                              bank_name: p.bank_name,
-                              bank_account: p.bank_account,
-                              bank_holder: p.bank_holder,
                               is_active: p.is_active,
                               rooms: (p.rooms || []).map((r, i) => ({
                                 name: r.name,
@@ -731,6 +728,47 @@ export default function HostDashboard() {
                       placeholder="010-0000-0000"
                       className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
                     />
+                  </div>
+                </div>
+
+                {/* 입금 계좌 */}
+                <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                  <div className="px-5 py-4 border-b border-gray-50">
+                    <p className="font-semibold text-gray-900 text-sm">입금 계좌</p>
+                    <p className="text-xs text-gray-400 mt-0.5">게스트가 예약 후 입금할 계좌 정보입니다.</p>
+                  </div>
+                  <div className="px-5 py-4 space-y-3">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1.5">은행명</p>
+                      <input
+                        type="text"
+                        value={settings.bank_name ?? ""}
+                        onChange={e => setSettings(s => s ? { ...s, bank_name: e.target.value } : s)}
+                        placeholder="예) 국민은행"
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1.5">계좌번호</p>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={settings.bank_account ?? ""}
+                        onChange={e => setSettings(s => s ? { ...s, bank_account: e.target.value.replace(/[^0-9-]/g, "") } : s)}
+                        placeholder="계좌번호를 입력해주세요"
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1.5">예금주</p>
+                      <input
+                        type="text"
+                        value={settings.bank_holder ?? ""}
+                        onChange={e => setSettings(s => s ? { ...s, bank_holder: e.target.value } : s)}
+                        placeholder="예금주명을 입력해주세요"
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                      />
+                    </div>
                   </div>
                 </div>
 

@@ -8,7 +8,6 @@ import { isSlugTaken } from "@/lib/db";
 import { apiUpsertProperty } from "@/lib/api";
 import { uploadImageEntry, isDataUrl } from "@/lib/storage";
 import KakaoAddressInput from "@/components/host/KakaoAddressInput";
-import BankSelector from "@/components/host/BankSelector";
 import MultiImageUpload from "@/components/host/MultiImageUpload";
 import StepRooms from "@/components/host/steps/StepRooms";
 import StepPricing from "@/components/host/steps/StepPricing";
@@ -25,9 +24,6 @@ const DEFAULT_DRAFT: PropertyDraft = {
   image_url: "",
   images: [],
   slug: "",
-  bank_name: "",
-  bank_account: "",
-  bank_holder: "",
   rooms: [{
     name: "",
     max_guests: 1,
@@ -78,7 +74,6 @@ const STEPS: StepConfig[] = [
   { title: "숙소를\n소개해주세요", subtitle: "어떤 숙소인지 자유롭게 작성해주세요.", validate: () => null },
   { title: "위치를\n알려주세요", subtitle: "게스트가 찾아갈 수 있도록 정확한 주소를 입력해주세요.", validate: (d) => d.address.trim() ? null : "주소를 입력해주세요." },
   { title: "대표 사진을\n등록해주세요", subtitle: "숙소의 매력을 잘 보여주는 사진을 등록해주세요.", validate: (d) => (d.images ?? []).some(img => img.thumb_url || img.main_url) ? null : "대표 사진을 1장 이상 등록해주세요." },
-  { title: "입금 계좌를\n입력해주세요", subtitle: "게스트가 직접 이체할 계좌 정보입니다.", validate: (d) => (d.bank_name && d.bank_account && d.bank_holder) ? null : "계좌 정보를 모두 입력해주세요." },
   { title: "객실을\n설정해주세요", subtitle: "최대 5개의 객실을 등록할 수 있습니다.", validate: (d) => {
     if (!d.rooms.every(r => r.name.trim())) return "모든 객실 이름을 입력해주세요.";
     if (!d.rooms.every(r => (r.images ?? []).some(img => img.thumb_url || img.main_url) || r.image_url)) return "모든 객실 사진을 등록해주세요.";
@@ -118,7 +113,6 @@ export default function PropertyStepper({ user }: { user: KakaoUser }) {
   const [loading, setLoading] = useState(false);
   const [slugSuggested, setSlugSuggested] = useState(false);
   const [toast, setToast] = useState("");
-  const [bankModalOpen, setBankModalOpen] = useState(false);
   const [slugRaw, setSlugRaw] = useState(draft.slug);
   const [slugTaken, setSlugTaken] = useState(false);
   const [slugChecking, setSlugChecking] = useState(false);
@@ -298,46 +292,16 @@ export default function PropertyStepper({ user }: { user: KakaoUser }) {
           />
         );
 
-      // 5. 계좌 정보
+      // 5. 객실
       case 4:
-        return (
-          <div className="space-y-4 w-full">
-            {/* 은행명 */}
-            <div>
-              <p className="text-xs font-medium text-gray-500 mb-1.5">은행명</p>
-              <button type="button" onClick={() => setBankModalOpen(true)}
-                className={`w-full border rounded-xl px-4 py-3.5 text-base text-left transition-colors
-                  ${draft.bank_name
-                    ? "border-gray-200 text-gray-900 bg-white"
-                    : "border-gray-200 text-gray-300 bg-white hover:border-indigo-300"}`}>
-                {draft.bank_name || "은행 선택"}
-              </button>
-            </div>
-            {/* 계좌번호 */}
-            <div>
-              <p className="text-xs font-medium text-gray-500 mb-1.5">계좌번호</p>
-              <input type="text" value={draft.bank_account} onChange={(e) => updateDraft({ bank_account: e.target.value })}
-                placeholder="계좌번호를 입력해주세요" className={inputClass} inputMode="numeric" />
-            </div>
-            {/* 예금주 */}
-            <div>
-              <p className="text-xs font-medium text-gray-500 mb-1.5">예금주</p>
-              <input type="text" value={draft.bank_holder} onChange={(e) => updateDraft({ bank_holder: e.target.value })}
-                placeholder="예금주명을 입력해주세요" className={inputClass} />
-            </div>
-          </div>
-        );
-
-      // 6. 객실
-      case 5:
         return <StepRooms draft={draft} onChange={updateDraft} errors={{}} />;
 
-      // 7. 요금
-      case 6:
+      // 6. 요금
+      case 5:
         return <StepPricing draft={draft} onChange={updateDraft} errors={{}} />;
 
-      // 8. 링크
-      case 7: {
+      // 7. 링크
+      case 6: {
         const isValid = /^[a-z0-9][a-z0-9-]{1,}[a-z0-9]$/.test(draft.slug);
         const slugStatus = slugChecking ? "checking" : slugTaken ? "taken" : isValid ? "ok" : "invalid";
         return (
@@ -412,24 +376,6 @@ export default function PropertyStepper({ user }: { user: KakaoUser }) {
         </div>
       )}
 
-      {/* 은행 선택 모달 */}
-      {bankModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setBankModalOpen(false)} />
-          <div className="relative bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-              <p className="font-bold text-gray-900">은행 선택</p>
-              <button onClick={() => setBankModalOpen(false)} className="text-gray-400 hover:text-gray-700 text-xl leading-none">✕</button>
-            </div>
-            <div className="p-4 overflow-y-auto max-h-[70vh]">
-              <BankSelector
-                value={draft.bank_name}
-                onChange={(name) => { updateDraft({ bank_name: name }); setBankModalOpen(false); }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
       {/* Header */}
       <header className="sticky top-0 z-10 bg-white">
         <div className="relative flex items-center justify-center px-4 py-2 max-w-lg mx-auto">

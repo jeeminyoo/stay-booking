@@ -154,6 +154,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
   }, [infoError, phoneError]);
   const [autoCancelMinutes, setAutoCancelMinutes] = useState(60);
   const [hostSettingsLoaded, setHostSettingsLoaded] = useState(false);
+  const [hostSettings, setHostSettings] = useState<import("@/lib/types").HostSettings | null>(null);
   const [longStayDiscounts, setLongStayDiscounts] = useState<import("@/lib/types").LongStayDiscount[]>([]);
   const [bookingMaxDate, setBookingMaxDate] = useState<string | undefined>(undefined);
   const [descExpanded, setDescExpanded] = useState(false);
@@ -184,6 +185,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
         localStorage.setItem(RECENT_KEY, JSON.stringify(next));
       } catch {}
       const hs = await fetchHostSettings(found.host_id);
+      if (hs) setHostSettings(hs);
       if (hs?.auto_cancel_minutes) setAutoCancelMinutes(hs.auto_cancel_minutes);
       if (hs?.long_stay_discounts?.length) setLongStayDiscounts(hs.long_stay_discounts);
       setHostSettingsLoaded(true);
@@ -299,9 +301,9 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
         guest_phone: guestPhone,
         guest_message: guestMessage || undefined,
         payment_notified: false,
-        bank_name: property.bank_name,
-        bank_account: property.bank_account,
-        bank_holder: property.bank_holder,
+        bank_name: hostSettings?.bank_name ?? "",
+        bank_account: hostSettings?.bank_account ?? "",
+        bank_holder: hostSettings?.bank_holder ?? "",
       }, autoCancelMinutes);
       setBooking(newBooking);
       setStep("payment");
@@ -737,8 +739,8 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
 
             <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-5 text-white">
               <p className="text-indigo-200 text-xs mb-1">입금 계좌</p>
-              <p className="font-bold text-2xl tracking-widest mb-1">{property.bank_account}</p>
-              <p className="text-indigo-200 text-sm">{property.bank_name} · {property.bank_holder}</p>
+              <p className="font-bold text-2xl tracking-widest mb-1">{hostSettings?.bank_account ?? booking?.bank_account}</p>
+              <p className="text-indigo-200 text-sm">{hostSettings?.bank_name ?? booking?.bank_name} · {hostSettings?.bank_holder ?? booking?.bank_holder}</p>
               <div className="border-t border-white/20 mt-4 pt-4 flex justify-between items-baseline">
                 <span className="text-indigo-200 text-sm">입금액</span>
                 <span className="text-white text-2xl font-bold">{booking.total_price.toLocaleString()}원</span>
@@ -747,7 +749,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
             </div>
 
             <button
-              onClick={() => { navigator.clipboard.writeText(property.bank_account); alert("계좌번호가 복사되었습니다."); }}
+              onClick={() => { navigator.clipboard.writeText(hostSettings?.bank_account ?? booking?.bank_account ?? ""); alert("계좌번호가 복사되었습니다."); }}
               className="w-full border border-indigo-300 text-indigo-600 py-3 rounded-xl text-sm hover:bg-indigo-50 transition-colors">
               계좌번호 복사
             </button>

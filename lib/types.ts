@@ -32,6 +32,9 @@ export interface HostSettings {
   booking_window_type: "none" | "fixed" | "rolling"; // 예약 가능 기간 유형
   booking_window_end?: string;    // YYYY-MM-DD (fixed 시 사용)
   booking_window_months?: number; // 개월 수 (rolling 시 사용)
+  bank_name?: string;
+  bank_account?: string;
+  bank_holder?: string;
 }
 
 export interface Booking {
@@ -181,9 +184,6 @@ export interface PropertyDraft {
   image_url: string;
   images?: ImageEntry[];
   slug: string;
-  bank_name: string;
-  bank_account: string;
-  bank_holder: string;
   rooms: RoomDraft[];
   notice?: string;                  // 예약 진행 시
   notice_confirm?: string;          // 예약 확정 알림톡
