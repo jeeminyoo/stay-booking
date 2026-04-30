@@ -102,12 +102,14 @@ export default function HostDashboard() {
     if (t) setTab(t);
     if (bookingId) { setTab("bookings"); setHighlightBookingId(bookingId); }
 
-    // 카카오 로그인 직후 _u 쿠키에서 유저 정보 저장 후 쿠키 삭제
+    // 카카오 로그인 직후 _u 쿠키에서 유저 정보를 localStorage에 저장
     const match = document.cookie.match(/(?:^|;\s*)_u=([^;]*)/);
     if (match) {
       try {
         const cookieUser = JSON.parse(decodeURIComponent(match[1]));
-        if (cookieUser?.id) setUser(cookieUser);
+        if (cookieUser?.id) {
+          localStorage.setItem("host_user", JSON.stringify(cookieUser));
+        }
       } catch {}
       document.cookie = "_u=; path=/; max-age=0";
     }
@@ -115,7 +117,10 @@ export default function HostDashboard() {
     const u = getUser();
     setUser(u);
     setChecked(true);
-    if (!u) return;
+    if (!u) {
+      router.replace("/login");
+      return;
+    }
     setHasDraft(!!localStorage.getItem("host_property_draft"));
     expireOverdueBookings().catch(console.error);
     fetchHostProperties(u.id).then((props) => {
@@ -291,7 +296,7 @@ export default function HostDashboard() {
   }
 
   if (!checked) return null;
-  if (!user) { router.replace("/login"); return null; }
+  if (!user) return null;
 
   const actionNeededCount = bookings.filter(b =>
     b.status === "waiting_for_deposit" || b.status === "deposit_requested"
