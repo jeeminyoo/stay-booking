@@ -40,13 +40,21 @@ export async function GET(req: NextRequest) {
     profile_image: kakaoUser.kakao_account?.profile?.profile_image_url ?? "",
   };
 
-  const res = NextResponse.json(user);
+  const res = NextResponse.redirect(new URL("/host", baseUrl));
   res.cookies.set("session", createSession(user.id), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: 60 * 60 * 24 * 30, // 30일
+    maxAge: 60 * 60 * 24 * 30,
+  });
+  // 클라이언트가 localStorage에 저장할 수 있도록 단기 non-httponly 쿠키로 전달
+  res.cookies.set("_u", JSON.stringify(user), {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60,
   });
   return res;
 }

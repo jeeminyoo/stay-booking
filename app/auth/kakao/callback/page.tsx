@@ -2,7 +2,6 @@
 
 import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { setUser } from "@/lib/auth";
 
 function KakaoCallbackInner() {
   const router = useRouter();
@@ -17,18 +16,8 @@ function KakaoCallbackInner() {
       return;
     }
 
-    fetch(`/api/auth/kakao?code=${code}`)
-      .then((res) => res.json())
-      .then((user) => {
-        if (user.id) {
-          setUser(user);
-          router.replace("/host");
-        } else {
-          console.error("Kakao auth failed", user);
-          router.replace("/host");
-        }
-      })
-      .catch(() => router.replace("/host"));
+    // 브라우저가 직접 이동해야 Set-Cookie가 안정적으로 적용됨
+    window.location.replace(`/api/auth/kakao?code=${code}`);
   }, [searchParams, router]);
 
   return (

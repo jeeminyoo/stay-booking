@@ -102,6 +102,16 @@ export default function HostDashboard() {
     if (t) setTab(t);
     if (bookingId) { setTab("bookings"); setHighlightBookingId(bookingId); }
 
+    // 카카오 로그인 직후 _u 쿠키에서 유저 정보 저장 후 쿠키 삭제
+    const match = document.cookie.match(/(?:^|;\s*)_u=([^;]*)/);
+    if (match) {
+      try {
+        const cookieUser = JSON.parse(decodeURIComponent(match[1]));
+        if (cookieUser?.id) setUser(cookieUser);
+      } catch {}
+      document.cookie = "_u=; path=/; max-age=0";
+    }
+
     const u = getUser();
     setUser(u);
     setChecked(true);
