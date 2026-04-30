@@ -234,7 +234,7 @@ export default function PropertyStepper({ user }: { user: KakaoUser }) {
       };
       await apiUpsertProperty(saved);
       localStorage.removeItem(DRAFT_KEY);
-      router.push(`/host?registered=1&id=${propertyId}`);
+      router.push(`/host?registered=1&id=${propertyId}&tab=properties`);
     } catch (e) {
       setLoading(false);
       const msg = e instanceof Error ? e.message
