@@ -245,6 +245,33 @@ export default function PropertyStepper({ user }: { user: KakaoUser }) {
     }
   }
 
+  async function handleTempSave() {
+    const propertyId = draft.id || `prop-${Date.now()}`;
+    try {
+      const uploadedCoverImages = await Promise.all(
+        (draft.images ?? []).map(img => uploadImageEntry(img, `stays/${propertyId}/cover`))
+      );
+      const rooms = await Promise.all(
+        draft.rooms.map(async (room, i) => {
+          const uploaded = await Promise.all(
+            (room.images ?? []).map(img => uploadImageEntry(img, `stays/${propertyId}/rooms/room-${i}`))
+          );
+          return { ...room, images: uploaded.length ? uploaded : room.images };
+        })
+      );
+      const updated = {
+        ...draft,
+        id: propertyId,
+        images: uploadedCoverImages.length ? uploadedCoverImages : draft.images,
+        rooms,
+      };
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(updated));
+    } catch {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    }
+    router.push("/host");
+  }
+
   const { title, subtitle } = STEPS[step];
   const progress = ((step + 1) / TOTAL) * 100;
   const isLast = step === TOTAL - 1;
@@ -383,7 +410,7 @@ export default function PropertyStepper({ user }: { user: KakaoUser }) {
             <Logo />
           </button>
           <span className="text-xs text-gray-400 font-medium">{step + 1} / {TOTAL}</span>
-          <button onClick={() => { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); router.push("/host"); }}
+          <button onClick={handleTempSave}
             className="absolute right-4 text-xs text-gray-400 hover:text-gray-700 transition-colors">
             임시저장
           </button>
