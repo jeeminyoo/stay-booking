@@ -557,6 +557,63 @@ export default function HostDashboard() {
         {/* ─── 내 숙소 탭 ─── */}
         {tab === "properties" && (
           <div>
+            {/* ── 게시 준비 체크리스트 ── */}
+            {properties.some(p => !p.is_draft && p.is_active === false) && (() => {
+              const phoneDigits = (settings?.host_phone ?? "").replace(/-/g, "");
+              const hasPhone = /^01[0-9]\d{7,8}$/.test(phoneDigits);
+              const hasBank = !!(settings?.bank_account?.trim() && settings?.bank_name?.trim() && settings?.bank_holder?.trim());
+              const hasNotice = properties.some(p => p.notice?.trim() || p.rooms.some(r => r.notice?.trim()));
+              if (hasPhone && hasBank && hasNotice) return null;
+              return (
+                <div className="bg-white border border-indigo-100 rounded-2xl p-5 mb-5">
+                  <p className="text-sm font-bold text-gray-900 mb-1">숙소를 게시하려면 아래 항목을 완료해주세요</p>
+                  <p className="text-xs text-gray-400 mb-4">모두 완료되면 게시 상태를 '게시중'으로 변경할 수 있어요.</p>
+                  <div className="space-y-2.5">
+                    {[
+                      {
+                        done: hasPhone,
+                        label: "휴대폰 번호 등록",
+                        desc: "알림톡 수신에 필요합니다",
+                        action: () => { setTab("settings"); setSettingsTab("account"); },
+                        actionLabel: "입력하기",
+                      },
+                      {
+                        done: hasBank,
+                        label: "입금 계좌 등록",
+                        desc: "게스트 입금 안내에 사용됩니다",
+                        action: () => { setTab("settings"); setSettingsTab("account"); },
+                        actionLabel: "입력하기",
+                      },
+                      {
+                        done: hasNotice,
+                        label: "이용 유의사항 등록",
+                        desc: "예약 확정 후 게스트에게 전달됩니다",
+                        action: () => { const p = properties.find(p => !p.is_draft); if (p) router.push(`/host/notice/${p.id}`); },
+                        actionLabel: "등록하기",
+                      },
+                    ].map(item => (
+                      <div key={item.label} className="flex items-center gap-3">
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${item.done ? "bg-green-500" : "bg-gray-100"}`}>
+                          {item.done
+                            ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            : <div className="w-2 h-2 rounded-full bg-gray-300" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-medium ${item.done ? "text-gray-400 line-through" : "text-gray-800"}`}>{item.label}</p>
+                          {!item.done && <p className="text-xs text-gray-400">{item.desc}</p>}
+                        </div>
+                        {!item.done && (
+                          <button onClick={item.action}
+                            className="shrink-0 text-xs font-semibold text-indigo-600 border border-indigo-200 px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors">
+                            {item.actionLabel}
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
             {properties.length > 0 && (
               <div className="flex items-center justify-between mb-5">
                 <span className="text-sm text-gray-400">{properties.length}개</span>
