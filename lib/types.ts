@@ -241,6 +241,20 @@ export interface Review {
   created_at: string;
 }
 
+// ─── BankAccountLog (계좌 변경 이력) ─────────────────────────────────────────
+
+export interface BankAccountLog {
+  id: string;
+  host_id: string;
+  old_bank_name: string | null;
+  old_bank_account: string | null;
+  old_bank_holder: string | null;
+  new_bank_name: string | null;
+  new_bank_account: string | null;
+  new_bank_holder: string | null;
+  changed_at: string;
+}
+
 // ─── Subscription (호스트 구독) ───────────────────────────────────────────────
 
 export type SubscriptionStatus = "trial" | "active" | "expired";

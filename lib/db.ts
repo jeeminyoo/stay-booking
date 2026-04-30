@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { SavedProperty, Booking, HostSettings, ManualBlock, WeeklyBlock, WeeklyBlockException, Review, Subscription } from "./types";
+import { SavedProperty, Booking, HostSettings, ManualBlock, WeeklyBlock, WeeklyBlockException, Review, Subscription, BankAccountLog } from "./types";
 
 // ─── Properties ──────────────────────────────────────────────────────────────
 
@@ -367,4 +367,14 @@ export async function upsertSubscription(sub: Subscription): Promise<void> {
     .from("subscriptions")
     .upsert({ ...sub, updated_at: new Date().toISOString() });
   if (error) throw error;
+}
+
+export async function fetchAllBankAccountLogs(): Promise<BankAccountLog[]> {
+  const { data, error } = await supabase
+    .from("bank_account_logs")
+    .select("*")
+    .order("changed_at", { ascending: false })
+    .limit(200);
+  if (error) return [];
+  return (data ?? []) as BankAccountLog[];
 }

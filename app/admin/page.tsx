@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getUser } from "@/lib/auth";
-import { fetchAllPropertiesAdmin, fetchAllBookingsAdmin, fetchAllHostSettingsAdmin, fetchAllSubscriptions, upsertSubscription } from "@/lib/db";
-import { SavedProperty, Booking, KakaoUser, HostSettings, Subscription, SubscriptionStatus } from "@/lib/types";
+import { fetchAllPropertiesAdmin, fetchAllBookingsAdmin, fetchAllHostSettingsAdmin, fetchAllSubscriptions, upsertSubscription, fetchAllBankAccountLogs } from "@/lib/db";
+import { SavedProperty, Booking, KakaoUser, HostSettings, Subscription, SubscriptionStatus, BankAccountLog } from "@/lib/types";
 
 const ADMIN_ID = "4855799810";
 
@@ -36,8 +36,9 @@ export default function AdminPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [hostSettings, setHostSettings] = useState<HostSettings[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [bankLogs, setBankLogs] = useState<BankAccountLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"overview" | "bookings" | "properties" | "subscriptions">("overview");
+  const [tab, setTab] = useState<"overview" | "bookings" | "properties" | "subscriptions" | "banklogs">("overview");
   const [search, setSearch] = useState("");
   const [subSaving, setSubSaving] = useState<string | null>(null);
 
@@ -53,12 +54,13 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!checked) return;
-    Promise.all([fetchAllPropertiesAdmin(), fetchAllBookingsAdmin(), fetchAllHostSettingsAdmin(), fetchAllSubscriptions()])
-      .then(([props, bks, hs, subs]) => {
+    Promise.all([fetchAllPropertiesAdmin(), fetchAllBookingsAdmin(), fetchAllHostSettingsAdmin(), fetchAllSubscriptions(), fetchAllBankAccountLogs()])
+      .then(([props, bks, hs, subs, logs]) => {
         setProperties(props);
         setBookings(bks);
         setHostSettings(hs);
         setSubscriptions(subs);
+        setBankLogs(logs);
       })
       .finally(() => setLoading(false));
   }, [checked]);
@@ -119,15 +121,20 @@ export default function AdminPage() {
         </div>
         {/* 탭 */}
         <div className="max-w-5xl mx-auto px-4 flex gap-0 border-t border-gray-100">
-          {(["overview", "bookings", "properties", "subscriptions"] as const).map(t => (
+          {(["overview", "bookings", "properties", "subscriptions", "banklogs"] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 tab === t ? "border-indigo-500 text-indigo-600" : "border-transparent text-gray-400 hover:text-gray-600"
               }`}
             >
-              {t === "overview" ? "개요" : t === "bookings" ? "예약" : t === "properties" ? "숙소" : "구독"}
+              {t === "overview" ? "개요" : t === "bookings" ? "예약" : t === "properties" ? "숙소" : t === "subscriptions" ? "구독" : (
+                <span className="flex items-center gap-1">
+                  계좌이력
+                  {bankLogs.length > 0 && <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{bankLogs.length}</span>}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -396,6 +403,49 @@ export default function AdminPage() {
             </div>
           );
         })()}
+
+        {/* ─── 계좌이력 탭 ──────────────────────────────────────────────────── */}
+        {tab === "banklogs" && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-gray-700">계좌 변경 이력 ({bankLogs.length}건)</p>
+              {bankLogs.length === 0 && <p className="text-xs text-gray-400">변경 이력 없음</p>}
+            </div>
+            {bankLogs.length > 0 && (
+              <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden divide-y divide-gray-50">
+                {bankLogs.map(log => {
+                  const hs = hostSettings.find(h => h.host_id === log.host_id);
+                  const hostName = hs?.host_name ?? log.host_id;
+                  return (
+                    <div key={log.id} className="px-5 py-4">
+                      <div className="flex items-start justify-between gap-4 mb-3">
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">{hostName}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">{log.host_id}</p>
+                        </div>
+                        <p className="text-xs text-gray-400 whitespace-nowrap shrink-0">{fmtDt(log.changed_at)}</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-red-50 rounded-xl px-3 py-2.5 text-xs space-y-1">
+                          <p className="text-red-400 font-semibold mb-1">변경 전</p>
+                          <p className="text-gray-600">{log.old_bank_name ?? "-"}</p>
+                          <p className="text-gray-800 font-mono font-semibold">{log.old_bank_account ?? "-"}</p>
+                          <p className="text-gray-500">{log.old_bank_holder ?? "-"}</p>
+                        </div>
+                        <div className="bg-green-50 rounded-xl px-3 py-2.5 text-xs space-y-1">
+                          <p className="text-green-500 font-semibold mb-1">변경 후</p>
+                          <p className="text-gray-600">{log.new_bank_name ?? "-"}</p>
+                          <p className="text-gray-800 font-mono font-semibold">{log.new_bank_account ?? "-"}</p>
+                          <p className="text-gray-500">{log.new_bank_holder ?? "-"}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
       </div>
     </div>
