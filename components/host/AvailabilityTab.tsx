@@ -496,7 +496,7 @@ export default function AvailabilityTab({ user: _user, properties, bookings, onC
                         <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                        <div className="text-gray-500"><span className="text-gray-400">연락처</span> {b.guest_phone}</div>
+                        <div className="text-gray-500"><span className="text-gray-400">연락처</span> {b.guest_phone.replace(/(\d{3})(\d{3,4})(\d{4})/, "$1-$2-$3")}</div>
                         <div className="text-gray-500">
                           <span className="text-gray-400">인원</span>{" "}
                           성인 {b.adults}{b.children > 0 ? ` · 어린이 ${b.children}` : ""}{b.infants > 0 ? ` · 유아 ${b.infants}` : ""}

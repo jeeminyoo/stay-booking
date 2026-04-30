@@ -467,7 +467,7 @@ export default function HostDashboard() {
                           <div><span className="text-gray-400">체크인</span> {formatDate(b.check_in)}</div>
                           <div><span className="text-gray-400">체크아웃</span> {formatDate(b.check_out)}</div>
                           <div><span className="text-gray-400">예약자</span> {b.guest_name}</div>
-                          <div><span className="text-gray-400">연락처</span> {b.guest_phone}</div>
+                          <div><span className="text-gray-400">연락처</span> {b.guest_phone.replace(/(\d{3})(\d{3,4})(\d{4})/, "$1-$2-$3")}</div>
                           <div><span className="text-gray-400">인원</span> 성인 {b.adults}{b.children > 0 ? ` · 어린이 ${b.children}` : ""}{b.infants > 0 ? ` · 유아 ${b.infants}` : ""}</div>
                           <div className="font-semibold text-gray-800"><span className="text-gray-400 font-normal">금액</span> {b.total_price.toLocaleString()}원</div>
                         </div>

@@ -242,7 +242,7 @@ export default function AdminPage() {
                   <div key={b.id} className="bg-white rounded-2xl border border-gray-100 px-5 py-4 space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="text-sm font-semibold text-gray-900">{b.guest_name} · {b.guest_phone}</p>
+                        <p className="text-sm font-semibold text-gray-900">{b.guest_name} · {b.guest_phone.replace(/(\d{3})(\d{3,4})(\d{4})/, "$1-$2-$3")}</p>
                         <p className="text-xs text-gray-400 mt-0.5">{b.property_name} · {b.room_name}</p>
                       </div>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${sl?.className ?? "bg-gray-100 text-gray-500"}`}>{sl?.label ?? b.status}</span>
