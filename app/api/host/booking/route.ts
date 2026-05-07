@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifySession } from "@/lib/session";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { sendGuestBookingConfirmed } from "@/lib/alimtalk";
 
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies();
@@ -12,14 +13,23 @@ export async function POST(req: NextRequest) {
 
   // 해당 예약이 이 호스트 소유 숙소의 예약인지 확인
   const { data: booking } = await supabaseAdmin
-    .from("bookings").select("property_id").eq("id", id).single();
+    .from("bookings").select("*").eq("id", id).single();
   if (!booking) return NextResponse.json({ error: "not found" }, { status: 404 });
 
   const { data: prop } = await supabaseAdmin
-    .from("properties").select("host_id").eq("id", booking.property_id).single();
+    .from("properties").select("host_id, slug").eq("id", booking.property_id).single();
   if (!prop || prop.host_id !== userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const { error } = await supabaseAdmin.from("bookings").update(updates).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // 예약 확정 시 게스트에게 알림톡 발송
+  if (updates.status === "confirmed") {
+    const confirmedBooking = { ...booking, ...updates };
+    sendGuestBookingConfirmed(confirmedBooking, prop.slug).catch((e) =>
+      console.error("[alimtalk] sendGuestBookingConfirmed failed:", e),
+    );
+  }
+
   return NextResponse.json({ ok: true });
 }

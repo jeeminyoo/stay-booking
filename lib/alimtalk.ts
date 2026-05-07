@@ -1,71 +1,98 @@
-import { Booking, SavedProperty } from "./types";
+import { sendAlimtalk, TEMPLATE } from "./solapi";
+import type { Booking } from "./types";
 
-const ORIGIN = process.env.NEXT_PUBLIC_SITE_URL ?? "https://staypick.info";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://staypick.info";
 
-function formatDate(d: string) {
-  const [y, m, day] = d.split("-");
-  return `${y}.${m}.${parseInt(day)}`;
+function fmt(date: string) {
+  return date.replace(/-/g, ".");
 }
 
-function formatGuests(b: Booking) {
+function fmtDeadline(iso: string) {
+  const d = new Date(iso);
+  return `${d.getMonth() + 1}월 ${d.getDate()}일 ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+function fmtPrice(n: number) {
+  return n.toLocaleString("ko-KR");
+}
+
+function fmtGuests(b: Booking) {
   const parts = [`성인 ${b.adults}명`];
   if (b.children > 0) parts.push(`어린이 ${b.children}명`);
   if (b.infants > 0) parts.push(`유아 ${b.infants}명`);
-  return parts.join(", ");
+  return parts.join(" ");
 }
 
-// 버튼 URL: 프로토콜+도메인은 템플릿에 고정 입력하므로 경로만 반환
-// 솔라피 버튼 URL 필드: https://staypick.info/s/#{유의사항경로}
-function noticeUrlPath(property: SavedProperty, roomName: string) {
-  const path = `s/${property.slug}/notice`;
-  if (!property.notice_per_room) return path;
-  return `${path}?room=${encodeURIComponent(roomName)}`;
+// 1. 게스트 입금 요청 (예약 생성 직후)
+export async function sendGuestDepositRequest(booking: Booking): Promise<void> {
+  await sendAlimtalk(
+    booking.guest_phone,
+    TEMPLATE.GUEST_DEPOSIT_REQUEST,
+    {
+      "#{게스트명}":  booking.guest_name,
+      "#{숙소명}":    booking.property_name,
+      "#{객실명}":    booking.room_name,
+      "#{금액}":      fmtPrice(booking.total_price),
+      "#{은행명}":    booking.bank_name,
+      "#{예금주}":    booking.bank_holder,
+      "#{계좌번호}":  booking.bank_account,
+      "#{입금기한}":  fmtDeadline(booking.payment_deadline),
+    },
+    [{ buttonType: "WL", buttonName: "입금확인 요청하기", linkMo: `${BASE_URL}/booking/${booking.id}`, linkPc: `${BASE_URL}/booking/${booking.id}` }],
+  );
 }
 
-// ─── 예약 확정 알림톡 변수 ────────────────────────────────────────────────────
-
-export interface ConfirmAlimtalkVars {
-  게스트명: string;
-  숙소명: string;
-  객실명: string;
-  체크인: string;
-  체크아웃: string;
-  인원: string;
-  금액: string;
-  유의사항경로: string;  // 버튼 URL용 — 프로토콜+도메인은 템플릿에 고정
+// 2. 호스트 입금확인요청 알림 (게스트가 입금확인 요청 시)
+export async function sendHostDepositRequested(booking: Booking, hostPhone: string): Promise<void> {
+  await sendAlimtalk(
+    hostPhone,
+    TEMPLATE.HOST_DEPOSIT_REQUESTED,
+    {
+      "#{숙소명}":      booking.property_name,
+      "#{객실명}":      booking.room_name,
+      "#{체크인일자}":  fmt(booking.check_in),
+      "#{체크아웃일자}": fmt(booking.check_out),
+      "#{입금자명}":    booking.guest_name,
+      "#{휴대폰번호}":  booking.guest_phone,
+      "#{입금액}":      fmtPrice(booking.total_price),
+      "#{메시지}":      booking.payment_note || "없음",
+    },
+  );
 }
 
-export function buildConfirmVars(
-  booking: Booking,
-  property: SavedProperty,
-): ConfirmAlimtalkVars {
-  return {
-    게스트명:    booking.guest_name,
-    숙소명:      booking.property_name,
-    객실명:      booking.room_name,
-    체크인:      formatDate(booking.check_in),
-    체크아웃:    formatDate(booking.check_out),
-    인원:        formatGuests(booking),
-    금액:        booking.total_price.toLocaleString(),
-    유의사항경로: noticeUrlPath(property, booking.room_name),
-  };
+// 3. 게스트 예약 확정 안내 (호스트가 예약 확정 시)
+export async function sendGuestBookingConfirmed(booking: Booking, slug: string): Promise<void> {
+  const confirmUrl = `${BASE_URL}/s/${slug}/notice-confirm`;
+  await sendAlimtalk(
+    booking.guest_phone,
+    TEMPLATE.GUEST_BOOKING_CONFIRMED,
+    {
+      "#{게스트명}":  booking.guest_name,
+      "#{숙소명}":    booking.property_name,
+      "#{객실명}":    booking.room_name,
+      "#{체크인}":    fmt(booking.check_in),
+      "#{체크아웃}":  fmt(booking.check_out),
+      "#{입금자명}":  booking.guest_name,
+      "#{인원}":      fmtGuests(booking),
+      "#{금액}":      fmtPrice(booking.total_price),
+    },
+    [{ buttonType: "WL", buttonName: "유의사항 확인하기", linkMo: confirmUrl, linkPc: confirmUrl }],
+  );
 }
 
-// ─── 템플릿 미리보기 (디버깅·확인용) ─────────────────────────────────────────
-
-export function renderConfirmTemplate(vars: ConfirmAlimtalkVars): string {
-  return `[예약 확정 안내]
-
-${vars.게스트명}님, 예약이 확정되었습니다!
-
-━━━━━━━━━━━━━━
-🏡 ${vars.숙소명}
-🛏 ${vars.객실명}
-📅 체크인  ${vars.체크인}
-📅 체크아웃 ${vars.체크아웃}
-👥 ${vars.인원}
-💳 ${vars.금액}원
-━━━━━━━━━━━━━━
-
-체크인 전 이용 유의사항을 꼭 확인해주세요.`;
+// 4. 게스트 체크인 당일 안내 (크론 발송)
+export async function sendGuestCheckinReminder(booking: Booking, slug: string): Promise<void> {
+  const checkinUrl = `${BASE_URL}/s/${slug}/notice-checkin`;
+  await sendAlimtalk(
+    booking.guest_phone,
+    TEMPLATE.GUEST_CHECKIN_REMINDER,
+    {
+      "#{게스트명}":  booking.guest_name,
+      "#{숙소명}":    booking.property_name,
+      "#{객실명}":    booking.room_name,
+      "#{체크인}":    fmt(booking.check_in),
+      "#{체크아웃}":  fmt(booking.check_out),
+    },
+    [{ buttonType: "WL", buttonName: "체크인 유의사항 확인", linkMo: checkinUrl, linkPc: checkinUrl }],
+  );
 }

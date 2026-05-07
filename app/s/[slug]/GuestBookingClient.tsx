@@ -57,7 +57,7 @@ import { calculateTotalPrice } from "@/lib/pricing";
 import BookingCalendar from "@/components/BookingCalendar";
 import PaymentTimer from "@/components/PaymentTimer";
 import { fetchPropertyBySlug } from "@/lib/db";
-import { getBlockedDates, createBooking, updateBooking, calcAutoDeadline } from "@/lib/data";
+import { getBlockedDates } from "@/lib/data";
 import { fetchHostSettings } from "@/lib/db";
 import Logo from "@/components/Logo";
 
@@ -285,26 +285,35 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
         return;
       }
       try { localStorage.setItem("guest_phone", guestPhone); } catch {}
-      const newBooking = await createBooking({
-        property_id: property.id,
-        room_id: roomId,
-        property_name: property.name,
-        room_name: selectedRoom.name,
-        check_in: checkIn,
-        check_out: checkOut,
-        adults: guests.adults,
-        children: guests.children,
-        infants: guests.infants,
-        total_price: calc?.total ?? 0,
-        status: "waiting_for_deposit",
-        guest_name: guestName,
-        guest_phone: guestPhone,
-        guest_message: guestMessage || undefined,
-        payment_notified: false,
-        bank_name: hostSettings?.bank_name ?? "",
-        bank_account: hostSettings?.bank_account ?? "",
-        bank_holder: hostSettings?.bank_holder ?? "",
-      }, autoCancelMinutes);
+      const res = await fetch("/api/guest/booking/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookingData: {
+            property_id: property.id,
+            room_id: roomId,
+            property_name: property.name,
+            room_name: selectedRoom.name,
+            check_in: checkIn,
+            check_out: checkOut,
+            adults: guests.adults,
+            children: guests.children,
+            infants: guests.infants,
+            total_price: calc?.total ?? 0,
+            status: "waiting_for_deposit",
+            guest_name: guestName,
+            guest_phone: guestPhone,
+            guest_message: guestMessage || null,
+            payment_notified: false,
+            bank_name: hostSettings?.bank_name ?? "",
+            bank_account: hostSettings?.bank_account ?? "",
+            bank_holder: hostSettings?.bank_holder ?? "",
+          },
+          autoCancelMinutes,
+        }),
+      });
+      if (!res.ok) throw new Error("booking create failed");
+      const { booking: newBooking } = await res.json();
       setBooking(newBooking);
       setStep("payment");
     } catch {
@@ -316,24 +325,28 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
 
   async function handleNotifyPayment() {
     if (!booking || !paymentNote || !property) return;
-    const settings = await fetchHostSettings(property.host_id);
-    const deadline = calcAutoDeadline(
-      new Date(),
-      settings?.auto_cancel_minutes ?? 60,
-      settings?.unavailable_start,
-      settings?.unavailable_end,
-    );
-    await updateBooking(booking.id, {
-      payment_notified: true,
-      payment_note: paymentNote,
-      status: "deposit_requested",
-      payment_deadline: deadline.toISOString(),
+    await fetch("/api/guest/booking", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: booking.id,
+        payment_note: paymentNote,
+        autoCancelMinutes: hostSettings?.auto_cancel_minutes ?? 60,
+        unavailableStart: hostSettings?.unavailable_start,
+        unavailableEnd: hostSettings?.unavailable_end,
+      }),
     });
     setStep("done");
   }
 
   async function handleExpire() {
-    if (booking) await updateBooking(booking.id, { status: "auto_cancelled" });
+    if (booking) {
+      await fetch("/api/guest/booking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: booking.id, _expire: true }),
+      }).catch(() => {});
+    }
     setStep("date");
     setCheckIn("");
     setCheckOut("");
