@@ -10,6 +10,7 @@ import { fetchHostProperties, fetchHostSettings, fetchHostBookingsPaged, fetchHo
 import { apiDeleteProperty, apiPatchBookingHost, apiUpsertHostSettings, apiPatchPropertyActive, apiLogout } from "@/lib/api";
 import { expireOverdueBookings } from "@/lib/data";
 import AvailabilityTab from "@/components/host/AvailabilityTab";
+import BankSelectModal from "@/components/BankSelectModal";
 
 function SuccessBanner() {
   const searchParams = useSearchParams();
@@ -88,6 +89,7 @@ export default function HostDashboard() {
   const [toast, setToast] = useState("");
   const [highlightBookingId, setHighlightBookingId] = useState<string | null>(null);
   const [noticeSheetProperty, setNoticeSheetProperty] = useState<SavedProperty | null>(null);
+  const [bankModalOpen, setBankModalOpen] = useState(false);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -825,13 +827,16 @@ export default function HostDashboard() {
                   <div className="px-5 py-4 space-y-3">
                     <div>
                       <p className="text-xs text-gray-500 mb-1.5">은행명</p>
-                      <input
-                        type="text"
-                        value={settings.bank_name ?? ""}
-                        onChange={e => setSettings(s => s ? { ...s, bank_name: e.target.value } : s)}
-                        placeholder="예) 국민은행"
-                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
-                      />
+                      <button
+                        type="button"
+                        onClick={() => setBankModalOpen(true)}
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-left transition-colors hover:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      >
+                        {settings.bank_name
+                          ? <span className="text-gray-700">{settings.bank_name}</span>
+                          : <span className="text-gray-400">은행을 선택해주세요</span>
+                        }
+                      </button>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-1.5">계좌번호</p>
@@ -1071,6 +1076,13 @@ export default function HostDashboard() {
           <path d="M12 3C6.477 3 2 6.925 2 11.75c0 3.017 1.77 5.666 4.455 7.258L5.5 22l3.326-1.746C9.839 20.734 10.905 21 12 21c5.523 0 10-3.925 10-8.75S17.523 3 12 3z"/>
         </svg>
       </a>
+
+      {bankModalOpen && (
+        <BankSelectModal
+          onSelect={(name) => setSettings(s => s ? { ...s, bank_name: name } : s)}
+          onClose={() => setBankModalOpen(false)}
+        />
+      )}
     </div>
   );
 }
