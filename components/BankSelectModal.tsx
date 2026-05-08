@@ -45,7 +45,7 @@ const BANKS: Bank[] = [
   { name: "HSBC은행",         svg: "/banks/hsbc.svg", bg: "#DB0011" },
   { name: "JP모간체이스은행", img: "/banks/jpmorgan.png" },
   { name: "케이뱅크",         img: "/banks/kbank_new.png" },
-  { name: "토스뱅크",         svg: "/banks/092.svg",  bg: "#4285F4" },
+  { name: "토스뱅크",         img: "/banks/toss_new.png", bg: "#C5E0F5" },
 ];
 
 interface Props {
