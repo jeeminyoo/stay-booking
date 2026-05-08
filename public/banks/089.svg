@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="138.9px" height="34.02px" viewBox="0 0 138.9 34.02" enable-background="new 0 0 138.9 34.02" xml:space="preserve">
+<g id="Group-22" transform="translate(30.364964, 0.000000)">
+	<g id="Clip-21">
+	</g>
+	<defs>
+		<filter id="Adobe_OpacityMaskFilter" filterUnits="userSpaceOnUse" x="0" y="0" width="25.621" height="34.16">
+			<feColorMatrix  type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
+		</filter>
+	</defs>
+	<mask maskUnits="userSpaceOnUse" x="0" y="0" width="25.621" height="34.16" id="mask-4_1_">
+		<g filter="url(#Adobe_OpacityMaskFilter)">
+			<polygon id="path-3_1_" fill="#FFFFFF" points="0,0 25.62,0 25.62,34.16 0,34.16 			"/>
+		</g>
+	</mask>
+	<path id="Fill-20" mask="url(#mask-4_1_)" fill="#FFFFFF" d="M12.787,28.104c-3.522,0-6.387-2.827-6.387-6.303
+		c0-3.477,2.865-6.305,6.387-6.305s6.387,2.828,6.387,6.305C19.174,25.276,16.309,28.104,12.787,28.104 M13.858,9.425
+		c-2.518,0-4.848,0.881-6.561,2.48l-0.589,0.549V0H0v21.285C0,29.227,4.81,34.16,12.553,34.16c7.572,0,13.067-5.191,13.067-12.345
+		C25.62,14.636,20.673,9.425,13.858,9.425"/>
+</g>
+<polygon id="Fill-23" fill="#FFFFFF" points="19.655,0 6.649,15.119 6.649,0 0,0 0,33.211 6.649,33.211 6.649,18.225 19.919,33.211 
+	28.467,33.211 13.786,16.605 28.07,0 "/>
+<g id="Group-27" transform="translate(115.766423, 0.000000)">
+	<g id="Clip-26">
+	</g>
+	<defs>
+		<filter id="Adobe_OpacityMaskFilter_1_" filterUnits="userSpaceOnUse" x="0" y="0" width="22.773" height="33.211">
+			<feColorMatrix  type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
+		</filter>
+	</defs>
+	<mask maskUnits="userSpaceOnUse" x="0" y="0" width="22.773" height="33.211" id="mask-6_1_">
+		<g filter="url(#Adobe_OpacityMaskFilter_1_)">
+			<polygon id="path-5_1_" fill="#FFFFFF" points="0,0 22.774,0 22.774,33.211 0,33.211 			"/>
+		</g>
+	</mask>
+	<polygon id="Fill-25" mask="url(#mask-6_1_)" fill="#FFFFFF" points="22.774,10.156 15.298,10.156 6.71,20.112 6.71,0 0,0 
+		0,33.211 6.71,33.211 6.71,23.255 15.298,33.211 22.774,33.211 12.83,21.684 	"/>
+</g>
+<path id="Fill-28" fill="#FFFFFF" d="M103.183,9.489c-4.024,0-6.507,1.893-7.693,3.22v-2.436h-6.292v22.938h6.52L95.715,20.72
+	c0-3.122,2.164-5.304,4.869-5.304s4.868,2.182,4.868,5.304v12.491h6.519V18.752C111.971,13.385,108.101,9.489,103.183,9.489"/>
+<g id="Group-32" transform="translate(58.832117, 9.489051)">
+	<g id="Clip-31">
+	</g>
+	<defs>
+		<filter id="Adobe_OpacityMaskFilter_2_" filterUnits="userSpaceOnUse" x="0" y="0" width="25.621" height="24.671">
+			<feColorMatrix  type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
+		</filter>
+	</defs>
+	<mask maskUnits="userSpaceOnUse" x="0" y="0" width="25.621" height="24.671" id="mask-8_1_">
+		<g filter="url(#Adobe_OpacityMaskFilter_2_)">
+			<polygon id="path-7_1_" fill="#FFFFFF" points="0,0 25.621,0 25.621,24.671 0,24.671 			"/>
+		</g>
+	</mask>
+	<path id="Fill-30" mask="url(#mask-8_1_)" fill="#FFFFFF" d="M12.965,18.631c-3.478,0-6.307-2.82-6.307-6.287
+		c0-3.468,2.829-6.288,6.307-6.288c3.478,0,6.307,2.82,6.307,6.288C19.271,15.811,16.442,18.631,12.965,18.631 M12.764,0
+		C5.369,0,0,5.197,0,12.359c0,7.134,4.947,12.312,11.762,12.312c4.844,0,7.433-3.496,7.458-3.531l0.376-0.518v3.276h6.025v-11.54
+		C25.621,5.197,20.214,0,12.764,0"/>
+</g>
+</svg>
