@@ -44,7 +44,7 @@ const BANKS: Bank[] = [
   { name: "BNP파리바은행",    img: "/banks/bnp.png" },
   { name: "HSBC은행",         svg: "/banks/hsbc.svg", bg: "#DB0011" },
   { name: "JP모간체이스은행", img: "/banks/jpmorgan.png" },
-  { name: "케이뱅크",         svg: "/banks/090.svg",  bg: "#1A237E" },
+  { name: "케이뱅크",         img: "/banks/kbank_new.png" },
   { name: "토스뱅크",         svg: "/banks/092.svg",  bg: "#4285F4" },
 ];
 
