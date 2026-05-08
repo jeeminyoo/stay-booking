@@ -27,7 +27,7 @@ const BANKS: Bank[] = [
   { name: "하나은행",         img: "/banks/hana_new.png", bg: "#009490", white: true, size: "w-9 h-9" },
   { name: "SC제일은행",       img: "/banks/sc_logo.png", bg: "#1499FF", white: true },
   { name: "경남은행",         svg: "/banks/039.svg",  bg: "#C8102E" },
-  { name: "광주은행",         img: "/banks/gwangju.png" },
+  { name: "광주은행",         img: "/banks/gwangju.png", bg: "#1669AD", white: true },
   { name: "도이치은행",       svgColored: "/banks/deutsche.svg", bg: "#0018A8" },
   { name: "뱅크오브아메리카", svg: "/banks/boa.svg",  bg: "#C8102E" },
   { name: "부산은행",         svg: "/banks/032.svg",  bg: "#C8102E" },
