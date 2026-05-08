@@ -82,13 +82,13 @@ export default function BankSelectModal({ onSelect, onClose }: Props) {
               className="flex flex-col items-center gap-1.5 active:opacity-60 transition-opacity"
             >
               {bank.img ? (
-                <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0">
+                <div className="w-14 h-14 rounded-full overflow-hidden shrink-0">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={bank.img} alt={bank.name} className="w-full h-full object-cover" />
                 </div>
               ) : (
                 <div
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 overflow-hidden"
+                  className="w-14 h-14 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
                   style={{ backgroundColor: bank.bg ?? "#6B7280" }}
                 >
                   {(bank.svg || bank.svgColored) ? (
