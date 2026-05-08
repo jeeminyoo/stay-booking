@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+
 interface Bank {
   name: string;
   // app-icon PNGs: display as-is (already colored square icons)
@@ -54,9 +57,13 @@ interface Props {
 }
 
 export default function BankSelectModal({ onSelect, onClose }: Props) {
-  return (
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  if (!mounted) return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40"
+      className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/40"
       onClick={onClose}
     >
       <div
@@ -104,6 +111,7 @@ export default function BankSelectModal({ onSelect, onClose }: Props) {
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
