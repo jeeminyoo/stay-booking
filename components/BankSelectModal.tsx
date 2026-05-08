@@ -19,7 +19,7 @@ interface Bank {
 const BANKS: Bank[] = [
   { name: "카카오뱅크",       img: "/banks/kakaobank.png" },
   { name: "국민은행",         img: "/banks/kb_thevc.jpg" },
-  { name: "기업은행",         svg: "/banks/003.svg",  bg: "#0062B8" },
+  { name: "기업은행",         svgColored: "/banks/ibk.svg", bg: "#0062B8" },
   { name: "농협은행",         svg: "/banks/011.svg",  bg: "#F5BC1F" },
   { name: "신한은행",         svg: "/banks/088.svg",  bg: "#0046FF" },
   { name: "iM뱅크",           img: "/banks/im.png",  bg: "#00C7A9" },
