@@ -1,8 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
-
 interface Bank {
   name: string;
   // app-icon PNGs: display as-is (already colored square icons)
@@ -18,16 +15,16 @@ interface Bank {
 
 const BANKS: Bank[] = [
   { name: "카카오뱅크",       img: "/banks/kakaobank.png" },
-  { name: "국민은행",         img: "/banks/kb.png" },
+  { name: "국민은행",         svg: "/banks/004.svg",  bg: "#FFBC00" },
   { name: "기업은행",         svg: "/banks/003.svg",  bg: "#1D4ED8" },
-  { name: "농협은행",         img: "/banks/nh.png" },
-  { name: "신한은행",         img: "/banks/shinhan.png" },
+  { name: "농협은행",         svg: "/banks/011.svg",  bg: "#007B40" },
+  { name: "신한은행",         svg: "/banks/088.svg",  bg: "#0046FF" },
   { name: "iM뱅크",           img: "/banks/im.png" },
   { name: "산업은행",         svg: "/banks/002.svg",  bg: "#003087" },
-  { name: "우리은행",         img: "/banks/woori.png" },
+  { name: "우리은행",         svg: "/banks/020.svg",  bg: "#0066B3" },
   { name: "한국씨티은행",     svg: "/banks/027.svg",  bg: "#003B8E" },
-  { name: "하나은행",         img: "/banks/hana.png" },
-  { name: "SC제일은행",       img: "/banks/sc.png" },
+  { name: "하나은행",         svg: "/banks/081.svg",  bg: "#009B77" },
+  { name: "SC제일은행",       svg: "/banks/023.svg",  bg: "#1E6F5C" },
   { name: "경남은행",         svg: "/banks/039.svg",  bg: "#C8102E" },
   { name: "광주은행",         img: "/banks/gwangju.png" },
   { name: "도이치은행",       svgColored: "/banks/deutsche.svg", bg: "#0018A8" },
@@ -35,10 +32,10 @@ const BANKS: Bank[] = [
   { name: "부산은행",         svg: "/banks/032.svg",  bg: "#C8102E" },
   { name: "산림조합중앙회",   img: "/banks/nfcf.png" },
   { name: "저축은행",         svg: "/banks/050.svg",  bg: "#388E3C" },
-  { name: "새마을금고",       img: "/banks/mg.png" },
-  { name: "수협",             img: "/banks/sh.png" },
+  { name: "새마을금고",       svg: "/banks/045.svg",  bg: "#00ACC1" },
+  { name: "수협",             svg: "/banks/007.svg",  bg: "#006699" },
   { name: "신협중앙회",       svg: "/banks/048.svg",  bg: "#00796B" },
-  { name: "우체국",           img: "/banks/post.png" },
+  { name: "우체국",           svg: "/banks/071.svg",  bg: "#E65100" },
   { name: "전북은행",         img: "/banks/jeonbuk.png" },
   { name: "제주은행",         svg: "/banks/035.svg",  bg: "#0277BD" },
   { name: "중국건설은행",     svgColored: "/banks/ccb.svg", bg: "#1565C0" },
@@ -57,13 +54,9 @@ interface Props {
 }
 
 export default function BankSelectModal({ onSelect, onClose }: Props) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
-  if (!mounted) return null;
-
-  return createPortal(
+  return (
     <div
-      className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/40"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40"
       onClick={onClose}
     >
       <div
@@ -111,7 +104,6 @@ export default function BankSelectModal({ onSelect, onClose }: Props) {
           ))}
         </div>
       </div>
-    </div>,
-    document.body,
+    </div>
   );
 }
