@@ -31,7 +31,7 @@ const BANKS: Bank[] = [
   { name: "도이치은행",       svgColored: "/banks/deutsche.svg", bg: "#0018A8" },
   { name: "뱅크오브아메리카", svg: "/banks/boa.svg",  bg: "#C8102E" },
   { name: "부산은행",         svg: "/banks/032.svg",  bg: "#C8102E" },
-  { name: "산림조합중앙회",   img: "/banks/nfcf.png" },
+  { name: "산림조합중앙회",   img: "/banks/nfcf.png", bg: "#022461" },
   { name: "저축은행",         svg: "/banks/050.svg",  bg: "#388E3C" },
   { name: "새마을금고",       svg: "/banks/045.svg",  bg: "#00ACC1" },
   { name: "수협",             svg: "/banks/007.svg",  bg: "#006699" },
