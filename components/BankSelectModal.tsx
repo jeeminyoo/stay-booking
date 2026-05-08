@@ -23,7 +23,7 @@ const BANKS: Bank[] = [
   { name: "산업은행",         img: "/banks/kdb.png",   bg: "#0A1B98" },
   { name: "우리은행",         img: "/banks/woori.png", bg: "#C5E0F5", size: "w-9 h-9" },
   { name: "한국씨티은행",     img: "/banks/citi_new.jpg" },
-  { name: "하나은행",         svg: "/banks/081.svg",  bg: "#009B77" },
+  { name: "하나은행",         img: "/banks/hana_new.png", bg: "#009B77" },
   { name: "SC제일은행",       img: "/banks/sc_logo.png", bg: "#1E6F5C" },
   { name: "경남은행",         svg: "/banks/039.svg",  bg: "#C8102E" },
   { name: "광주은행",         img: "/banks/gwangju.png" },
