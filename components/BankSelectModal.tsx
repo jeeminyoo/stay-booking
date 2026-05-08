@@ -28,8 +28,8 @@ const BANKS: Bank[] = [
   { name: "SC제일은행",       img: "/banks/sc_logo.png", bg: "#1499FF", white: true },
   { name: "경남은행",         svg: "/banks/039.svg",  bg: "#C8102E" },
   { name: "광주은행",         img: "/banks/gwangju.png", bg: "#1669AD", white: true },
-  { name: "도이치은행",       svgColored: "/banks/deutsche.svg", bg: "#0018A8" },
-  { name: "뱅크오브아메리카", svg: "/banks/boa.svg",  bg: "#C8102E" },
+  { name: "도이치은행",       img: "/banks/deutsche_wiki.png", bg: "#0018A8", white: true, size: "w-7 h-7" },
+  { name: "뱅크오브아메리카", svg: "/banks/boa.svg",  bg: "#CF4A10" },
   { name: "부산은행",         svg: "/banks/032.svg",  bg: "#C8102E" },
   { name: "산림조합중앙회",   img: "/banks/nfcf.png", bg: "#022461" },
   { name: "저축은행",         svg: "/banks/050.svg",  bg: "#388E3C" },
@@ -41,7 +41,7 @@ const BANKS: Bank[] = [
   { name: "제주은행",         svg: "/banks/035.svg",  bg: "#0277BD" },
   { name: "중국건설은행",     svgColored: "/banks/ccb.svg", bg: "#1565C0" },
   { name: "중국공상은행",     img: "/banks/icbc.png" },
-  { name: "중국은행",         svgColored: "/banks/boc.svg", bg: "#C8102E" },
+  { name: "중국은행",         svgColored: "/banks/boc.svg", bg: "#C8102E", white: true },
   { name: "BNP파리바은행",    img: "/banks/bnp.png" },
   { name: "HSBC은행",         svg: "/banks/hsbc.svg", bg: "#DB0011" },
   { name: "JP모간체이스은행", img: "/banks/jpmorgan.png" },
@@ -98,7 +98,7 @@ export default function BankSelectModal({ onSelect, onClose }: Props) {
                       src={(bank.svg ?? bank.svgColored)!}
                       alt={bank.name}
                       className={`${bank.size ?? "w-9 h-9"} object-contain`}
-                      style={bank.svg ? { filter: "brightness(0) invert(1)" } : undefined}
+                      style={(bank.svg || bank.white) ? { filter: "brightness(0) invert(1)" } : undefined}
                     />
                   ) : (
                     <span className="text-[11px] font-bold text-white text-center px-1 leading-tight">
