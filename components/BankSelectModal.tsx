@@ -22,7 +22,7 @@ const BANKS: Bank[] = [
   { name: "기업은행",         svgColored: "/banks/ibk.svg", bg: "#F0F0F0" },
   { name: "농협은행",         svg: "/banks/011.svg",  bg: "#F5BC1F" },
   { name: "신한은행",         svg: "/banks/088.svg",  bg: "#0046FF" },
-  { name: "iM뱅크",           img: "/banks/im.png" },
+  { name: "iM뱅크",           img: "/banks/im.png",  bg: "#00C7A9" },
   { name: "산업은행",         svg: "/banks/002.svg",  bg: "#003087" },
   { name: "우리은행",         svg: "/banks/020.svg",  bg: "#0066B3" },
   { name: "한국씨티은행",     svg: "/banks/027.svg",  bg: "#003B8E" },
@@ -82,9 +82,12 @@ export default function BankSelectModal({ onSelect, onClose }: Props) {
               className="flex flex-col items-center gap-1.5 active:opacity-60 transition-opacity"
             >
               {bank.img ? (
-                <div className="w-14 h-14 rounded-full overflow-hidden shrink-0">
+                <div
+                  className="w-14 h-14 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
+                  style={bank.bg ? { backgroundColor: bank.bg } : undefined}
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={bank.img} alt={bank.name} className="w-full h-full object-cover" />
+                  <img src={bank.img} alt={bank.name} className={bank.bg ? "w-10 h-10 object-contain" : "w-full h-full object-cover"} />
                 </div>
               ) : (
                 <div
