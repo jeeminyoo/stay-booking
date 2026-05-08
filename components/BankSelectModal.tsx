@@ -14,14 +14,14 @@ interface Bank {
 }
 
 const BANKS: Bank[] = [
-  { name: "카카오뱅크",       img: "/banks/kakaobank.png", bg: "#F9F9F9", size: "w-11 h-11" },
+  { name: "카카오뱅크",       img: "/banks/kakaobank.png" },
   { name: "국민은행",         img: "/banks/kb_thevc.jpg" },
   { name: "기업은행",         svgColored: "/banks/ibk.svg", bg: "#0062B8" },
-  { name: "농협은행",         svg: "/banks/011.svg",  bg: "#F5BC1F", size: "w-7 h-7" },
+  { name: "농협은행",         svg: "/banks/011.svg",  bg: "#F5BC1F", size: "w-8 h-8" },
   { name: "신한은행",         svg: "/banks/088.svg",  bg: "#0046FF" },
-  { name: "iM뱅크",           img: "/banks/im.png",  bg: "#00C7A9" },
+  { name: "iM뱅크",           img: "/banks/im.png",  bg: "#00C7A9", size: "w-9 h-9" },
   { name: "산업은행",         img: "/banks/kdb.png",   bg: "#0A1B98" },
-  { name: "우리은행",         img: "/banks/woori.png", bg: "#C5E0F5" },
+  { name: "우리은행",         img: "/banks/woori.png", bg: "#C5E0F5", size: "w-9 h-9" },
   { name: "한국씨티은행",     img: "/banks/citi_new.jpg" },
   { name: "하나은행",         svg: "/banks/081.svg",  bg: "#009B77" },
   { name: "SC제일은행",       img: "/banks/sc_logo.png", bg: "#1E6F5C" },
