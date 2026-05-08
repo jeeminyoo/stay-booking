@@ -398,7 +398,7 @@ export default function HostDashboard() {
                 ${tab === key ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-400 hover:text-gray-600"}`}>
               {label}
               {key === "bookings" && actionNeededCount > 0 && (
-                <span className="absolute top-1.5 ml-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 inline-flex items-center justify-center leading-none">{actionNeededCount}</span>
+                <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 inline-flex items-center justify-center leading-none">{actionNeededCount}</span>
               )}
             </button>
           ))}
