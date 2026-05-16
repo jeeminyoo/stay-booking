@@ -120,6 +120,22 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
   const [property, setProperty] = useState<SavedProperty | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [step, setStep] = useState<Step>("room");
+
+  // 브라우저 히스토리에 step 기록 (room/date/info만)
+  function goToStep(newStep: Step) {
+    setStep(newStep);
+    history.pushState({ step: newStep }, "");
+  }
+
+  useEffect(() => {
+    history.replaceState({ step: "room" }, "");
+    function handlePop(e: PopStateEvent) {
+      const s = e.state?.step as Step | undefined;
+      if (s) setStep(s);
+    }
+    window.addEventListener("popstate", handlePop);
+    return () => window.removeEventListener("popstate", handlePop);
+  }, []);
   const [selectedRoom, setSelectedRoom] = useState<RoomDraft | null>(null);
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
@@ -211,7 +227,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
       const blocked = await getBlockedDates(property.id, roomId);
       setBlockedDates(blocked);
     }
-    setStep("date");
+    goToStep("date");
     setRoomLoading(false);
   };
 
@@ -812,20 +828,20 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
       {step === "room" && property.rooms.length === 1 && (
         <BottomNav
           onBack={() => router.push("/")} backLabel="홈"
-          onNext={() => setStep("date")} nextLabel="날짜 선택"
+          onNext={() => goToStep("date")} nextLabel="날짜 선택"
         />
       )}
       {step === "date" && (
         <BottomNav
-          onBack={() => setStep("room")} backLabel="이전"
-          onNext={() => setStep("info")} nextLabel="다음"
+          onBack={() => history.back()} backLabel="이전"
+          onNext={() => goToStep("info")} nextLabel="다음"
           nextDisabled={!checkIn || !checkOut}
           priceSummary={calc ? { nights, total: calc.total, subtotal: calc.subtotal, discountPercent: calc.discountPercent, discountAmount: calc.discountAmount, adults: guests.adults, children: guests.children, infants: guests.infants } : null}
         />
       )}
       {step === "info" && (
         <BottomNav
-          onBack={() => setStep("date")} backLabel="이전"
+          onBack={() => history.back()} backLabel="이전"
           onNext={handleConfirmBooking} nextLabel={loading ? "처리 중..." : !hostSettingsLoaded ? "로딩 중..." : "예약 요청"}
           nextDisabled={loading || !hostSettingsLoaded}
         />
