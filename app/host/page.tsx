@@ -244,9 +244,17 @@ export default function HostDashboard() {
     setBookings(prev => prev.filter(b => b.property_id !== id));
   }
 
+  const [actingBookingId, setActingBookingId] = useState<string | null>(null);
+
   async function confirmBooking(id: string) {
-    await apiPatchBookingHost(id, { status: "confirmed" });
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: "confirmed" } : b));
+    if (actingBookingId) return;
+    setActingBookingId(id);
+    try {
+      await apiPatchBookingHost(id, { status: "confirmed" });
+      setBookings(prev => prev.map(b => b.id === id ? { ...b, status: "confirmed" } : b));
+    } finally {
+      setActingBookingId(null);
+    }
   }
 
   async function toggleActive(p: SavedProperty) {
@@ -283,9 +291,15 @@ export default function HostDashboard() {
   }
 
   async function cancelBooking(id: string) {
+    if (actingBookingId) return;
     if (!confirm("이 예약을 취소하시겠습니까?")) return;
-    await apiPatchBookingHost(id, { status: "cancelled" });
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: "cancelled" } : b));
+    setActingBookingId(id);
+    try {
+      await apiPatchBookingHost(id, { status: "cancelled" });
+      setBookings(prev => prev.map(b => b.id === id ? { ...b, status: "cancelled" } : b));
+    } finally {
+      setActingBookingId(null);
+    }
   }
 
   async function saveSettings() {
@@ -544,11 +558,13 @@ export default function HostDashboard() {
                       {canAct && (
                         <div className="border-t border-gray-100 px-4 py-3 bg-gray-50 flex gap-2">
                           <button onClick={() => confirmBooking(b.id)}
-                            className="flex-1 bg-indigo-600 text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-indigo-700 transition-colors">
-                            예약 확정
+                            disabled={!!actingBookingId}
+                            className="flex-1 bg-indigo-600 text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50">
+                            {actingBookingId === b.id ? "처리 중..." : "예약 확정"}
                           </button>
                           <button onClick={() => cancelBooking(b.id)}
-                            className="flex-1 border border-gray-200 text-gray-600 text-sm font-semibold py-2.5 rounded-xl hover:bg-gray-100 transition-colors">
+                            disabled={!!actingBookingId}
+                            className="flex-1 border border-gray-200 text-gray-600 text-sm font-semibold py-2.5 rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-50">
                             예약 취소
                           </button>
                         </div>
@@ -556,12 +572,13 @@ export default function HostDashboard() {
                       {isConfirmed && (
                         <div className="border-t border-gray-100 px-4 py-3">
                           <button
+                            disabled={!!actingBookingId}
                             onClick={() => {
                               if (confirm(`게스트(${b.guest_name})에게 환불을 완료한 후 취소 처리하세요.\n\n환불 완료 후 취소 처리하시겠습니까?`)) {
                                 cancelBooking(b.id);
                               }
                             }}
-                            className="w-full border border-red-200 text-red-500 text-sm font-semibold py-2.5 rounded-xl hover:bg-red-50 transition-colors">
+                            className="w-full border border-red-200 text-red-500 text-sm font-semibold py-2.5 rounded-xl hover:bg-red-50 transition-colors disabled:opacity-50">
                             환불 후 예약 취소
                           </button>
                         </div>

@@ -201,7 +201,10 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
     load();
   }, [slug]);
 
+  const [roomLoading, setRoomLoading] = useState(false);
   const handleSelectRoom = async (room: RoomDraft) => {
+    if (roomLoading) return;
+    setRoomLoading(true);
     setSelectedRoom(room);
     if (property) {
       const roomId = `${property.id}-${room.name}`;
@@ -209,6 +212,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
       setBlockedDates(blocked);
     }
     setStep("date");
+    setRoomLoading(false);
   };
 
   const priceCalc = useCallback(() => {
@@ -242,7 +246,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
   }, [selectedRoom, checkIn, checkOut, guests, longStayDiscounts]);
 
   async function handleConfirmBooking() {
-    if (!property || !selectedRoom) return;
+    if (!property || !selectedRoom || loading) return;
 
     if (!guestName.trim()) { setInfoError("예약자 이름을 입력해주세요."); return; }
     if (!isValidPhone(guestPhone)) { setInfoError("올바른 휴대폰번호를 입력해주세요. (예: 010-1234-5678)"); return; }
@@ -318,19 +322,24 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
   }
 
   async function handleNotifyPayment() {
-    if (!booking || !paymentNote || !property) return;
-    await fetch("/api/guest/booking", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: booking.id,
-        payment_note: paymentNote,
-        autoCancelMinutes: hostSettings?.auto_cancel_minutes ?? 60,
-        unavailableStart: hostSettings?.unavailable_start,
-        unavailableEnd: hostSettings?.unavailable_end,
-      }),
-    });
-    setStep("done");
+    if (!booking || !paymentNote || !property || loading) return;
+    setLoading(true);
+    try {
+      await fetch("/api/guest/booking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: booking.id,
+          payment_note: paymentNote,
+          autoCancelMinutes: hostSettings?.auto_cancel_minutes ?? 60,
+          unavailableStart: hostSettings?.unavailable_start,
+          unavailableEnd: hostSettings?.unavailable_end,
+        }),
+      });
+      setStep("done");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleExpire() {
@@ -505,7 +514,8 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
                 const isSelected = selectedRoom?.name === room.name;
                 return (
                   <button key={idx} type="button" onClick={() => void handleSelectRoom(room)}
-                    className={`w-full bg-white rounded-2xl border text-left transition-all overflow-hidden
+                    disabled={roomLoading}
+                    className={`w-full bg-white rounded-2xl border text-left transition-all overflow-hidden disabled:opacity-60
                       ${isSelected ? "border-indigo-500 ring-2 ring-indigo-200 shadow-sm" : "border-gray-200 hover:border-indigo-300"}`}>
                     <div className="relative">
                       {getImages(room).length > 0
@@ -822,8 +832,8 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
       )}
       {step === "payment" && (
         <BottomNav
-          onNext={handleNotifyPayment} nextLabel="입금 완료 알리기"
-          nextDisabled={!paymentNote}
+          onNext={handleNotifyPayment} nextLabel={loading ? "처리 중..." : "입금 완료 알리기"}
+          nextDisabled={!paymentNote || loading}
           nextDanger
         />
       )}
