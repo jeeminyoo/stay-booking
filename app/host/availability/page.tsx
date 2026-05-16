@@ -261,11 +261,27 @@ export default function AvailabilityPage() {
     if (!property || !room) return;
     const existing = weeklyBlocks.find(b => b.day_of_week === dow);
     if (existing) {
-      await deleteWeeklyBlock(existing.id);
       setWeeklyBlocks(prev => prev.filter(b => b.id !== existing.id));
+      try {
+        await deleteWeeklyBlock(existing.id);
+      } catch {
+        setWeeklyBlocks(prev => [...prev, existing]);
+      }
     } else {
-      await upsertWeeklyBlock({ property_id: property.id, room_id: room.name, day_of_week: dow });
-      setWeeklyBlocks(await fetchWeeklyBlocks(property.id, room.name));
+      const temp: WeeklyBlock = {
+        id: `temp-${dow}`,
+        property_id: property.id,
+        room_id: room.name,
+        day_of_week: dow,
+        created_at: new Date().toISOString(),
+      };
+      setWeeklyBlocks(prev => [...prev, temp]);
+      try {
+        await upsertWeeklyBlock({ property_id: property.id, room_id: room.name, day_of_week: dow });
+        setWeeklyBlocks(await fetchWeeklyBlocks(property.id, room.name));
+      } catch {
+        setWeeklyBlocks(prev => prev.filter(b => b.id !== temp.id));
+      }
     }
   }
 
