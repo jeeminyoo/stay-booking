@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import { useRouter } from "next/navigation";
 import { SavedProperty, KakaoUser } from "@/lib/types";
-import { fetchProperties, fetchHostProperties, fetchHostBookings } from "@/lib/db";
+import { fetchProperties, fetchHostProperties, fetchHostBookings, fetchConfirmedBookingCounts } from "@/lib/db";
 import { getUser } from "@/lib/auth";
 
 // ─── localStorage helpers ──────────────────────────────────────────────────────
@@ -113,6 +113,27 @@ function PropertyCard({ p }: { p: SavedProperty }) {
 function PropertySection({ title, sub, properties }: {
   title: string; sub?: string; properties: SavedProperty[];
 }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateArrows = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    updateArrows();
+  }, [properties, updateArrows]);
+
+  function scroll(dir: "left" | "right") {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir === "left" ? -300 : 300, behavior: "smooth" });
+  }
+
   if (properties.length === 0) return null;
   return (
     <section className="mb-12">
@@ -120,16 +141,32 @@ function PropertySection({ title, sub, properties }: {
         <h2 className="text-xl font-bold text-gray-900">{title}</h2>
         {sub && <span className="text-sm text-gray-400">{sub}</span>}
       </div>
-      <div
-        className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory"
-        style={{ scrollbarWidth: "none" } as React.CSSProperties}
-      >
-        {properties.map(p => (
-          <div key={p.id} className="shrink-0 w-[70vw] max-w-[260px] snap-start">
-            <PropertyCard p={p} />
-          </div>
-        ))}
-        <div className="shrink-0 w-2" />
+      <div className="relative">
+        <button
+          onClick={() => scroll("left")}
+          className={`hidden md:flex absolute -left-5 top-[38%] -translate-y-1/2 z-10 w-9 h-9 items-center justify-center rounded-full bg-white border border-gray-200 shadow-md hover:shadow-lg transition-all ${canScrollLeft ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+          aria-label="이전">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div
+          ref={scrollRef}
+          onScroll={updateArrows}
+          className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory"
+          style={{ scrollbarWidth: "none" } as React.CSSProperties}
+        >
+          {properties.map(p => (
+            <div key={p.id} className="shrink-0 w-[70vw] max-w-[260px] snap-start">
+              <PropertyCard p={p} />
+            </div>
+          ))}
+          <div className="shrink-0 w-2" />
+        </div>
+        <button
+          onClick={() => scroll("right")}
+          className={`hidden md:flex absolute -right-5 top-[38%] -translate-y-1/2 z-10 w-9 h-9 items-center justify-center rounded-full bg-white border border-gray-200 shadow-md hover:shadow-lg transition-all ${canScrollRight ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+          aria-label="다음">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
       </div>
     </section>
   );
@@ -145,6 +182,7 @@ export default function Home() {
   const [notifCount, setNotifCount] = useState(0);
   const [depositIds, setDepositIds] = useState<string[]>([]);
   const [recentSlugs, setRecentSlugs] = useState<string[]>([]);
+  const [bookingCounts, setBookingCounts] = useState<Record<string, number>>({});
 
   const loadNotifs = useCallback(async (u: KakaoUser) => {
     try {
@@ -167,6 +205,7 @@ export default function Home() {
       .then(setAllProperties)
       .catch(() => setAllProperties([]))
       .finally(() => setLoading(false));
+    fetchConfirmedBookingCounts().then(setBookingCounts).catch(() => {});
   }, [loadNotifs]);
 
   function handleBellClick() {
@@ -186,12 +225,18 @@ export default function Home() {
 
   const recentSet = new Set(recentSlugs);
   const remaining = allProperties.filter(p => !recentSet.has(p.slug));
-  const recommended = recentProperties.length > 0
+  const byPopularity = (a: SavedProperty, b: SavedProperty) => {
+    const diff = (bookingCounts[b.id] ?? 0) - (bookingCounts[a.id] ?? 0);
+    if (diff !== 0) return diff;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  };
+  const recommended = (recentProperties.length > 0
     ? [...remaining]
         .map(p => ({ p, score: scoreProperty(p, recentProperties) }))
         .sort((a, b) => b.score - a.score)
         .map(({ p }) => p)
-    : allProperties;
+    : [...remaining].sort(byPopularity)
+  ).slice(0, 10);
 
   return (
     <div className="min-h-screen bg-white">
@@ -288,7 +333,7 @@ export default function Home() {
             <h3 className="text-xl font-bold text-gray-900 leading-snug">
               수수료 없이 직접 예약 받으세요
             </h3>
-            <p className="text-sm text-gray-400 mt-1">지금 신청하면 4개월 무료 체험</p>
+            <p className="text-sm text-gray-400 mt-1">지금 신청하면 3개월 무료 체험</p>
           </div>
           <button onClick={handleHostClick}
             className="shrink-0 bg-gray-900 text-white font-semibold text-sm px-7 py-3.5 rounded-xl hover:bg-gray-700 transition-colors">
@@ -322,10 +367,8 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="border-t border-gray-200 mt-8 pt-6 space-y-1">
+          <div className="border-t border-gray-200 mt-8 pt-6">
             <p className="text-[11px] text-gray-400">© 2025 Staypick. All rights reserved.</p>
-            <p className="text-[11px] text-gray-400">뉴세컨드 · 대표이사 조분식 · 사업자등록번호 584-17-02178</p>
-            <p className="text-[11px] text-gray-400">대구광역시 북구 동북로 163, 109동 1607호</p>
           </div>
         </div>
       </footer>

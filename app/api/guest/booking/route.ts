@@ -8,9 +8,10 @@ export async function POST(req: NextRequest) {
   const { id, payment_note, autoCancelMinutes = 60, unavailableStart, unavailableEnd, _expire } = await req.json();
   if (!id) return NextResponse.json({ error: "missing id" }, { status: 400 });
 
-  // 만료(타이머 초과) 처리
+  // 만료(타이머 초과) 처리 — 입금 대기 상태에서만 자동취소
   if (_expire) {
-    await supabaseAdmin.from("bookings").update({ status: "auto_cancelled" }).eq("id", id);
+    await supabaseAdmin.from("bookings").update({ status: "auto_cancelled" })
+      .eq("id", id).eq("status", "waiting_for_deposit");
     return NextResponse.json({ ok: true });
   }
 

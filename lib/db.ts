@@ -14,6 +14,18 @@ export async function fetchProperties(): Promise<SavedProperty[]> {
   return (data ?? []) as SavedProperty[];
 }
 
+export async function fetchConfirmedBookingCounts(): Promise<Record<string, number>> {
+  const { data } = await supabase
+    .from("bookings")
+    .select("property_id")
+    .eq("status", "confirmed");
+  const counts: Record<string, number> = {};
+  (data ?? []).forEach(({ property_id }) => {
+    counts[property_id] = (counts[property_id] ?? 0) + 1;
+  });
+  return counts;
+}
+
 export async function isSlugTaken(slug: string, excludeId?: string): Promise<boolean> {
   let query = supabase.from("properties").select("id").eq("slug", slug);
   if (excludeId) query = query.neq("id", excludeId);

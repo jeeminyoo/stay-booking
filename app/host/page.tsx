@@ -77,7 +77,8 @@ export default function HostDashboard() {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [hasDraft, setHasDraft] = useState(false);
   const [checked, setChecked] = useState(false);
-  const [tab, setTab] = useState<"bookings" | "availability" | "properties" | "reviews" | "settings">("bookings");
+  const [tab, setTab] = useState<"management" | "properties" | "reviews" | "settings">("management");
+  const [bookingSubTab, setBookingSubTab] = useState<"bookings" | "availability">("bookings");
   const [settingsTab, setSettingsTab] = useState<"account" | "property">("account");
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewsLoaded, setReviewsLoaded] = useState(false);
@@ -98,11 +99,11 @@ export default function HostDashboard() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const t = params.get("tab") as "bookings" | "availability" | "properties" | "settings" | null;
+    const t = params.get("tab") as "management" | "properties" | "reviews" | "settings" | null;
     const bookingId = params.get("booking");
     const registeredId = params.get("registered") === "1" ? params.get("id") : null;
     if (t) setTab(t);
-    if (bookingId) { setTab("bookings"); setHighlightBookingId(bookingId); }
+    if (bookingId) { setTab("management"); setBookingSubTab("bookings"); setHighlightBookingId(bookingId); }
 
     // 카카오 로그인 직후 _u 쿠키에서 유저 정보를 localStorage에 저장
     const match = document.cookie.match(/(?:^|;\s*)_u=([^;]*)/);
@@ -295,6 +296,15 @@ export default function HostDashboard() {
       alert("휴대폰 번호 형식이 올바르지 않습니다.\n예) 010-1234-5678 또는 01012345678");
       return;
     }
+    const bankName = settings.bank_name?.trim() ?? "";
+    const bankAccount = settings.bank_account?.trim() ?? "";
+    const bankHolder = settings.bank_holder?.trim() ?? "";
+    if (bankName || bankAccount || bankHolder) {
+      if (!bankName || !bankAccount || !bankHolder) {
+        alert("은행명, 계좌번호, 예금주를 모두 입력해 주세요.");
+        return;
+      }
+    }
     setSettingsSaving(true);
     try {
       const updated = { ...settings, host_id: user.id, host_name: user.nickname, updated_at: new Date().toISOString() };
@@ -384,11 +394,10 @@ export default function HostDashboard() {
         {/* 탭 */}
         <div className="flex border-b border-gray-200 mb-6">
           {[
-            { key: "bookings",     label: "예약알림" },
-            { key: "availability", label: "예약현황" },
-            { key: "properties",   label: "내숙소" },
-            { key: "reviews",      label: "리뷰" },
-            { key: "settings",     label: "설정" },
+            { key: "management",  label: "예약관리" },
+            { key: "properties",  label: "내숙소" },
+            { key: "reviews",     label: "리뷰" },
+            { key: "settings",    label: "설정" },
           ].map(({ key, label }) => (
             <button key={key} onClick={() => {
               setTab(key as typeof tab);
@@ -399,7 +408,7 @@ export default function HostDashboard() {
               className={`relative flex-1 py-2.5 text-sm font-semibold transition-colors text-center border-b-2 -mb-px
                 ${tab === key ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-400 hover:text-gray-600"}`}>
               {label}
-              {key === "bookings" && actionNeededCount > 0 && (
+              {key === "management" && actionNeededCount > 0 && (
                 <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 inline-flex items-center justify-center leading-none">{actionNeededCount}</span>
               )}
             </button>
@@ -442,13 +451,33 @@ export default function HostDashboard() {
           </div>
         )}
 
-        {/* ─── 예약 현황 탭 ─── */}
-        {tab === "availability" && user && (
-          <AvailabilityTab user={user} properties={properties} bookings={bookings} onConfirmBooking={confirmBooking} onCancelBooking={cancelBooking} />
-        )}
+        {/* ─── 예약 관리 탭 ─── */}
+        {tab === "management" && (
+          <div>
+            {/* 서브탭 */}
+            <div className="flex bg-gray-100 rounded-xl p-1 mb-5">
+              {([
+                { key: "bookings",     label: "예약알림" },
+                { key: "availability", label: "예약현황" },
+              ] as const).map(({ key, label }) => (
+                <button key={key} onClick={() => setBookingSubTab(key)}
+                  className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors relative
+                    ${bookingSubTab === key ? "bg-white text-gray-900 shadow-sm" : "text-gray-400"}`}>
+                  {label}
+                  {key === "bookings" && actionNeededCount > 0 && (
+                    <span className="absolute top-1 right-4 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 inline-flex items-center justify-center leading-none">{actionNeededCount}</span>
+                  )}
+                </button>
+              ))}
+            </div>
 
-        {/* ─── 예약 알림 탭 ─── */}
-        {tab === "bookings" && (
+            {/* 예약현황 */}
+            {bookingSubTab === "availability" && user && (
+              <AvailabilityTab user={user} properties={properties} bookings={bookings} onConfirmBooking={confirmBooking} onCancelBooking={cancelBooking} />
+            )}
+
+            {/* 예약알림 */}
+            {bookingSubTab === "bookings" && (
           <div>
             {/* 상태 필터 */}
             <div className="mb-4 relative inline-block">
@@ -553,6 +582,8 @@ export default function HostDashboard() {
                 )}
               </div>
             )}
+            </div>
+            )}
           </div>
         )}
 
@@ -564,7 +595,7 @@ export default function HostDashboard() {
               const phoneDigits = (settings?.host_phone ?? "").replace(/-/g, "");
               const hasPhone = /^01[0-9]\d{7,8}$/.test(phoneDigits);
               const hasBank = !!(settings?.bank_account?.trim() && settings?.bank_name?.trim() && settings?.bank_holder?.trim());
-              const hasNotice = properties.some(p => p.notice?.trim() || p.rooms.some(r => r.notice?.trim()));
+              const hasNotice = properties.filter(p => !p.is_draft).every(p => p.notice?.trim() || p.rooms.some(r => r.notice?.trim()));
               if (hasPhone && hasBank && hasNotice) return null;
               return (
                 <div className="bg-white border border-indigo-100 rounded-2xl p-5 mb-5">
@@ -589,8 +620,8 @@ export default function HostDashboard() {
                       {
                         done: hasNotice,
                         label: "이용 유의사항 등록",
-                        desc: "예약 확정 후 게스트에게 전달됩니다",
-                        action: () => { const p = properties.find(p => !p.is_draft); if (p) router.push(`/host/notice/${p.id}`); },
+                        desc: "모든 숙소에 등록이 필요합니다",
+                        action: () => { const p = properties.find(p => !p.is_draft && !(p.notice?.trim() || p.rooms.some(r => r.notice?.trim()))); if (p) router.push(`/host/notice/${p.id}`); },
                         actionLabel: "등록하기",
                       },
                     ].map(item => (
@@ -690,12 +721,12 @@ export default function HostDashboard() {
                               is_active: p.is_active,
                               rooms: (p.rooms || []).map((r, i) => ({
                                 name: r.name,
-                                max_guests: r.max_guests,
-                                base_guests: r.base_guests,
-                                max_infants: r.max_infants,
-                                bedrooms: r.bedrooms,
-                                beds: r.beds,
-                                bathrooms: r.bathrooms,
+                                max_guests: r.max_guests ?? 1,
+                                base_guests: r.base_guests ?? 1,
+                                max_infants: r.max_infants ?? 0,
+                                bedrooms: r.bedrooms ?? 0,
+                                beds: r.beds ?? 0,
+                                bathrooms: r.bathrooms ?? 0,
                                 image_url: r.image_url,
                                 images: r.images?.length ? r.images : (r.image_url ? [{ id: `room-${i}-0`, thumb_url: r.image_url, main_url: r.image_url }] : []),
                                 weekday_price: r.weekday_price || 0,
@@ -719,23 +750,6 @@ export default function HostDashboard() {
                         </button>
                         <button onClick={() => deleteProperty(p.id)} className="text-sm text-red-400 border border-red-100 px-3 py-2 rounded-lg hover:bg-red-50 transition-colors">삭제</button>
                       </div>
-                      {/* 유의사항 미등록 경고 */}
-                      {!(p.notice?.trim() || p.rooms.some(r => r.notice?.trim())) && (
-                        <div className="mt-2 flex items-center justify-between bg-orange-50 border border-orange-200 rounded-xl px-3 py-2.5">
-                          <div className="flex items-center gap-2">
-                            <span className="text-base">⚠️</span>
-                            <div>
-                              <p className="text-xs font-semibold text-orange-800">유의사항 미등록</p>
-                              <p className="text-xs text-orange-600">게스트 예약 후 안내 불가</p>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => router.push(`/host/notice/${p.id}`)}
-                            className="text-xs font-bold text-orange-700 bg-orange-100 border border-orange-200 px-3 py-1.5 rounded-lg hover:bg-orange-200 transition-colors shrink-0">
-                            등록하기 →
-                          </button>
-                        </div>
-                      )}
                       {/* 유의사항 버튼 */}
                       <button
                         onClick={() => router.push(`/host/notice/${p.id}`)}

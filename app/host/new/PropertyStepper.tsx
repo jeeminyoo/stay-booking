@@ -56,7 +56,13 @@ function loadDraft(): PropertyDraft {
     return {
       ...parsed,
       images: validImgs(parsed.images),
-      rooms: (parsed.rooms ?? []).map(r => ({ ...r, images: validImgs(r.images) })),
+      rooms: (parsed.rooms ?? []).map(r => ({
+        ...r,
+        bedrooms: r.bedrooms ?? 0,
+        beds: r.beds ?? 0,
+        bathrooms: r.bathrooms ?? 0,
+        images: validImgs(r.images),
+      })),
     };
   } catch { return DEFAULT_DRAFT; }
 }

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- white square -->
+  <rect x="19" y="19" width="62" height="62" fill="white"/>
+  <!-- blue chevron same color as bg — creates cut-out illusion -->
+  <polyline points="26,72 50,42 74,72" fill="none" stroke="#2B55B8" stroke-width="15" stroke-linejoin="miter" stroke-linecap="butt"/>
+</svg>

@@ -80,7 +80,7 @@ export async function expireOverdueBookings(): Promise<void> {
   const { error } = await supabase
     .from("bookings")
     .update({ status: "auto_cancelled" })
-    .in("status", ["waiting_for_deposit", "deposit_requested"])
+    .in("status", ["waiting_for_deposit"])
     .lt("payment_deadline", new Date().toISOString());
   if (error) throw error;
 }
