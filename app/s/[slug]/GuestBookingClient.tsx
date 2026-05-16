@@ -325,6 +325,8 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
             bank_holder: hostSettings?.bank_holder ?? "",
           },
           autoCancelMinutes,
+          unavailableStart: hostSettings?.unavailable_start,
+          unavailableEnd: hostSettings?.unavailable_end,
         }),
       });
       if (!res.ok) throw new Error("booking create failed");

@@ -4,11 +4,11 @@ import { calcAutoDeadline } from "@/lib/data";
 import { sendGuestDepositRequest } from "@/lib/alimtalk";
 
 export async function POST(req: NextRequest) {
-  const { bookingData, autoCancelMinutes = 60 } = await req.json();
+  const { bookingData, autoCancelMinutes = 60, unavailableStart, unavailableEnd } = await req.json();
   if (!bookingData) return NextResponse.json({ error: "missing bookingData" }, { status: 400 });
 
   const now = new Date();
-  const deadline = calcAutoDeadline(now, autoCancelMinutes);
+  const deadline = calcAutoDeadline(now, autoCancelMinutes, unavailableStart, unavailableEnd);
 
   const row = {
     ...bookingData,

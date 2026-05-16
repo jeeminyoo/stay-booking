@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/checkin",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/expire",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
