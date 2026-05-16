@@ -340,6 +340,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
 
   async function handleNotifyPayment() {
     if (!booking || !paymentNote || !property || loading) return;
+    if (booking.status === "deposit_requested") return;
     setLoading(true);
     try {
       await fetch("/api/guest/booking", {
@@ -845,8 +846,9 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
       )}
       {step === "payment" && (
         <BottomNav
-          onNext={handleNotifyPayment} nextLabel={loading ? "처리 중..." : "입금 완료 알리기"}
-          nextDisabled={!paymentNote || loading}
+          onNext={handleNotifyPayment}
+          nextLabel={loading ? "처리 중..." : booking?.status === "deposit_requested" ? "이미 요청됨" : "입금 완료 알리기"}
+          nextDisabled={!paymentNote || loading || booking?.status === "deposit_requested"}
           nextDanger
         />
       )}
