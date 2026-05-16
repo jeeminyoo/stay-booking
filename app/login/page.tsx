@@ -24,7 +24,7 @@ export default function LoginPage() {
           {/* Title */}
           <div className="mb-8">
             <h1 className="text-2xl font-black text-gray-900 leading-tight mb-1.5">시작하기</h1>
-            <p className="text-gray-400 text-sm">호스트 로그인 또는 예약을 확인하세요</p>
+            <p className="text-gray-400 text-sm">호스트로 로그인하시거나 예약번호로 예약을 확인하세요</p>
           </div>
 
           {/* Host card */}
@@ -49,7 +49,7 @@ export default function LoginPage() {
           <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100">
               <p className="text-base font-bold text-gray-900 mb-0.5">게스트</p>
-              <p className="text-xs text-gray-400">예약 시 입력한 전화번호로 확인합니다</p>
+              <p className="text-xs text-gray-400">예약번호로 예약 현황을 확인합니다</p>
             </div>
             <div className="px-5 py-4">
               <Link href="/my-bookings"

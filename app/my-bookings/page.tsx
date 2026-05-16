@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import { Booking } from "@/lib/types";
-import { getBookingsByPhone, expireOverdueBookings } from "@/lib/data";
+import { fetchBookingById } from "@/lib/db";
 import PaymentTimer from "@/components/PaymentTimer";
 
 const STATUS_LABELS: Record<string, { label: string; class: string }> = {
@@ -14,10 +14,6 @@ const STATUS_LABELS: Record<string, { label: string; class: string }> = {
   auto_cancelled:      { label: "자동 취소",       class: "bg-red-100 text-red-400" },
   cancelled:           { label: "취소됨",          class: "bg-gray-100 text-gray-500" },
 };
-
-function isValidPhone(v: string) {
-  return /^01[0-9]-?\d{3,4}-?\d{4}$/.test(v.replace(/\s/g, ""));
-}
 
 function formatDate(d: string) {
   const [y, m, day] = d.split("-");
@@ -32,38 +28,26 @@ function nights(checkIn: string, checkOut: string) {
 }
 
 export default function MyBookingsPage() {
-  const [phone, setPhone] = useState(() => {
-    if (typeof window === "undefined") return "";
-    return localStorage.getItem("guest_phone") ?? "";
-  });
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookingId, setBookingId] = useState("");
+  const [booking, setBooking] = useState<Booking | null | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
-  const [phoneError, setPhoneError] = useState("");
-
-  const refresh = useCallback(async (p: string) => {
-    setLoading(true);
-    try {
-      await expireOverdueBookings();
-      const data = await getBookingsByPhone(p);
-      setBookings(data);
-    } catch (e) {
-      console.error("예약 목록 로드 실패", e);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   async function handleSearch(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!isValidPhone(phone)) {
-      setPhoneError("올바른 휴대폰번호를 입력해주세요. (예: 010-1234-5678)");
-      return;
+    const id = bookingId.trim().toUpperCase();
+    if (!id) return;
+    setLoading(true);
+    setSearched(false);
+    try {
+      const data = await fetchBookingById(id);
+      setBooking(data);
+    } catch {
+      setBooking(null);
+    } finally {
+      setLoading(false);
+      setSearched(true);
     }
-    setPhoneError("");
-    try { localStorage.setItem("guest_phone", phone); } catch {}
-    setSearched(true);
-    await refresh(phone);
   }
 
   return (
@@ -78,24 +62,24 @@ export default function MyBookingsPage() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6">
-        <h1 className="text-xl font-bold text-gray-900 mb-5">내 예약 내역</h1>
+        <h1 className="text-xl font-bold text-gray-900 mb-5">예약 확인</h1>
 
         <form onSubmit={handleSearch} className="bg-white rounded-2xl border border-gray-100 p-4 mb-6 space-y-3">
-          <p className="text-sm text-gray-600 font-medium">예약 시 사용한 휴대폰번호로 조회하세요</p>
+          <p className="text-sm text-gray-600 font-medium">예약번호를 입력하세요</p>
+          <p className="text-xs text-gray-400">예약 완료 후 안내받은 예약번호를 입력해주세요 (예: BK1234567890123)</p>
           <div className="flex gap-2">
             <input
-              type="tel"
-              value={phone}
-              onChange={(e) => { setPhone(e.target.value); setPhoneError(""); }}
-              placeholder="010-1234-5678"
-              className={`flex-1 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 ${phoneError ? "border-red-300" : "border-gray-200"}`}
+              type="text"
+              value={bookingId}
+              onChange={(e) => setBookingId(e.target.value)}
+              placeholder="BKXXXXXXXXXXXXX"
+              className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 font-mono placeholder:font-sans placeholder:text-gray-300"
             />
             <button type="submit"
               className="bg-indigo-600 text-white px-5 py-3 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors whitespace-nowrap">
               조회
             </button>
           </div>
-          {phoneError && <p className="text-xs text-red-500">{phoneError}</p>}
         </form>
 
         {loading ? (
@@ -103,10 +87,10 @@ export default function MyBookingsPage() {
             <p className="text-2xl mb-2 animate-pulse">⏳</p>
             <p className="text-sm">불러오는 중...</p>
           </div>
-        ) : searched && bookings.length === 0 ? (
+        ) : searched && !booking ? (
           <div className="text-center py-20 text-gray-400">
             <p className="text-4xl mb-3">📋</p>
-            <p className="text-gray-500">해당 번호로 예약된 내역이 없습니다.</p>
+            <p className="text-gray-500">해당 예약번호로 조회된 내역이 없습니다.</p>
             <Link
               href="/"
               className="inline-block mt-4 bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm hover:bg-indigo-700 transition-colors"
@@ -114,16 +98,14 @@ export default function MyBookingsPage() {
               숙소 둘러보기
             </Link>
           </div>
-        ) : (
+        ) : booking ? (
           <div className="space-y-4">
-            {bookings.map((b) => {
+            {(() => {
+              const b = booking;
               const status = STATUS_LABELS[b.status];
               const nightCount = nights(b.check_in, b.check_out);
               return (
-                <div
-                  key={b.id}
-                  className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
-                >
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                   <div className="p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div>
@@ -133,6 +115,10 @@ export default function MyBookingsPage() {
                       <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${status.class}`}>
                         {status.label}
                       </span>
+                    </div>
+
+                    <div className="text-sm text-gray-600 mb-3">
+                      <span className="font-medium text-gray-800">{b.room_name}</span>
                     </div>
 
                     <div className="grid grid-cols-3 text-sm mb-3">
@@ -162,7 +148,9 @@ export default function MyBookingsPage() {
                     <div className="border-t border-orange-100 bg-orange-50 p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium text-orange-800">입금 대기 중</p>
-                        <PaymentTimer deadline={b.payment_deadline} onExpire={() => refresh(phone)} />
+                        <PaymentTimer deadline={b.payment_deadline} onExpire={() => {
+                          setBooking(prev => prev ? { ...prev, status: "auto_cancelled" } : prev);
+                        }} />
                       </div>
                       <div className="bg-white rounded-xl p-3 border border-orange-100">
                         <p className="text-xs text-gray-400 mb-1">입금 계좌</p>
@@ -195,9 +183,9 @@ export default function MyBookingsPage() {
                   )}
                 </div>
               );
-            })}
+            })()}
           </div>
-        )}
+        ) : null}
       </main>
     </div>
   );

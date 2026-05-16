@@ -53,7 +53,7 @@ export async function createBooking(
 
   const row = {
     ...data,
-    id: `BK-${Date.now()}`,
+    id: `BK${Date.now()}`,
     created_at: now.toISOString(),
     payment_deadline: deadline.toISOString(),
   };
