@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { SavedProperty, RoomDraft, Booking, ImageEntry } from "@/lib/types";
+import { filter, formatPhone } from "@/lib/validation";
 
 function getImages(p: SavedProperty | RoomDraft): ImageEntry[] {
   if (p.images && p.images.length > 0) return p.images;
@@ -699,17 +700,13 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
 
             <div className="bg-white rounded-2xl border border-gray-100 p-4 space-y-3">
               <div>
-                <input type="text" value={guestName} onChange={(e) => setGuestName(e.target.value)}
+                <input type="text" value={guestName} onChange={(e) => setGuestName(filter.name(e.target.value))}
                   placeholder="예약자 이름 (입금자명)" className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
               </div>
               <div>
                 <input type="tel" value={guestPhone}
                   onChange={(e) => {
-                    const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
-                    let formatted = digits;
-                    if (digits.length > 7) formatted = digits.slice(0,3) + "-" + digits.slice(3,7) + "-" + digits.slice(7);
-                    else if (digits.length > 3) formatted = digits.slice(0,3) + "-" + digits.slice(3);
-                    setGuestPhone(formatted);
+                    setGuestPhone(formatPhone(e.target.value));
                     setPhoneError("");
                   }}
                   onBlur={() => { if (guestPhone && !isValidPhone(guestPhone)) setPhoneError("올바른 휴대폰번호 형식이 아닙니다. (예: 010-1234-5678)"); }}

@@ -8,6 +8,7 @@ import { SavedProperty, KakaoUser, Booking, HostSettings, Review, Subscription }
 import { getUser, clearUser } from "@/lib/auth";
 import { fetchHostProperties, fetchHostSettings, fetchHostBookingsPaged, fetchHostReviews, fetchSubscriptionByHostId, upsertSubscription } from "@/lib/db";
 import { apiDeleteProperty, apiPatchBookingHost, apiUpsertHostSettings, apiPatchPropertyActive, apiLogout } from "@/lib/api";
+import { filter } from "@/lib/validation";
 import { expireOverdueBookings } from "@/lib/data";
 import AvailabilityTab from "@/components/host/AvailabilityTab";
 import BankSelectModal from "@/components/BankSelectModal";
@@ -888,7 +889,7 @@ export default function HostDashboard() {
                       <input
                         type="text"
                         value={settings.bank_holder ?? ""}
-                        onChange={e => setSettings(s => s ? { ...s, bank_holder: e.target.value } : s)}
+                        onChange={e => setSettings(s => s ? { ...s, bank_holder: filter.name(e.target.value) } : s)}
                         placeholder="예금주명을 입력해주세요"
                         className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
                       />

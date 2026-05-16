@@ -5,6 +5,7 @@ import Link from "next/link";
 import Logo from "@/components/Logo";
 import { Booking } from "@/lib/types";
 import { fetchBookingById } from "@/lib/db";
+import { filter } from "@/lib/validation";
 import PaymentTimer from "@/components/PaymentTimer";
 
 const STATUS_LABELS: Record<string, { label: string; class: string }> = {
@@ -68,7 +69,7 @@ export default function MyBookingsPage() {
             <input
               type="text"
               value={bookingId}
-              onChange={(e) => setBookingId(e.target.value)}
+              onChange={(e) => setBookingId(filter.bookingId(e.target.value))}
               placeholder="BKXXXXXXXXXXXXX"
               className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 font-mono placeholder:font-sans placeholder:text-gray-300"
             />
