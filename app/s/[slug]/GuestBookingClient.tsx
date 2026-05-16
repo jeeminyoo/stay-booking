@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { SavedProperty, RoomDraft, Booking, ImageEntry } from "@/lib/types";
 
@@ -138,8 +138,12 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [step]);
 
+  const prevErrors = useRef({ infoError: "", phoneError: "" });
   useEffect(() => {
-    if (infoError || phoneError) {
+    const prev = prevErrors.current;
+    const justSet = (!prev.infoError && !!infoError) || (!prev.phoneError && !!phoneError);
+    prevErrors.current = { infoError, phoneError };
+    if (justSet) {
       window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
     }
   }, [infoError, phoneError]);
