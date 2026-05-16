@@ -246,7 +246,7 @@ export default function HostDashboard() {
 
   async function confirmBooking(id: string) {
     await apiPatchBookingHost(id, { status: "confirmed" });
-    setBookings(prev => sortBookings(prev.map(b => b.id === id ? { ...b, status: "confirmed" } : b)));
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: "confirmed" } : b));
   }
 
   async function toggleActive(p: SavedProperty) {
@@ -285,7 +285,7 @@ export default function HostDashboard() {
   async function cancelBooking(id: string) {
     if (!confirm("이 예약을 취소하시겠습니까?")) return;
     await apiPatchBookingHost(id, { status: "cancelled" });
-    setBookings(prev => sortBookings(prev.map(b => b.id === id ? { ...b, status: "cancelled" } : b)));
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: "cancelled" } : b));
   }
 
   async function saveSettings() {
