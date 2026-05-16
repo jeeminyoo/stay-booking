@@ -1,6 +1,9 @@
 import crypto from "crypto";
 
-const SECRET = process.env.SESSION_SECRET ?? "dev-secret-change-in-production";
+if (!process.env.SESSION_SECRET)
+  throw new Error("SESSION_SECRET 환경변수가 설정되지 않았습니다.");
+
+const SECRET = process.env.SESSION_SECRET as string;
 
 export function createSession(userId: string): string {
   const sig = crypto.createHmac("sha256", SECRET).update(userId).digest("hex");
