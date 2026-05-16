@@ -65,9 +65,9 @@ export default function LoginPage() {
       <footer className="pb-8 text-center">
         <p className="text-[11px] text-gray-400">
           로그인 시{" "}
-          <span className="underline underline-offset-2 cursor-pointer">이용약관</span>
+          <Link href="/terms" className="underline underline-offset-2 hover:text-gray-600 transition-colors">이용약관</Link>
           {" "}및{" "}
-          <span className="underline underline-offset-2 cursor-pointer">개인정보처리방침</span>
+          <Link href="/privacy" className="underline underline-offset-2 hover:text-gray-600 transition-colors">개인정보처리방침</Link>
           에 동의합니다
         </p>
       </footer>
