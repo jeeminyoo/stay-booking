@@ -114,15 +114,6 @@ function CounterRow({ label, sub, value, onDec, onInc, min = 0, maxReached = fal
   );
 }
 
-const PRIVACY_TERMS = `■ 수집 항목: 예약자 이름, 휴대폰번호, 메시지(선택)
-■ 수집 목적: 예약 확인 및 운영자 연락
-■ 보유 기간: 체크아웃 후 30일 이내 파기
-
-■ 개인정보 제3자 제공
-  제공받는 자: 해당 숙소 운영자(호스트)
-  제공 항목: 예약자 이름, 휴대폰번호, 예약 메시지
-  제공 목적: 숙소 예약 확인 및 운영자 연락
-  보유 기간: 체크아웃 후 30일 이내 파기`;
 
 export default function GuestBookingClient({ slug }: { slug: string }) {
   const router = useRouter();
@@ -158,7 +149,6 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
   const [longStayDiscounts, setLongStayDiscounts] = useState<import("@/lib/types").LongStayDiscount[]>([]);
   const [bookingMaxDate, setBookingMaxDate] = useState<string | undefined>(undefined);
   const [descExpanded, setDescExpanded] = useState(false);
-  const [termsOpen, setTermsOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
@@ -710,20 +700,13 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
             <div className="text-xs text-gray-400 leading-relaxed px-1">
               <p>
                 예약 요청을 완료하면{" "}
-                <button onClick={() => setTermsOpen(v => !v)}
-                  className="underline underline-offset-2 text-gray-500 font-medium">
-                  이용약관, 개인정보처리방침, 개인정보 제3자 제공
-                </button>
+                <a href="/terms" target="_blank" rel="noopener noreferrer"
+                  className="underline underline-offset-2 text-gray-500 hover:text-gray-700">이용약관</a>
+                {" "}및{" "}
+                <a href="/privacy" target="_blank" rel="noopener noreferrer"
+                  className="underline underline-offset-2 text-gray-500 hover:text-gray-700">개인정보처리방침</a>
                 에 동의하는 것으로 간주됩니다.
               </p>
-
-              {termsOpen && (
-                <div className="mt-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-3 h-36 overflow-y-auto">
-                  <pre className="whitespace-pre-wrap text-gray-400 text-[11px] leading-relaxed font-sans">
-                    {PRIVACY_TERMS}
-                  </pre>
-                </div>
-              )}
             </div>
 
             {infoError && (

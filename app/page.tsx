@@ -362,8 +362,8 @@ export default function Home() {
               </div>
               <div className="space-y-2">
                 <p className="font-semibold text-gray-700 text-xs tracking-wide uppercase mb-3">약관</p>
-                <span className="block text-xs text-gray-500 cursor-pointer hover:text-gray-900 transition-colors">이용약관</span>
-                <span className="block text-xs text-gray-500 cursor-pointer hover:text-gray-900 transition-colors">개인정보처리방침</span>
+                <Link href="/terms" className="block text-xs text-gray-500 hover:text-gray-900 transition-colors">이용약관</Link>
+                <Link href="/privacy" className="block text-xs text-gray-500 hover:text-gray-900 transition-colors">개인정보처리방침</Link>
               </div>
             </div>
           </div>
