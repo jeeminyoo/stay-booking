@@ -233,8 +233,7 @@ export default function HostDashboard() {
   async function handleLogout() {
     await apiLogout();
     clearUser();
-    setUser(null);
-    router.refresh();
+    router.replace("/login");
   }
 
   async function deleteProperty(id: string) {
@@ -334,8 +333,11 @@ export default function HostDashboard() {
     }
   }
 
-  if (!checked) return null;
-  if (!user) return null;
+  if (!checked || !user) return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin" />
+    </div>
+  );
 
   const actionNeededCount = bookings.filter(b =>
     b.status === "waiting_for_deposit" || b.status === "deposit_requested"
