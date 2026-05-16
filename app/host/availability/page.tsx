@@ -687,7 +687,7 @@ export default function AvailabilityPage() {
                   const isBlocked = weeklyBlockSet.has(i);
                   return (
                     <button key={i} onClick={() => handleToggleWeeklyBlock(i)}
-                      className={`flex-1 h-12 rounded-2xl text-sm font-bold transition-all
+                      className={`flex-1 h-12 rounded-2xl text-sm font-bold
                         ${isBlocked
                           ? "bg-gray-900 text-white shadow-sm"
                           : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
