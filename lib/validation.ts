@@ -1,7 +1,7 @@
 // 입력값 필터 — onChange에서 사용, 허용하지 않는 문자를 실시간으로 제거
 export const filter = {
-  // 이름/예금주: 한글·영문·공백만
-  name: (v: string) => v.replace(/[^가-힣a-zA-Z\s]/g, ""),
+  // 이름/예금주: 한글(완성형+자모)·영문·공백만 — 자모 포함은 모바일 IME 조합 중 필터링 방지용
+  name: (v: string) => v.replace(/[^가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z\s]/g, ""),
 
   // 전화번호: 숫자만 (자동 포맷은 호출 측에서 처리)
   digits: (v: string) => v.replace(/\D/g, ""),
