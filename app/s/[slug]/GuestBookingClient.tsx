@@ -30,13 +30,13 @@ function ImageGallery({ images, onClickImage, height = "h-56 md:h-72" }: {
     );
   }
   return (
-    <div className={`${height} bg-gray-200 shrink-0 relative`}>
+    <div className={`${height} bg-gray-200 shrink-0 relative overflow-hidden`}>
       <div
-        className="flex overflow-x-auto snap-x snap-mandatory h-full scrollbar-hide"
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        className="flex overflow-x-auto snap-x snap-mandatory h-full w-full"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none", overscrollBehaviorX: "contain" }}
       >
         {images.map((img) => (
-          <div key={img.id} className="shrink-0 w-full h-full snap-center">
+          <div key={img.id} className="shrink-0 min-w-full h-full snap-start snap-always">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={img.thumb_url} alt="" loading="lazy"
