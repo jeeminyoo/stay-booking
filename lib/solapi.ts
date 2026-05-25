@@ -33,10 +33,6 @@ export async function sendAlimtalk(
   variables: Record<string, string>,
   buttons?: Button[],
 ): Promise<void> {
-  // TODO: 테스트 완료 후 아래 두 줄 제거
-  console.log("[Solapi] alimtalk skipped (dev mode)", { to, templateId, variables });
-  return;
-
   if (!API_KEY || !API_SECRET) {
     console.warn("[Solapi] API key not set, skipping alimtalk");
     return;
