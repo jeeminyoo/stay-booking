@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // 게스트에게 입금 안내 알림톡 발송
-  sendGuestDepositRequest(booking).catch((e) =>
+  await sendGuestDepositRequest(booking).catch((e) =>
     console.error("[alimtalk] sendGuestDepositRequest failed:", e),
   );
 

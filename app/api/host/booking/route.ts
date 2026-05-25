@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   // 예약 확정 시 게스트에게 알림톡 발송
   if (updates.status === "confirmed") {
     const confirmedBooking = { ...booking, ...updates };
-    sendGuestBookingConfirmed(confirmedBooking, prop.slug).catch((e) =>
+    await sendGuestBookingConfirmed(confirmedBooking, prop.slug).catch((e) =>
       console.error("[alimtalk] sendGuestBookingConfirmed failed:", e),
     );
   }

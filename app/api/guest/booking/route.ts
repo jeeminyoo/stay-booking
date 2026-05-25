@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
       .from("host_settings").select("host_phone").eq("host_id", prop.host_id).single();
     if (hs?.host_phone) {
       const updatedBooking = { ...booking, status: "deposit_requested", payment_note: payment_note || null };
-      sendHostDepositRequested(updatedBooking, hs.host_phone).catch((e) =>
+      await sendHostDepositRequested(updatedBooking, hs.host_phone).catch((e) =>
         console.error("[alimtalk] sendHostDepositRequested failed:", e),
       );
     }
