@@ -766,12 +766,12 @@ export default function HostDashboard() {
                         </button>
                         <button
                           onClick={() => {
-                            if (p.is_active === false) {
-                              alert("현재 비노출 상태입니다.\n게스트에게 링크를 공유하기 전에 게시 상태를 '게시중'으로 변경해주세요.");
-                              return;
-                            }
                             navigator.clipboard.writeText(`${window.location.origin}/s/${p.slug}`);
-                            showToast("링크가 복사되었습니다");
+                            if (p.is_active === false) {
+                              alert("링크가 복사되었습니다.\n현재 비노출 상태입니다. 게스트에게 공유하기 전에 게시 상태를 '게시중'으로 변경해주세요.");
+                            } else {
+                              showToast("링크가 복사되었습니다");
+                            }
                           }}
                           className="flex-1 text-sm border border-indigo-200 text-indigo-600 bg-indigo-50 py-2 rounded-lg hover:bg-indigo-100 transition-colors">
                           링크 복사
