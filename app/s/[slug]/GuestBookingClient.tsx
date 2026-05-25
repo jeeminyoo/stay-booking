@@ -770,6 +770,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
               </div>
               <div>
                 <textarea value={guestMessage} onChange={(e) => setGuestMessage(e.target.value)}
+                  onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: "smooth", block: "center" }), 300)}
                   placeholder="운영자에게 남길 메시지 (선택사항) — 예: 늦은 체크인 예정입니다."
                   maxLength={100}
                   rows={2} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none" />

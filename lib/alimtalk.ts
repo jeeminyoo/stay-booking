@@ -37,6 +37,7 @@ export async function sendGuestDepositRequest(booking: Booking): Promise<void> {
       "#{예금주}":    booking.bank_holder,
       "#{계좌번호}":  booking.bank_account,
       "#{입금기한}":  fmtDeadline(booking.payment_deadline),
+      "#{예약ID}":    booking.id,
     },
     [{ buttonType: "WL", buttonName: "입금확인 요청하기", linkMo: `${BASE_URL}/booking/${booking.id}`, linkPc: `${BASE_URL}/booking/${booking.id}` }],
   );
