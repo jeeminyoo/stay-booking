@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
   const row = {
     ...bookingData,
-    id: `BK-${Date.now()}`,
+    id: `BK${Date.now()}`,
     created_at: now.toISOString(),
     payment_deadline: deadline.toISOString(),
   };
