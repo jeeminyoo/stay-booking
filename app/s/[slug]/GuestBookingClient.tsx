@@ -816,7 +816,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
 
             <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-5 text-white">
               <p className="text-indigo-200 text-xs mb-1">입금 계좌</p>
-              <p className="font-bold text-2xl tracking-widest mb-1">{hostSettings?.bank_account ?? booking?.bank_account}</p>
+              <p className="font-bold text-2xl tracking-widest mb-1 break-all leading-tight [word-break:break-all]" style={{ fontSize: "clamp(1rem, 4vw, 1.5rem)" }}>{hostSettings?.bank_account ?? booking?.bank_account}</p>
               <p className="text-indigo-200 text-sm">{hostSettings?.bank_name ?? booking?.bank_name} · {hostSettings?.bank_holder ?? booking?.bank_holder}</p>
               <div className="border-t border-white/20 mt-4 pt-4 flex justify-between items-baseline">
                 <span className="text-indigo-200 text-sm">입금액</span>
