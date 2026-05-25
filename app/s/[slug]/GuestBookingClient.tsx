@@ -16,6 +16,8 @@ function ImageGallery({ images, onClickImage, height = "h-56 md:h-72" }: {
   onClickImage?: (url: string) => void;
   height?: string;
 }) {
+  const [activeIdx, setActiveIdx] = useState(0);
+
   if (images.length === 0) return null;
   if (images.length === 1) {
     return (
@@ -34,6 +36,11 @@ function ImageGallery({ images, onClickImage, height = "h-56 md:h-72" }: {
       <div
         className="flex overflow-x-auto snap-x snap-mandatory h-full w-full"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none", overscrollBehaviorX: "contain" }}
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          const idx = Math.round(el.scrollLeft / el.clientWidth);
+          setActiveIdx(idx);
+        }}
       >
         {images.map((img) => (
           <div key={img.id} className="shrink-0 min-w-full h-full snap-start snap-always">
@@ -47,8 +54,8 @@ function ImageGallery({ images, onClickImage, height = "h-56 md:h-72" }: {
         ))}
       </div>
       <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
-        {images.map((img) => (
-          <span key={img.id} className="w-1.5 h-1.5 rounded-full bg-white/80" />
+        {images.map((_, i) => (
+          <span key={i} className={`rounded-full transition-all ${i === activeIdx ? "w-2.5 h-2.5 bg-white" : "w-1.5 h-1.5 bg-white/50"}`} />
         ))}
       </div>
     </div>
