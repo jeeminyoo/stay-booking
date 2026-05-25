@@ -13,7 +13,7 @@ function getImages(p: SavedProperty | RoomDraft): ImageEntry[] {
 
 function ImageGallery({ images, onClickImage, height = "h-56 md:h-72" }: {
   images: ImageEntry[];
-  onClickImage?: (url: string) => void;
+  onClickImage?: (images: ImageEntry[], index: number) => void;
   height?: string;
 }) {
   const [activeIdx, setActiveIdx] = useState(0);
@@ -26,7 +26,7 @@ function ImageGallery({ images, onClickImage, height = "h-56 md:h-72" }: {
         <img
           src={images[0].thumb_url} alt="" loading="lazy"
           className="w-full h-full object-cover cursor-pointer"
-          onClick={() => onClickImage?.(images[0].main_url)}
+          onClick={() => onClickImage?.(images, 0)}
         />
       </div>
     );
@@ -42,13 +42,13 @@ function ImageGallery({ images, onClickImage, height = "h-56 md:h-72" }: {
           setActiveIdx(idx);
         }}
       >
-        {images.map((img) => (
+        {images.map((img, i) => (
           <div key={img.id} className="shrink-0 min-w-full h-full snap-start snap-always">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={img.thumb_url} alt="" loading="lazy"
               className="w-full h-full object-cover cursor-pointer"
-              onClick={() => onClickImage?.(img.main_url)}
+              onClick={() => onClickImage?.(images, i)}
             />
           </div>
         ))}
@@ -61,6 +61,45 @@ function ImageGallery({ images, onClickImage, height = "h-56 md:h-72" }: {
     </div>
   );
 }
+function LightboxGallery({ images, initialIndex }: { images: ImageEntry[]; initialIndex: number }) {
+  const [activeIdx, setActiveIdx] = useState(initialIndex);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.scrollLeft = initialIndex * el.clientWidth;
+  }, [initialIndex]);
+
+  return (
+    <div className="flex-1 relative overflow-hidden">
+      <div
+        ref={ref}
+        className="flex overflow-x-auto snap-x snap-mandatory h-full w-full"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none", overscrollBehaviorX: "contain" }}
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          setActiveIdx(Math.round(el.scrollLeft / el.clientWidth));
+        }}
+      >
+        {images.map((img) => (
+          <div key={img.id} className="shrink-0 min-w-full h-full snap-start snap-always flex items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={img.main_url} alt="" className="max-w-full max-h-full object-contain" />
+          </div>
+        ))}
+      </div>
+      {images.length > 1 && (
+        <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
+          {images.map((_, i) => (
+            <span key={i} className={`w-1.5 h-1.5 rounded-full transition-all ${i === activeIdx ? "bg-white" : "bg-white/40"}`} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 import { calculateTotalPrice } from "@/lib/pricing";
 import BookingCalendar from "@/components/BookingCalendar";
 import PaymentTimer from "@/components/PaymentTimer";
@@ -178,7 +217,12 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
   const [bookingMaxDate, setBookingMaxDate] = useState<string | undefined>(undefined);
   const [descExpanded, setDescExpanded] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
-  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [lightbox, setLightbox] = useState<{ images: ImageEntry[]; index: number } | null>(null);
+  useEffect(() => {
+    if (lightbox) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
+    return () => { document.body.style.overflow = ""; };
+  }, [lightbox]);
 
   async function handleShare() {
     const url = window.location.href;
@@ -495,7 +539,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
 
       {/* ── Hero image: step별 분기 ── */}
       {step === "room" && (
-        <ImageGallery images={getImages(property)} onClickImage={setLightboxUrl} />
+        <ImageGallery images={getImages(property)} onClickImage={(imgs, idx) => setLightbox({ images: imgs, index: idx })} />
       )}
       {step === "date" && selectedRoom && (
         <ImageGallery images={getImages(selectedRoom)} height="h-56" />
@@ -877,23 +921,16 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
       )}
 
       {/* ── Lightbox ── */}
-      {lightboxUrl && (
-        <div
-          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center"
-          onClick={() => setLightboxUrl(null)}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={lightboxUrl} alt=""
-            className="max-w-full max-h-full object-contain"
-            onClick={(e) => e.stopPropagation()}
-          />
+      {lightbox && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex flex-col">
           <button
-            onClick={() => setLightboxUrl(null)}
-            className="absolute top-4 right-4 w-9 h-9 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white text-xl transition-colors"
-          >
-            ✕
-          </button>
+            onClick={() => setLightbox(null)}
+            className="absolute top-4 right-4 w-9 h-9 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white text-xl transition-colors z-10"
+          >✕</button>
+          <LightboxGallery
+            images={lightbox.images}
+            initialIndex={lightbox.index}
+          />
         </div>
       )}
     </div>
