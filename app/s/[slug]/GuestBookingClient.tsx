@@ -55,7 +55,7 @@ function ImageGallery({ images, onClickImage, height = "h-56 md:h-72" }: {
       </div>
       <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
         {images.map((_, i) => (
-          <span key={i} className={`rounded-full transition-all ${i === activeIdx ? "w-2.5 h-2.5 bg-white" : "w-1.5 h-1.5 bg-white/50"}`} />
+          <span key={i} className={`w-1.5 h-1.5 rounded-full transition-all ${i === activeIdx ? "bg-white" : "bg-white/50"}`} />
         ))}
       </div>
     </div>
