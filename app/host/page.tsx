@@ -1039,7 +1039,7 @@ export default function HostDashboard() {
                     type="date"
                     value={settings.booking_window_end ?? ""}
                     onChange={e => setSettings(s => s ? { ...s, booking_window_end: e.target.value } : s)}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-inner-spin-button]:hidden"
                   />
                 )}
                 {settings.booking_window_type === "rolling" && (
