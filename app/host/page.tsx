@@ -162,7 +162,7 @@ export default function HostDashboard() {
         await upsertSubscription(newSub);
         setSubscription(newSub);
       }
-    });
+    }).catch(console.error);
   }, []);
 
   const getCutoff = useCallback(() => {

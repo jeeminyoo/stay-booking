@@ -361,7 +361,12 @@ export async function fetchSubscriptionByHostId(hostId: string): Promise<Subscri
     .select("*")
     .eq("host_id", hostId)
     .single();
-  if (error) return null;
+  // PGRST116 = "no rows returned" — genuinely no record yet
+  // any other error is a transient/network failure; throw to prevent re-creation
+  if (error) {
+    if (error.code === "PGRST116") return null;
+    throw error;
+  }
   return data as Subscription;
 }
 
