@@ -402,8 +402,8 @@ export default function HostDashboard() {
         <Suspense><SuccessBanner /></Suspense>
 
         {hasDraft && (
-          <div className="bg-orange-50 border border-orange-200 rounded-xl px-5 py-3 mb-6 flex items-center justify-between">
-            <p className="text-sm text-orange-700 font-medium">임시저장된 숙소 등록이 있습니다.</p>
+          <div className="bg-orange-50 border border-orange-200 rounded-xl px-5 py-3 mb-6">
+            <p className="text-sm text-orange-700 font-medium mb-2">임시저장된 숙소 등록이 있습니다.</p>
             <Link href="/host/new" className="text-sm text-orange-700 font-semibold underline">이어서 등록</Link>
           </div>
         )}
@@ -629,21 +629,21 @@ export default function HostDashboard() {
                         label: "휴대폰 번호 등록",
                         desc: "알림톡 수신에 필요합니다",
                         action: () => { setTab("settings"); setSettingsTab("account"); },
-                        actionLabel: "입력하기",
+                        actionLabel: "입력",
                       },
                       {
                         done: hasBank,
                         label: "입금 계좌 등록",
                         desc: "게스트 입금 안내에 사용됩니다",
                         action: () => { setTab("settings"); setSettingsTab("account"); },
-                        actionLabel: "입력하기",
+                        actionLabel: "입력",
                       },
                       {
                         done: hasNotice,
                         label: "이용 유의사항 등록",
                         desc: "모든 숙소에 등록이 필요합니다",
                         action: () => { const p = properties.find(p => !p.is_draft && !(p.notice?.trim() || p.rooms.some(r => r.notice?.trim()))); if (p) router.push(`/host/notice/${p.id}`); },
-                        actionLabel: "등록하기",
+                        actionLabel: "등록",
                       },
                     ].map(item => (
                       <div key={item.label} className="flex items-center gap-3">
