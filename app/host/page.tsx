@@ -974,13 +974,31 @@ export default function HostDashboard() {
               </div>
               <div className="px-5 py-4">
                 <div className="flex items-center gap-3">
-                  <input type="time" value={settings.unavailable_start}
-                    onChange={e => setSettings(s => s ? { ...s, unavailable_start: e.target.value } : s)}
-                    className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent" />
+                  <div className="relative inline-block">
+                    <select value={settings.unavailable_start}
+                      onChange={e => setSettings(s => s ? { ...s, unavailable_start: e.target.value } : s)}
+                      className="appearance-none border border-gray-200 rounded-xl pl-3 pr-10 py-2.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
+                      {Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}:00`).map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                    <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </div>
                   <span className="text-gray-400 text-sm font-medium">~</span>
-                  <input type="time" value={settings.unavailable_end}
-                    onChange={e => setSettings(s => s ? { ...s, unavailable_end: e.target.value } : s)}
-                    className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent" />
+                  <div className="relative inline-block">
+                    <select value={settings.unavailable_end}
+                      onChange={e => setSettings(s => s ? { ...s, unavailable_end: e.target.value } : s)}
+                      className="appearance-none border border-gray-200 rounded-xl pl-3 pr-10 py-2.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
+                      {Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}:00`).map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                    <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </div>
                 </div>
               </div>
             </div>
