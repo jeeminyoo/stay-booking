@@ -367,7 +367,7 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t border-gray-200 mt-8 pt-6">
-            <p className="text-[11px] text-gray-400">© 2025 Staypick. All rights reserved.</p>
+            <p className="text-[11px] text-gray-400">© 2026 Staypick. All rights reserved.</p>
           </div>
         </div>
       </footer>

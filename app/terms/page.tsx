@@ -69,7 +69,7 @@ const SECTIONS = [
   },
   {
     title: "부칙",
-    content: `이 약관은 2025년 1월 1일부터 시행합니다.`,
+    content: `이 약관은 2026년 1월 1일부터 시행합니다.`,
   },
 ];
 
@@ -98,7 +98,7 @@ export default function TermsPage() {
           ))}
         </div>
 
-        <p className="text-center text-xs text-gray-300 mt-8 pb-4">© 2025 Staypick. All rights reserved.</p>
+        <p className="text-center text-xs text-gray-300 mt-8 pb-4">© 2026 Staypick. All rights reserved.</p>
       </main>
     </div>
   );
