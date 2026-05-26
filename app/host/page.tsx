@@ -946,7 +946,7 @@ export default function HostDashboard() {
               <div className="px-5 py-4 border-b border-gray-50">
                 <p className="font-semibold text-gray-900 text-sm">자동취소 시간</p>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  예약요청·입금확인요청 두 상태 모두, 이 시간 내 호스트가 확정하지 않으면 자동취소됩니다.
+                  게스트가 예약요청 후 입금확인요청을 하지 않은 경우, 이 시간 내 호스트가 예약을 확정하지 않으면 자동 취소됩니다.
                 </p>
               </div>
               <div className="px-5 py-4">
