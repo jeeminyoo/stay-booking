@@ -1115,7 +1115,7 @@ export default function HostDashboard() {
                 })()}
                 {(settings.long_stay_discounts ?? []).map((d, i) => (
                   <div key={i} className="flex items-center gap-2">
-                    <div className="flex items-center gap-1.5 border border-gray-200 rounded-xl px-3 py-2 bg-white focus-within:ring-2 focus-within:ring-indigo-400">
+                    <div className="flex items-center gap-1 border border-gray-200 rounded-xl px-2 py-2 bg-white focus-within:ring-2 focus-within:ring-indigo-400">
                       <input
                         type="number" min={2} max={365}
                         value={d.nights}
@@ -1125,11 +1125,11 @@ export default function HostDashboard() {
                           next[i] = { ...next[i], nights: Number(e.target.value) };
                           return { ...s, long_stay_discounts: next };
                         })}
-                        className="w-10 text-sm text-gray-700 bg-transparent outline-none text-center"
+                        className="w-14 text-sm text-gray-700 bg-transparent outline-none text-center"
                       />
-                      <span className="text-sm text-gray-400 shrink-0">박 이상</span>
+                      <span className="text-xs text-gray-400 shrink-0">박~</span>
                     </div>
-                    <div className="flex items-center gap-1.5 border border-gray-200 rounded-xl px-3 py-2 bg-white focus-within:ring-2 focus-within:ring-indigo-400">
+                    <div className="flex items-center gap-1 border border-gray-200 rounded-xl px-2 py-2 bg-white focus-within:ring-2 focus-within:ring-indigo-400">
                       <input
                         type="number" min={1} max={99}
                         value={d.percent}
@@ -1139,15 +1139,15 @@ export default function HostDashboard() {
                           next[i] = { ...next[i], percent: Number(e.target.value) };
                           return { ...s, long_stay_discounts: next };
                         })}
-                        className="w-10 text-sm text-gray-700 bg-transparent outline-none text-center"
+                        className="w-14 text-sm text-gray-700 bg-transparent outline-none text-center"
                       />
-                      <span className="text-sm text-gray-400 shrink-0">% 할인</span>
+                      <span className="text-xs text-gray-400 shrink-0">%↓</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => setSettings(s => s ? { ...s, long_stay_discounts: (s.long_stay_discounts ?? []).filter((_, j) => j !== i) } : s)}
-                      className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-red-400 transition-colors shrink-0">
-                      ✕
+                      className="w-6 h-6 flex items-center justify-center rounded-full text-gray-300 hover:bg-gray-100 hover:text-red-400 transition-colors shrink-0">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
                     </button>
                   </div>
                 ))}
