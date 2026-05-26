@@ -332,28 +332,30 @@ export default function AvailabilityTab({ user: _user, properties, bookings, onC
       {/* ── Calendar card ── */}
       <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
 
-        {/* Room tabs + block mode button */}
-        <div className="flex items-center gap-2 px-4 pt-4 pb-2">
-          <div className="flex gap-1.5 flex-1 overflow-x-auto">
-            {rooms.map((r, i) => (
-              <button key={i}
-                onClick={() => { setRoomIdx(i); setSelectedDate(null); exitBlockMode(); }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-all
-                  ${roomIdx === i ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
-                {r.name}
-              </button>
-            ))}
-          </div>
-          {!blockMode && (
+        {/* Room tabs */}
+        <div className="flex gap-1.5 px-4 pt-4 pb-2 overflow-x-auto">
+          {rooms.map((r, i) => (
+            <button key={i}
+              onClick={() => { setRoomIdx(i); setSelectedDate(null); exitBlockMode(); }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-all
+                ${roomIdx === i ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
+              {r.name}
+            </button>
+          ))}
+        </div>
+
+        {/* Block mode button */}
+        {!blockMode && (
+          <div className="px-4 pb-2">
             <button onClick={enterBlockMode}
-              className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-xl transition-colors">
+              className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-xl transition-colors">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/>
               </svg>
               날짜 블락
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Block mode banner */}
         {blockMode && (
