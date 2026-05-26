@@ -900,6 +900,12 @@ export default function HostDashboard() {
                       />
                     </div>
                   </div>
+                  <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-start gap-2">
+                    <svg className="shrink-0 mt-0.5 text-gray-400" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <p className="text-xs text-gray-400 leading-relaxed">계좌번호는 외부에 공개되지 않으며, 예약 요청한 게스트에게만 카카오톡 알림톡으로 안내됩니다.</p>
+                  </div>
                 </div>
 
                 <div className="pt-8 space-y-3">
