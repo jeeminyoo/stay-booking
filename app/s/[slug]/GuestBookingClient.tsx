@@ -745,8 +745,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
                 <div>
                   <p className="text-xs font-semibold text-indigo-700 mb-0.5">직접 이체로, 더 낮은 가격</p>
                   <p className="text-xs text-indigo-600 leading-relaxed">
-                    스테이픽은 호스트 계좌로 직접 이체하는 방식으로 예약이 진행됩니다.<br />
-                    중간 수수료 없이, 더 좋은 가격을 경험해보세요.
+                    스테이픽은 호스트 계좌로 직접 이체하는 방식으로 예약이 진행됩니다. 중간 수수료 없이, 더 좋은 가격을 경험해보세요.
                   </p>
                 </div>
               </div>

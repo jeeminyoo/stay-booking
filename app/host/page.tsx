@@ -357,9 +357,7 @@ export default function HostDashboard() {
               <div>
                 <p className="font-bold text-gray-900 text-base mb-1">유의사항을 등록해주세요</p>
                 <p className="text-sm text-gray-500 leading-relaxed">
-                  게스트가 예약 완료 후 확인하는 중요한 안내입니다.<br />
-                  입실·퇴실 규칙, 주의사항 등을 등록해두면<br />
-                  불필요한 문의를 줄일 수 있어요.
+                  게스트가 예약 완료 후 확인하는 중요한 안내입니다. 입실·퇴실 규칙, 주의사항 등을 등록해두면 불필요한 문의를 줄일 수 있어요.
                 </p>
               </div>
             </div>
@@ -443,7 +441,7 @@ export default function HostDashboard() {
               <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center">
                 <p className="text-3xl mb-3">💬</p>
                 <p className="font-semibold text-gray-700 mb-1">아직 등록된 리뷰가 없습니다</p>
-                <p className="text-sm text-gray-400 leading-relaxed">리뷰는 체크인 당일 게스트에게 발송되는<br />알림톡을 통해 작성할 수 있어요.</p>
+                <p className="text-sm text-gray-400 leading-relaxed">리뷰는 체크인 당일 게스트에게 발송되는 알림톡을 통해 작성할 수 있어요.</p>
               </div>
             ) : reviews.map((r) => (
               <div key={r.id} className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">

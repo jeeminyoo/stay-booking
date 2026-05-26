@@ -349,8 +349,7 @@ export default function Home() {
             <div>
               <Link href="/"><Logo /></Link>
               <p className="text-xs text-gray-400 mt-3 leading-relaxed">
-                수수료 없는 숙소 예약 플랫폼<br />
-                호스트와 게스트를 직접 연결합니다
+                수수료 없는 숙소 예약 플랫폼. 호스트와 게스트를 직접 연결합니다
               </p>
             </div>
             <div className="flex gap-8 text-sm text-gray-500">

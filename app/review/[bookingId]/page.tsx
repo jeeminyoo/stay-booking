@@ -112,7 +112,7 @@ export default function ReviewPage() {
           {existingReview ? "리뷰가 수정되었습니다" : "리뷰가 등록되었습니다"}
         </p>
         <p className="text-sm text-gray-400 leading-relaxed">
-          소중한 후기를 남겨주셔서 감사합니다.<br />더 나은 서비스로 보답하겠습니다.
+          소중한 후기를 남겨주셔서 감사합니다. 더 나은 서비스로 보답하겠습니다.
         </p>
       </main>
     </div>
