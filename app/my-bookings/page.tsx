@@ -64,7 +64,7 @@ export default function MyBookingsPage() {
 
         <form onSubmit={handleSearch} className="bg-white rounded-2xl border border-gray-100 p-4 mb-6 space-y-3">
           <p className="text-sm text-gray-600 font-medium">예약번호를 입력하세요</p>
-          <p className="text-xs text-gray-400">예약 완료 후 안내받은 예약번호를 입력해주세요 (예: BK1234567890123)</p>
+          <p className="text-xs text-gray-400">예약 완료 후 안내받은 예약번호를 입력해주세요<br />(예: BK1234567890123)</p>
           <div className="flex gap-2">
             <input
               type="text"
