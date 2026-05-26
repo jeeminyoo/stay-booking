@@ -970,7 +970,7 @@ export default function HostDashboard() {
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
               <div className="px-5 py-4 border-b border-gray-50">
                 <p className="font-semibold text-gray-900 text-sm">응답 불가 시간</p>
-                <p className="text-xs text-gray-400 mt-0.5">이 시간대에는 자동취소 타이머가 멈춥니다. (기본: 오후 9시 ~ 오전 8시)</p>
+                <p className="text-xs text-gray-400 mt-0.5">이 시간대에는 자동취소 타이머가 멈춥니다.</p>
               </div>
               <div className="px-5 py-4">
                 <div className="flex items-center gap-3">
