@@ -346,9 +346,9 @@ export default function AvailabilityTab({ user: _user, properties, bookings, onC
 
         {/* Block mode button */}
         {!blockMode && (
-          <div className="px-4 pb-2">
+          <div className="px-4 pb-3 border-t border-gray-100 pt-2.5">
             <button onClick={enterBlockMode}
-              className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-xl transition-colors">
+              className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 border border-gray-200 hover:border-gray-300 hover:text-gray-700 bg-white px-3 py-1.5 rounded-xl transition-colors">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/>
               </svg>
