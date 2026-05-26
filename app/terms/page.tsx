@@ -86,7 +86,7 @@ export default function TermsPage() {
       <main className="max-w-2xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-2xl font-black text-gray-900 mb-1">이용약관</h1>
-          <p className="text-sm text-gray-400">최종 수정일: 2025년 1월 1일</p>
+          <p className="text-sm text-gray-400">최종 수정일: 2026년 5월 26일</p>
         </div>
 
         <div className="space-y-6">
