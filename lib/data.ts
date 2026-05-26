@@ -85,22 +85,25 @@ export async function expireOverdueBookings(): Promise<void> {
   if (error) throw error;
 }
 
-// 자동취소 deadline 계산 — 비가용 시간대(기본 21:00-08:00)에는 타이머 정지
+// 자동취소 deadline 계산 — 비가용 시간대(기본 21:00-08:00 KST)에는 타이머 정지
 export function calcAutoDeadline(
   now: Date,
   minutes: number,
   unavailableStart = "21:00",
   unavailableEnd = "08:00",
 ): Date {
+  const KST = 9 * 60 * 60 * 1000;
   const startH = parseInt(unavailableStart.split(":")[0]);
   const endH   = parseInt(unavailableEnd.split(":")[0]);
-  const hour   = now.getHours();
+  // KST 기준 시각으로 비교
+  const kstNow = new Date(now.getTime() + KST);
+  const hour   = kstNow.getUTCHours();
   const inUnavailable = hour >= startH || hour < endH;
   if (inUnavailable) {
-    const start = new Date(now);
-    if (hour >= startH) start.setDate(start.getDate() + 1);
-    start.setHours(endH, 0, 0, 0);
-    return new Date(start.getTime() + minutes * 60 * 1000);
+    const kstStart = new Date(kstNow);
+    if (hour >= startH) kstStart.setUTCDate(kstStart.getUTCDate() + 1);
+    kstStart.setUTCHours(endH, 0, 0, 0);
+    return new Date(kstStart.getTime() - KST + minutes * 60 * 1000);
   }
   return new Date(now.getTime() + minutes * 60 * 1000);
 }
