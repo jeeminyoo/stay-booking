@@ -959,18 +959,18 @@ export default function HostDashboard() {
               const acEnabled = settings.auto_cancel_minutes !== 0;
               return (
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-50 flex items-start justify-between gap-3">
-                <div>
+              <div className="px-5 py-4 border-b border-gray-50">
+                <div className="flex items-center justify-between gap-3 mb-1">
                   <p className="font-semibold text-gray-900 text-sm">자동취소 시간</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    게스트가 예약요청 후 입금확인요청을 하지 않은 경우, 이 시간 내 호스트가 예약을 확정하지 않으면 자동 취소됩니다.
-                  </p>
+                  <button type="button"
+                    onClick={() => setSettings(s => s ? { ...s, auto_cancel_minutes: acEnabled ? 0 : 60 } : s)}
+                    className={`shrink-0 w-11 h-6 rounded-full flex items-center px-0.5 transition-colors ${acEnabled ? "bg-indigo-500" : "bg-gray-200"}`}>
+                    <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${acEnabled ? "translate-x-5" : "translate-x-0"}`} />
+                  </button>
                 </div>
-                <button type="button"
-                  onClick={() => setSettings(s => s ? { ...s, auto_cancel_minutes: acEnabled ? 0 : 60 } : s)}
-                  className={`shrink-0 w-11 h-6 rounded-full flex items-center px-0.5 transition-colors ${acEnabled ? "bg-indigo-500" : "bg-gray-200"}`}>
-                  <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${acEnabled ? "translate-x-5" : "translate-x-0"}`} />
-                </button>
+                <p className="text-xs text-gray-400">
+                  게스트가 예약요청 후 입금확인요청을 하지 않은 경우, 이 시간 내 호스트가 예약을 확정하지 않으면 자동 취소됩니다.
+                </p>
               </div>
               {acEnabled && (
                 <div className="px-5 py-4">
@@ -998,20 +998,20 @@ export default function HostDashboard() {
               const enabled = settings.unavailable_start !== "00:00" || settings.unavailable_end !== "00:00";
               return (
                 <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-                  <div className="px-5 py-4 border-b border-gray-50 flex items-start justify-between gap-3">
-                    <div>
+                  <div className="px-5 py-4 border-b border-gray-50">
+                    <div className="flex items-center justify-between gap-3 mb-1">
                       <p className="font-semibold text-gray-900 text-sm">응답 불가 시간</p>
-                      <p className="text-xs text-gray-400 mt-0.5">이 시간대에는 자동취소 타이머가 멈춥니다.</p>
+                      <button type="button"
+                        onClick={() => setSettings(s => s ? {
+                          ...s,
+                          unavailable_start: enabled ? "00:00" : "21:00",
+                          unavailable_end:   enabled ? "00:00" : "08:00",
+                        } : s)}
+                        className={`shrink-0 w-11 h-6 rounded-full flex items-center px-0.5 transition-colors ${enabled ? "bg-indigo-500" : "bg-gray-200"}`}>
+                        <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${enabled ? "translate-x-5" : "translate-x-0"}`} />
+                      </button>
                     </div>
-                    <button type="button"
-                      onClick={() => setSettings(s => s ? {
-                        ...s,
-                        unavailable_start: enabled ? "00:00" : "21:00",
-                        unavailable_end:   enabled ? "00:00" : "08:00",
-                      } : s)}
-                      className={`shrink-0 w-11 h-6 rounded-full flex items-center px-0.5 transition-colors ${enabled ? "bg-indigo-500" : "bg-gray-200"}`}>
-                      <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${enabled ? "translate-x-5" : "translate-x-0"}`} />
-                    </button>
+                    <p className="text-xs text-gray-400">이 시간대에는 자동취소 타이머가 멈춥니다.</p>
                   </div>
                   {enabled && (
                     <div className="px-5 py-4">
