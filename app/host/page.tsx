@@ -263,13 +263,13 @@ export default function HostDashboard() {
     if (nextActive) {
       const phoneDigits = (settings?.host_phone ?? "").replace(/-/g, "");
       if (!phoneDigits || !/^01[0-9]\d{7,8}$/.test(phoneDigits)) {
-        alert("설정 > 판매자 계정에서 휴대폰 번호를 먼저 등록해주세요.");
+        alert("설정 > 호스트 계정에서 휴대폰 번호를 먼저 등록해주세요.");
         setTab("settings");
         setSettingsTab("account");
         return;
       }
       if (!settings?.bank_account?.trim() || !settings?.bank_name?.trim() || !settings?.bank_holder?.trim()) {
-        alert("설정 > 판매자 계정에서 입금 계좌를 먼저 등록해주세요.");
+        alert("설정 > 호스트 계정에서 입금 계좌를 먼저 등록해주세요.");
         setTab("settings");
         setSettingsTab("account");
         return;
@@ -808,12 +808,12 @@ export default function HostDashboard() {
                       : "bg-white border border-gray-200 text-gray-500 hover:text-gray-700"
                   }`}
                 >
-                  {t === "account" ? "판매자 계정" : "숙소 설정"}
+                  {t === "account" ? "호스트 계정" : "숙소 설정"}
                 </button>
               ))}
             </div>
 
-            {/* ── 판매자 계정 ── */}
+            {/* ── 호스트 계정 ── */}
             {settingsTab === "account" && (
               <div className="space-y-4">
 
