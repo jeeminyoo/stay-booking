@@ -955,29 +955,43 @@ export default function HostDashboard() {
               <div className="space-y-4">
 
             {/* 자동취소 시간 */}
+            {(() => {
+              const acEnabled = settings.auto_cancel_minutes !== 0;
+              return (
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-50">
-                <p className="font-semibold text-gray-900 text-sm">자동취소 시간</p>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  게스트가 예약요청 후 입금확인요청을 하지 않은 경우, 이 시간 내 호스트가 예약을 확정하지 않으면 자동 취소됩니다.
-                </p>
-              </div>
-              <div className="px-5 py-4">
-                <div className="relative inline-block">
-                  <select
-                    value={settings.auto_cancel_minutes}
-                    onChange={e => setSettings(s => s ? { ...s, auto_cancel_minutes: Number(e.target.value) } : s)}
-                    className="appearance-none border border-gray-200 rounded-xl pl-3 pr-10 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
-                    {AUTO_CANCEL_OPTIONS.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                  <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
+              <div className="px-5 py-4 border-b border-gray-50 flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-gray-900 text-sm">자동취소 시간</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    게스트가 예약요청 후 입금확인요청을 하지 않은 경우, 이 시간 내 호스트가 예약을 확정하지 않으면 자동 취소됩니다.
+                  </p>
                 </div>
+                <button type="button"
+                  onClick={() => setSettings(s => s ? { ...s, auto_cancel_minutes: acEnabled ? 0 : 60 } : s)}
+                  className={`shrink-0 w-11 h-6 rounded-full flex items-center px-0.5 transition-colors ${acEnabled ? "bg-indigo-500" : "bg-gray-200"}`}>
+                  <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${acEnabled ? "translate-x-5" : "translate-x-0"}`} />
+                </button>
               </div>
+              {acEnabled && (
+                <div className="px-5 py-4">
+                  <div className="relative inline-block">
+                    <select
+                      value={settings.auto_cancel_minutes}
+                      onChange={e => setSettings(s => s ? { ...s, auto_cancel_minutes: Number(e.target.value) } : s)}
+                      className="appearance-none border border-gray-200 rounded-xl pl-3 pr-10 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
+                      {AUTO_CANCEL_OPTIONS.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                    <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </div>
+                </div>
+              )}
             </div>
+              );
+            })()}
 
             {/* 응답 불가 시간 */}
             {(() => {

@@ -92,6 +92,8 @@ export function calcAutoDeadline(
   unavailableStart = "21:00",
   unavailableEnd = "08:00",
 ): Date {
+  // minutes === 0 은 자동취소 비활성화 센티넬 — 먼 미래로 설정
+  if (minutes === 0) return new Date(now.getTime() + 100 * 365 * 24 * 60 * 60 * 1000);
   // "00:00"/"00:00" 은 응답불가시간 비활성화 센티넬
   if (unavailableStart === unavailableEnd) return new Date(now.getTime() + minutes * 60 * 1000);
   const KST = 9 * 60 * 60 * 1000;
