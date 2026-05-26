@@ -400,9 +400,9 @@ export default function HostDashboard() {
         <Suspense><SuccessBanner /></Suspense>
 
         {hasDraft && (
-          <div className="bg-orange-50 border border-orange-200 rounded-xl px-5 py-3 mb-6">
-            <p className="text-sm text-orange-700 font-medium mb-2">임시저장된 숙소 등록이 있습니다.</p>
-            <Link href="/host/new" className="text-sm text-orange-700 font-semibold underline">이어서 등록</Link>
+          <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-2 mb-6 flex items-center justify-between gap-3">
+            <p className="text-xs text-orange-700 font-medium">임시저장된 숙소 등록이 있습니다.</p>
+            <Link href="/host/new" className="text-xs text-orange-700 font-semibold underline shrink-0">이어서 등록</Link>
           </div>
         )}
 
