@@ -319,6 +319,16 @@ export default function HostDashboard() {
         return;
       }
     }
+    const uStart = parseInt(settings.unavailable_start);
+    const uEnd   = parseInt(settings.unavailable_end);
+    if (uStart === uEnd) {
+      alert("응답 불가 시간의 시작과 종료 시간이 같습니다. 다시 설정해주세요.");
+      return;
+    }
+    if (uStart > uEnd && (uStart - uEnd) < 4) {
+      alert(`응답 가능 시간이 ${uStart - uEnd}시간뿐입니다.\n자정을 넘는 설정은 저녁 시작 → 아침 종료로 설정해주세요.\n예) 21:00 ~ 08:00`);
+      return;
+    }
     setSettingsSaving(true);
     try {
       const updated = { ...settings, host_id: user.id, host_name: user.nickname, updated_at: new Date().toISOString() };
