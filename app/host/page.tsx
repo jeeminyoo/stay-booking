@@ -415,7 +415,21 @@ export default function HostDashboard() {
         {hasDraft && (
           <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-2 mb-6 flex items-center justify-between gap-3">
             <p className="text-xs text-orange-700 font-medium">임시저장된 숙소 등록이 있습니다.</p>
-            <Link href="/host/new" className="text-xs text-orange-700 font-semibold underline shrink-0">이어서 등록</Link>
+            <div className="flex items-center gap-2 shrink-0">
+              <Link href="/host/new" className="text-xs text-orange-700 font-semibold underline">이어서 등록</Link>
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm("임시저장된 숙소를 삭제하시겠습니까?")) {
+                    localStorage.removeItem("host_property_draft");
+                    setHasDraft(false);
+                  }
+                }}
+                className="flex items-center justify-center w-5 h-5 rounded-full text-orange-400 hover:bg-orange-100 hover:text-orange-600 transition-colors"
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
           </div>
         )}
 
