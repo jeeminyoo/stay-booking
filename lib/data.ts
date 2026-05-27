@@ -44,6 +44,15 @@ export async function getBlockedDates(propertyId: string, roomId: string): Promi
   return blocked;
 }
 
+async function generateBookingId(): Promise<string> {
+  while (true) {
+    const digits = String(Math.floor(Math.random() * 1_000_000_00)).padStart(8, "0");
+    const id = `BK${digits}`;
+    const { data } = await supabase.from("bookings").select("id").eq("id", id).maybeSingle();
+    if (!data) return id;
+  }
+}
+
 export async function createBooking(
   data: Omit<Booking, "id" | "created_at" | "payment_deadline">,
   autoCancelMinutes = 60
@@ -53,7 +62,7 @@ export async function createBooking(
 
   const row = {
     ...data,
-    id: `BK${Date.now()}`,
+    id: await generateBookingId(),
     created_at: now.toISOString(),
     payment_deadline: deadline.toISOString(),
   };

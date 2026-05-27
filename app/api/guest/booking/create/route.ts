@@ -3,6 +3,15 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { calcAutoDeadline } from "@/lib/data";
 import { sendGuestDepositRequest } from "@/lib/alimtalk";
 
+async function generateBookingId(): Promise<string> {
+  while (true) {
+    const digits = String(Math.floor(Math.random() * 1_000_000_00)).padStart(8, "0");
+    const id = `BK${digits}`;
+    const { data } = await supabaseAdmin.from("bookings").select("id").eq("id", id).maybeSingle();
+    if (!data) return id;
+  }
+}
+
 export async function POST(req: NextRequest) {
   const { bookingData, autoCancelMinutes = 60, unavailableStart, unavailableEnd } = await req.json();
   if (!bookingData) return NextResponse.json({ error: "missing bookingData" }, { status: 400 });
@@ -12,7 +21,7 @@ export async function POST(req: NextRequest) {
 
   const row = {
     ...bookingData,
-    id: `BK${Date.now()}`,
+    id: await generateBookingId(),
     created_at: now.toISOString(),
     payment_deadline: deadline.toISOString(),
   };
