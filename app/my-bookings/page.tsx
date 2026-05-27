@@ -64,12 +64,12 @@ export default function MyBookingsPage() {
 
         <form onSubmit={handleSearch} className="bg-white rounded-2xl border border-gray-100 p-4 mb-6 space-y-3">
           <p className="text-sm text-gray-600 font-medium">예약번호를 입력하세요</p>
-          <p className="text-xs text-gray-400">예약 완료 후 안내받은 예약번호를 입력해주세요<br />(예: BK1234567890123)</p>
+          <p className="text-xs text-gray-400">예약 완료 후 안내받은 예약번호를 입력해주세요<br />(예: BK12345678)</p>
           <input
             type="text"
             value={bookingId}
             onChange={(e) => setBookingId(filter.bookingId(e.target.value))}
-            placeholder="BKXXXXXXXXXXXXX"
+            placeholder="BK12345678"
             className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 font-mono placeholder:font-sans placeholder:text-gray-300"
           />
           <button type="submit"

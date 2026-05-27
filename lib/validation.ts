@@ -24,7 +24,7 @@ export const validate = {
 
   bankAccount: (v: string) => /^\d[\d-]{3,}$/.test(v),
 
-  bookingId: (v: string) => /^BK\d{10,}$/.test(v),
+  bookingId: (v: string) => /^BK\d{8}$/.test(v),
 };
 
 // 전화번호 자동 포맷 (숫자 string → 010-1234-5678)
