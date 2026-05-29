@@ -25,10 +25,10 @@ export default function PaymentTimer({ deadline, onExpire }: Props) {
   const hours   = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  const isOver24h = remaining >= 24 * 60 * 60 * 1000;
+  const isOver1h  = remaining >= 60 * 60 * 1000;
   const isUrgent  = remaining < 5 * 60 * 1000;
 
-  const display = isOver24h
+  const display = isOver1h
     ? `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
     : `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 
