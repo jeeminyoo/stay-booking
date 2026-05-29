@@ -275,7 +275,7 @@ export default function PropertyStepper({ user }: { user: KakaoUser }) {
     } catch {
       localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
     }
-    router.push("/host");
+    router.push(`/host?registered=1&id=${propertyId}&tab=properties`);
   }
 
   const { title, subtitle } = STEPS[step];
