@@ -92,6 +92,9 @@ export default function HostDashboard() {
   const [highlightBookingId, setHighlightBookingId] = useState<string | null>(null);
   const [noticeSheetProperty, setNoticeSheetProperty] = useState<SavedProperty | null>(null);
   const [bankModalOpen, setBankModalOpen] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState<"phone" | "bank" | null>(null);
+  const [onboardingSaving, setOnboardingSaving] = useState(false);
+  const pendingOnboarding = useRef(false);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -103,6 +106,7 @@ export default function HostDashboard() {
     const t = params.get("tab") as "management" | "properties" | "reviews" | "settings" | null;
     const bookingId = params.get("booking");
     const registeredId = params.get("registered") === "1" ? params.get("id") : null;
+    if (registeredId) pendingOnboarding.current = true;
     if (t) setTab(t);
     if (bookingId) { setTab("management"); setBookingSubTab("bookings"); setHighlightBookingId(bookingId); }
 
@@ -143,6 +147,13 @@ export default function HostDashboard() {
       const loaded = s ?? { host_id: u.id, updated_at: "", ...DEFAULT_SETTINGS };
       setSettings(loaded);
       setSavedSettings(loaded);
+      if (pendingOnboarding.current) {
+        const phoneOk = /^01[0-9]\d{7,8}$/.test((loaded.host_phone ?? "").replace(/-/g, ""));
+        const bankOk = !!(loaded.bank_account?.trim() && loaded.bank_name?.trim() && loaded.bank_holder?.trim());
+        if (!phoneOk) setOnboardingStep("phone");
+        else if (!bankOk) setOnboardingStep("bank");
+        pendingOnboarding.current = false;
+      }
     });
     fetchSubscriptionByHostId(u.id).then(async (sub) => {
       if (sub) {
@@ -299,6 +310,27 @@ export default function HostDashboard() {
       setBookings(prev => prev.map(b => b.id === id ? { ...b, status: "cancelled" } : b));
     } finally {
       setActingBookingId(null);
+    }
+  }
+
+  async function saveOnboardingStep() {
+    if (!settings || !user) return;
+    setOnboardingSaving(true);
+    try {
+      const updated = { ...settings, host_id: user.id, host_name: user.nickname, updated_at: new Date().toISOString() };
+      await apiUpsertHostSettings(updated);
+      setSavedSettings(updated);
+      const bankOk = !!(updated.bank_account?.trim() && updated.bank_name?.trim() && updated.bank_holder?.trim());
+      if (onboardingStep === "phone") {
+        if (!bankOk) setOnboardingStep("bank");
+        else setOnboardingStep(null);
+      } else {
+        setOnboardingStep(null);
+      }
+    } catch (err) {
+      alert("저장 실패: " + (err instanceof Error ? err.message : JSON.stringify(err)));
+    } finally {
+      setOnboardingSaving(false);
     }
   }
 
@@ -1205,6 +1237,98 @@ export default function HostDashboard() {
           onSelect={(name) => setSettings(s => s ? { ...s, bank_name: name } : s)}
           onClose={() => setBankModalOpen(false)}
         />
+      )}
+
+      {/* ── 온보딩 모달 (숙소 등록 완료 후 phone/bank 미입력 시) ── */}
+      {onboardingStep && settings && (
+        <div className="fixed inset-0 z-50 bg-white flex flex-col">
+          <div className="flex-1 overflow-y-auto">
+            <div className="max-w-md mx-auto px-5 pt-12 pb-8">
+              {/* 진행 표시 */}
+              <div className="flex items-center gap-2 mb-8">
+                <div className={`w-2 h-2 rounded-full ${onboardingStep === "phone" ? "bg-indigo-600" : "bg-indigo-200"}`} />
+                <div className={`w-2 h-2 rounded-full ${onboardingStep === "bank" ? "bg-indigo-600" : "bg-indigo-200"}`} />
+              </div>
+
+              {onboardingStep === "phone" && (
+                <>
+                  <p className="text-2xl font-black text-gray-900 mb-1">휴대폰 번호를 등록해주세요</p>
+                  <p className="text-sm text-gray-400 mb-8">예약 알림을 카카오톡으로 받을 번호입니다.</p>
+                  <input
+                    type="tel"
+                    value={settings.host_phone ?? ""}
+                    onChange={e => {
+                      const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+                      let formatted = digits;
+                      if (digits.length > 7) formatted = digits.slice(0,3) + "-" + digits.slice(3,7) + "-" + digits.slice(7);
+                      else if (digits.length > 3) formatted = digits.slice(0,3) + "-" + digits.slice(3);
+                      setSettings(s => s ? { ...s, host_phone: formatted } : s);
+                    }}
+                    placeholder="010-0000-0000"
+                    className="w-full border border-gray-200 rounded-2xl px-4 py-3.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  />
+                </>
+              )}
+
+              {onboardingStep === "bank" && (
+                <>
+                  <p className="text-2xl font-black text-gray-900 mb-1">입금 계좌를 등록해주세요</p>
+                  <p className="text-sm text-gray-400 mb-8">게스트가 예약 후 입금할 계좌입니다. 예약자에게만 카카오톡으로 안내됩니다.</p>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1.5">은행명</p>
+                      <button
+                        type="button"
+                        onClick={() => setBankModalOpen(true)}
+                        className="w-full border border-gray-200 rounded-2xl px-4 py-3.5 text-sm text-left hover:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      >
+                        {settings.bank_name
+                          ? <span className="text-gray-700">{settings.bank_name}</span>
+                          : <span className="text-gray-400">은행을 선택해주세요</span>}
+                      </button>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1.5">계좌번호</p>
+                      <input
+                        type="text" inputMode="numeric"
+                        value={settings.bank_account ?? ""}
+                        onChange={e => setSettings(s => s ? { ...s, bank_account: e.target.value.replace(/[^0-9-]/g, "") } : s)}
+                        placeholder="계좌번호를 입력해주세요"
+                        className="w-full border border-gray-200 rounded-2xl px-4 py-3.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1.5">예금주</p>
+                      <input
+                        type="text"
+                        value={settings.bank_holder ?? ""}
+                        onChange={e => setSettings(s => s ? { ...s, bank_holder: filter.name(e.target.value) } : s)}
+                        placeholder="예금주명을 입력해주세요"
+                        className="w-full border border-gray-200 rounded-2xl px-4 py-3.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* 하단 버튼 */}
+          <div className="px-5 pt-3 pb-8 border-t border-gray-100 max-w-md mx-auto w-full">
+            <button
+              onClick={saveOnboardingStep}
+              disabled={onboardingSaving || (() => {
+                if (onboardingStep === "phone") {
+                  return !/^01[0-9]\d{7,8}$/.test((settings.host_phone ?? "").replace(/-/g, ""));
+                }
+                return !(settings.bank_name?.trim() && settings.bank_account?.trim() && settings.bank_holder?.trim());
+              })()}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white py-4 rounded-2xl text-base font-bold transition-colors"
+            >
+              {onboardingSaving ? "저장 중..." : onboardingStep === "phone" ? "다음" : "완료"}
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
