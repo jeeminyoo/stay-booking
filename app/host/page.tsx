@@ -34,6 +34,14 @@ function SuccessBanner() {
   );
 }
 
+function OnboardingTrigger({ onTrigger }: { onTrigger: () => void }) {
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get("registered") === "1") onTrigger();
+  }, [searchParams, onTrigger]);
+  return null;
+}
+
 
 function formatDate(d: string) {
   if (!d) return "-";
@@ -94,7 +102,18 @@ export default function HostDashboard() {
   const [bankModalOpen, setBankModalOpen] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState<"phone" | "bank" | null>(null);
   const [onboardingSaving, setOnboardingSaving] = useState(false);
-  const pendingOnboarding = useRef(false);
+  const [shouldCheckOnboarding, setShouldCheckOnboarding] = useState(false);
+
+  const triggerOnboarding = useCallback(() => setShouldCheckOnboarding(true), []);
+
+  useEffect(() => {
+    if (!shouldCheckOnboarding || !settings) return;
+    setShouldCheckOnboarding(false);
+    const phoneOk = /^01[0-9]\d{7,8}$/.test((settings.host_phone ?? "").replace(/-/g, ""));
+    const bankOk = !!(settings.bank_account?.trim() && settings.bank_name?.trim() && settings.bank_holder?.trim());
+    if (!phoneOk) setOnboardingStep("phone");
+    else if (!bankOk) setOnboardingStep("bank");
+  }, [shouldCheckOnboarding, settings]);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -106,7 +125,6 @@ export default function HostDashboard() {
     const t = params.get("tab") as "management" | "properties" | "reviews" | "settings" | null;
     const bookingId = params.get("booking");
     const registeredId = params.get("registered") === "1" ? params.get("id") : null;
-    if (registeredId) pendingOnboarding.current = true;
     if (t) setTab(t);
     if (bookingId) { setTab("management"); setBookingSubTab("bookings"); setHighlightBookingId(bookingId); }
 
@@ -147,13 +165,6 @@ export default function HostDashboard() {
       const loaded = s ?? { host_id: u.id, updated_at: "", ...DEFAULT_SETTINGS };
       setSettings(loaded);
       setSavedSettings(loaded);
-      if (pendingOnboarding.current) {
-        const phoneOk = /^01[0-9]\d{7,8}$/.test((loaded.host_phone ?? "").replace(/-/g, ""));
-        const bankOk = !!(loaded.bank_account?.trim() && loaded.bank_name?.trim() && loaded.bank_holder?.trim());
-        if (!phoneOk) setOnboardingStep("phone");
-        else if (!bankOk) setOnboardingStep("bank");
-        pendingOnboarding.current = false;
-      }
     });
     fetchSubscriptionByHostId(u.id).then(async (sub) => {
       if (sub) {
@@ -443,6 +454,7 @@ export default function HostDashboard() {
 
       <main className="max-w-4xl mx-auto px-4 py-8">
         <Suspense><SuccessBanner /></Suspense>
+        <Suspense><OnboardingTrigger onTrigger={triggerOnboarding} /></Suspense>
 
         {hasDraft && (
           <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-2 mb-6 flex items-center justify-between gap-3">
