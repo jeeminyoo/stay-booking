@@ -703,23 +703,19 @@ export default function HostDashboard() {
                         action: () => { const p = properties.find(p => !p.is_draft && !(p.notice?.trim() || p.rooms.some(r => r.notice?.trim()))); if (p) router.push(`/host/notice/${p.id}`); },
                         actionLabel: "등록",
                       },
-                    ].map(item => (
+                    ].filter(item => !item.done).map(item => (
                       <div key={item.label} className="flex items-center gap-3">
-                        <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${item.done ? "bg-green-500" : "bg-gray-100"}`}>
-                          {item.done
-                            ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                            : <div className="w-2 h-2 rounded-full bg-gray-300" />}
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 bg-gray-100">
+                          <div className="w-2 h-2 rounded-full bg-gray-300" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-medium ${item.done ? "text-gray-400 line-through" : "text-gray-800"}`}>{item.label}</p>
-                          {!item.done && <p className="text-xs text-gray-400">{item.desc}</p>}
+                          <p className="text-sm font-medium text-gray-800">{item.label}</p>
+                          <p className="text-xs text-gray-400">{item.desc}</p>
                         </div>
-                        {!item.done && (
-                          <button onClick={item.action}
-                            className="shrink-0 text-xs font-semibold text-indigo-600 border border-indigo-200 px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors">
-                            {item.actionLabel}
-                          </button>
-                        )}
+                        <button onClick={item.action}
+                          className="shrink-0 text-xs font-semibold text-indigo-600 border border-indigo-200 px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors">
+                          {item.actionLabel}
+                        </button>
                       </div>
                     ))}
                   </div>
