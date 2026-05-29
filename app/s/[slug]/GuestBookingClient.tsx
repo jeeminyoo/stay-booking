@@ -878,7 +878,6 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
       {/* ── Bottom nav ── */}
       {step === "room" && property.rooms.length === 1 && (
         <BottomNav
-          onBack={() => router.push("/")} backLabel="홈"
           onNext={() => goToStep("date")} nextLabel="날짜 선택"
         />
       )}
