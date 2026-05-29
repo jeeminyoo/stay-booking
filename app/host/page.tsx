@@ -94,6 +94,7 @@ export default function HostDashboard() {
   const [noticeSheetProperty, setNoticeSheetProperty] = useState<SavedProperty | null>(null);
   const [bankModalOpen, setBankModalOpen] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState<"phone" | "bank" | null>(null);
+  const [onboardingSteps, setOnboardingSteps] = useState<("phone" | "bank")[]>([]);
   const [onboardingSaving, setOnboardingSaving] = useState(false);
 
   function showToast(msg: string) {
@@ -149,8 +150,10 @@ export default function HostDashboard() {
       if (new URLSearchParams(window.location.search).get("registered") === "1") {
         const phoneOk = /^01[0-9]\d{7,8}$/.test((loaded.host_phone ?? "").replace(/-/g, ""));
         const bankOk = !!(loaded.bank_account?.trim() && loaded.bank_name?.trim() && loaded.bank_holder?.trim());
-        if (!phoneOk) setOnboardingStep("phone");
-        else if (!bankOk) setOnboardingStep("bank");
+        const steps: ("phone" | "bank")[] = [];
+        if (!phoneOk) steps.push("phone");
+        if (!bankOk) steps.push("bank");
+        if (steps.length > 0) { setOnboardingSteps(steps); setOnboardingStep(steps[0]); }
       }
     });
     fetchSubscriptionByHostId(u.id).then(async (sub) => {
@@ -1250,10 +1253,13 @@ export default function HostDashboard() {
           <div className="flex-1 overflow-y-auto">
             <div className="max-w-md mx-auto px-5 pt-12 pb-8">
               {/* 진행 표시 */}
-              <div className="flex items-center gap-2 mb-8">
-                <div className={`w-2 h-2 rounded-full ${onboardingStep === "phone" ? "bg-indigo-600" : "bg-indigo-200"}`} />
-                <div className={`w-2 h-2 rounded-full ${onboardingStep === "bank" ? "bg-indigo-600" : "bg-indigo-200"}`} />
-              </div>
+              {onboardingSteps.length > 1 && (
+                <div className="flex items-center gap-2 mb-8">
+                  {onboardingSteps.map(s => (
+                    <div key={s} className={`w-2 h-2 rounded-full ${onboardingStep === s ? "bg-indigo-600" : "bg-indigo-200"}`} />
+                  ))}
+                </div>
+              )}
 
               {onboardingStep === "phone" && (
                 <>
