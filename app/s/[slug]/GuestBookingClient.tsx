@@ -831,6 +831,11 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
               계좌번호 복사
             </button>
 
+            <div className="bg-red-50 border-2 border-red-400 rounded-2xl p-4 space-y-1">
+              <p className="text-sm font-bold text-red-600">⚠️ 이체 후 반드시 아래 버튼을 눌러주세요</p>
+              <p className="text-xs text-red-500">버튼을 누르지 않으면 호스트가 확인할 수 없어 <strong>예약이 자동 취소</strong>될 수 있습니다.</p>
+            </div>
+
             <div className="bg-white rounded-2xl border border-gray-100 p-4 text-xs text-gray-500 space-y-1.5">
               <div className="flex justify-between"><span>예약번호</span><span className="font-mono text-gray-800">{booking.id}</span></div>
               <div className="flex justify-between"><span>체크인</span><span>{formatDate(booking.check_in)}</span></div>
@@ -839,7 +844,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
 
             <div>
               <textarea value={paymentNote} onChange={(e) => setPaymentNote(e.target.value)}
-                placeholder="입금 완료 후 메시지를 남겨주세요 (예: 방금 이체 완료했습니다!)"
+                placeholder="이체 완료 후 입력해주세요 (예: 방금 이체했습니다) — 입력 후 아래 버튼을 눌러야 예약이 확정됩니다"
                 maxLength={100}
                 rows={2} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none" />
               <p className="text-xs text-gray-400 text-right mt-1">{paymentNote.length}/100</p>
