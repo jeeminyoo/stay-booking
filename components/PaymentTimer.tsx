@@ -11,13 +11,19 @@ export default function PaymentTimer({ deadline, onExpire }: Props) {
   const [remaining, setRemaining] = useState(0);
 
   useEffect(() => {
-    const calc = () => {
+    const diff0 = new Date(deadline).getTime() - Date.now();
+    if (diff0 <= 0) { setRemaining(0); onExpire(); return; }
+    setRemaining(diff0);
+    const interval = setInterval(() => {
       const diff = new Date(deadline).getTime() - Date.now();
-      setRemaining(Math.max(0, diff));
-      if (diff <= 0) onExpire();
-    };
-    calc();
-    const interval = setInterval(calc, 1000);
+      if (diff <= 0) {
+        setRemaining(0);
+        clearInterval(interval);
+        onExpire();
+        return;
+      }
+      setRemaining(diff);
+    }, 1000);
     return () => clearInterval(interval);
   }, [deadline, onExpire]);
 

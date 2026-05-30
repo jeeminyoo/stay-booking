@@ -144,8 +144,9 @@ export default function MyBookingsPage() {
                     <div className="border-t border-orange-100 bg-orange-50 p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium text-orange-800">입금 대기 중</p>
-                        <PaymentTimer deadline={b.payment_deadline} onExpire={() => {
-                          setBooking(prev => prev ? { ...prev, status: "auto_cancelled" } : prev);
+                        <PaymentTimer deadline={b.payment_deadline} onExpire={async () => {
+                          const refreshed = await fetchBookingById(b.id);
+                          setBooking(refreshed ?? { ...b, status: "auto_cancelled" });
                         }} />
                       </div>
                       <div className="bg-white rounded-xl p-3 border border-orange-100">

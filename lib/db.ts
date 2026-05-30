@@ -147,28 +147,6 @@ export async function fetchHostBookingsPaged(
   };
 }
 
-export async function fetchBlockedDates(propertyId: string, roomName: string): Promise<string[]> {
-  const now = new Date().toISOString();
-  const { data, error } = await supabase
-    .from("bookings")
-    .select("check_in, check_out, status, payment_deadline")
-    .eq("property_id", propertyId)
-    .eq("room_name", roomName)
-    .not("status", "in", '("cancelled","expired")');
-  if (error) return [];
-
-  const blocked: string[] = [];
-  for (const b of data ?? []) {
-    if (b.status === "pending" && b.payment_deadline < now) continue;
-    const cur = new Date(b.check_in);
-    const end = new Date(b.check_out);
-    while (cur < end) {
-      blocked.push(cur.toISOString().split("T")[0]);
-      cur.setDate(cur.getDate() + 1);
-    }
-  }
-  return blocked;
-}
 
 export async function fetchBookingById(id: string): Promise<Booking | null> {
   const { data, error } = await supabase
