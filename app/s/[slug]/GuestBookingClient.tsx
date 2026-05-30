@@ -844,7 +844,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
 
             <div>
               <textarea value={paymentNote} onChange={(e) => setPaymentNote(e.target.value)}
-                placeholder="이체 완료 후 입력해주세요 (예: 방금 이체했습니다) — 입력 후 아래 버튼을 눌러야 예약이 확정됩니다"
+                placeholder="(선택) 호스트에게 남길 메시지 (예: 방금 이체했습니다)"
                 maxLength={100}
                 rows={2} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none" />
               <p className="text-xs text-gray-400 text-right mt-1">{paymentNote.length}/100</p>
@@ -905,7 +905,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
         <BottomNav
           onNext={handleNotifyPayment}
           nextLabel={loading ? "처리 중..." : booking?.status === "deposit_requested" ? "이미 요청됨" : "입금 완료 알리기"}
-          nextDisabled={!paymentNote || loading || booking?.status === "deposit_requested"}
+          nextDisabled={loading || booking?.status === "deposit_requested"}
           nextDanger
         />
       )}
