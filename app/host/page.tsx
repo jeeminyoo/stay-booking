@@ -39,7 +39,14 @@ function SuccessBanner() {
 function formatDate(d: string) {
   if (!d) return "-";
   const [y, m, day] = d.split("-");
-  return `${y}.${m}.${parseInt(day)}`;
+  return `${y}.${m.padStart(2,"0")}.${day.padStart(2,"0")}`;
+}
+
+function formatDateTime(iso: string) {
+  if (!iso) return "-";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 const STATUS_LABEL: Record<string, { label: string; className: string }> = {
@@ -605,6 +612,7 @@ export default function HostDashboard() {
                           <div><span className="text-gray-400">인원</span> 성인 {b.adults}{b.children > 0 ? ` · 어린이 ${b.children}` : ""}{b.infants > 0 ? ` · 유아 ${b.infants}` : ""}</div>
                           <div className="font-semibold text-gray-800"><span className="text-gray-400 font-normal">금액</span> {b.total_price.toLocaleString()}원</div>
                           <div className="col-span-2"><span className="text-gray-400">예약번호</span> <span className="font-mono">{b.id}</span></div>
+                          <div className="col-span-2"><span className="text-gray-400">예약요청일시</span> {formatDateTime(b.created_at)}</div>
                         </div>
                         {b.guest_message && (
                           <div className="bg-gray-50 rounded-lg px-3 py-2 text-xs text-gray-600 border-l-2 border-indigo-200 mb-2">
