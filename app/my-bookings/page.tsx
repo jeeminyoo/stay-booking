@@ -5,6 +5,7 @@ import Link from "next/link";
 import Logo from "@/components/Logo";
 import { Booking } from "@/lib/types";
 import { fetchBookingById } from "@/lib/db";
+import { expireOverdueBookings } from "@/lib/data";
 import { filter } from "@/lib/validation";
 import PaymentTimer from "@/components/PaymentTimer";
 
@@ -41,6 +42,7 @@ export default function MyBookingsPage() {
     setLoading(true);
     setSearched(false);
     try {
+      await expireOverdueBookings().catch(() => {});
       const data = await fetchBookingById(id);
       setBooking(data);
     } catch {

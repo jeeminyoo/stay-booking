@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/expire",
-      "schedule": "*/10 * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }
