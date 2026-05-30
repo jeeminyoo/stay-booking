@@ -7,12 +7,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const { error } = await supabaseAdmin
+  const now = new Date().toISOString();
+  const { data, error } = await supabaseAdmin
     .from("bookings")
     .update({ status: "auto_cancelled" })
     .in("status", ["waiting_for_deposit"])
-    .lt("payment_deadline", new Date().toISOString());
+    .lt("payment_deadline", now)
+    .select("id");
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, cancelled: data?.length ?? 0, ids: data?.map(r => r.id) });
 }
