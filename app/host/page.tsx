@@ -760,8 +760,6 @@ export default function HostDashboard() {
                       <p className="text-sm text-gray-500 mb-3">{p.address}</p>
                       <div className="flex items-center gap-2 text-xs text-gray-400 mb-3">
                         <span>객실 {p.rooms.length}개</span>
-                        <span>·</span>
-                        <span className="font-mono">/s/{p.slug}</span>
                       </div>
                       {!p.is_draft && (
                         <button
