@@ -480,11 +480,11 @@ export default function HostDashboard() {
                 fetchHostReviews(propertyIds).then(r => { setReviews(r); setReviewsLoaded(true); });
               }
             }}
-              className={`relative flex-1 py-2.5 text-sm font-semibold transition-colors text-center border-b-2 -mb-px
+              className={`flex-1 py-2.5 text-sm font-semibold transition-colors border-b-2 -mb-px inline-flex items-center justify-center gap-1
                 ${tab === key ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-400 hover:text-gray-600"}`}>
               {label}
               {key === "management" && actionNeededCount > 0 && (
-                <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 inline-flex items-center justify-center leading-none">{actionNeededCount}</span>
+                <span className="bg-red-500 text-white text-[10px] rounded-full w-4 h-4 inline-flex items-center justify-center leading-none shrink-0">{actionNeededCount}</span>
               )}
             </button>
           ))}
@@ -1116,8 +1116,9 @@ export default function HostDashboard() {
                   <input
                     type="date"
                     value={settings.booking_window_end ?? ""}
+                    min={new Date().toISOString().split("T")[0]}
                     onChange={e => setSettings(s => s ? { ...s, booking_window_end: e.target.value } : s)}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-inner-spin-button]:hidden"
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
                   />
                 )}
                 {settings.booking_window_type === "rolling" && (
