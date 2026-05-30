@@ -12,8 +12,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: "StayPick" };
   }
 
-  const image = property.rooms?.[0]?.images?.[0]?.main_url
-    ?? property.rooms?.[0]?.image_url
+  const image = property.images?.[0]?.main_url
+    ?? property.image_url
     ?? undefined;
 
   return {
