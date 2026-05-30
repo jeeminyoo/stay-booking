@@ -39,5 +39,5 @@ export async function POST(req: NextRequest) {
     console.error("[alimtalk] sendGuestDepositRequest failed:", e),
   );
 
-  return NextResponse.json({ booking });
+  return NextResponse.json({ booking }, { status: 201 });
 }
