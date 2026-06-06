@@ -64,22 +64,21 @@ export async function sendHostDepositRequested(booking: Booking, hostPhone: stri
 
 // 3. 게스트 예약 확정 안내 (호스트가 예약 확정 시)
 export async function sendGuestBookingConfirmed(booking: Booking, slug: string): Promise<void> {
-  const confirmUrl = `${BASE_URL}/s/${slug}/notice-confirm`;
   await sendAlimtalk(
     booking.guest_phone,
     TEMPLATE.GUEST_BOOKING_CONFIRMED,
     {
-      "#{게스트명}":  booking.guest_name,
-      "#{숙소명}":    booking.property_name,
-      "#{객실명}":    booking.room_name,
-      "#{예약번호}":  booking.id,
-      "#{입금자명}":  booking.guest_name,
-      "#{체크인}":    fmt(booking.check_in),
-      "#{체크아웃}":  fmt(booking.check_out),
-      "#{인원}":      fmtGuests(booking),
-      "#{금액}":      fmtPrice(booking.total_price),
+      "#{게스트명}":      booking.guest_name,
+      "#{숙소명}":        booking.property_name,
+      "#{객실명}":        booking.room_name,
+      "#{예약번호}":      booking.id,
+      "#{입금자명}":      booking.guest_name,
+      "#{체크인}":        fmt(booking.check_in),
+      "#{체크아웃}":      fmt(booking.check_out),
+      "#{인원}":          fmtGuests(booking),
+      "#{금액}":          fmtPrice(booking.total_price),
+      "#{유의사항경로}":  `${slug}/notice-confirm`,
     },
-    [{ buttonType: "WL", buttonName: "유의사항 확인하기", linkMo: confirmUrl, linkPc: confirmUrl }],
   );
 }
 
