@@ -832,7 +832,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
             </button>
 
             <div className="bg-red-50 border-2 border-red-400 rounded-2xl p-4 space-y-1">
-              <p className="text-sm font-bold text-red-600">⚠️ 이체 후 반드시 아래 버튼을 눌러주세요</p>
+              <p className="text-sm font-bold text-red-600">⚠️ 이체 후 반드시 '입금 완료 알리기' 버튼을 눌러주세요</p>
               <p className="text-xs text-red-500">버튼을 누르지 않으면 호스트가 확인할 수 없어 <strong>예약이 자동 취소</strong>될 수 있습니다.</p>
             </div>
 
