@@ -392,7 +392,7 @@ export default function GuestBookingClient({ slug }: { slug: string }) {
   }
 
   async function handleNotifyPayment() {
-    if (!booking || !paymentNote || !property || loading) return;
+    if (!booking || !property || loading) return;
     if (booking.status === "deposit_requested") return;
     setLoading(true);
     try {
