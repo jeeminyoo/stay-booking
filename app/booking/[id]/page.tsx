@@ -103,6 +103,22 @@ export default function BookingPage() {
 
       <main className="max-w-lg mx-auto px-4 py-8 space-y-4">
 
+        {/* 입금완료 CTA — waiting 상태에서만 */}
+        {pageState === "waiting" && (
+          <div className="bg-indigo-600 rounded-2xl p-5 space-y-3">
+            <div>
+              <p className="text-white font-bold text-base">이체 완료하셨나요?</p>
+              <p className="text-indigo-200 text-xs mt-0.5">버튼을 눌러 호스트에게 입금 확인을 요청하세요</p>
+            </div>
+            <button
+              onClick={handleRequest}
+              disabled={submitting}
+              className="w-full py-3.5 rounded-xl text-sm font-bold bg-white text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-50">
+              {submitting ? "요청 중..." : "입금 완료 알리기"}
+            </button>
+          </div>
+        )}
+
         {/* 예약 요약 */}
         <div className="bg-white rounded-2xl p-5 space-y-4">
           <div>
