@@ -58,6 +58,7 @@ export async function sendHostDepositRequested(booking: Booking, hostPhone: stri
       "#{입금액}":      fmtPrice(booking.total_price),
       "#{메시지}":      booking.payment_note || "없음",
     },
+    [{ buttonType: "WL", buttonName: "예약 확인하기", linkMo: `${BASE_URL}/host?tab=bookings&booking=${booking.id}`, linkPc: `${BASE_URL}/host?tab=bookings&booking=${booking.id}` }],
   );
 }
 
